@@ -10,6 +10,7 @@ mexer nos parametros so re-roda fusao + render — sem rebaixar o video.
 
 from __future__ import annotations
 
+import json
 import os
 import time
 
@@ -159,6 +160,11 @@ if gerar:
         report(1.0, "Pronto")
         ss.clips = clips
         ss.out_dir = out_dir
+        try:
+            with open(os.path.join(out_dir, "manifest.json"), encoding="utf-8") as fh:
+                ss.cost = json.load(fh).get("cost")
+        except (OSError, ValueError):
+            ss.cost = None
         if not clips:
             st.warning(
                 "Nenhum momento acima da media de energia. "
@@ -177,6 +183,21 @@ if "track" in ss:
             f"Video: {media.width}×{media.height} · "
             f"{media.duration:.0f}s · {media.fps:.0f} fps"
         )
+
+# Custo da geracao (LLM de viralizacao).
+cost = ss.get("cost")
+if cost:
+    st.subheader("💸 Custo desta geracao (LLM)")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Modelo", cost.get("model") or "—")
+    c2.metric("Tokens totais", f"{cost.get('total_tokens', 0):,}")
+    usd = cost.get("cost_usd")
+    c3.metric("Custo (USD)", f"${usd:.4f}" if usd is not None else "n/d")
+    st.caption(
+        f"{cost.get('calls', 0)} chamada(s) · "
+        f"entrada {cost.get('prompt_tokens', 0):,} + saida {cost.get('completion_tokens', 0):,} tokens"
+        + ("" if usd is not None else " · custo nao retornado pela API")
+    )
 
 # Resultados.
 clips = ss.get("clips")

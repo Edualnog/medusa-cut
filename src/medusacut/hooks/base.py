@@ -31,6 +31,7 @@ class HookResult:
     virality_score: float
     refined_start: float | None = None
     refined_end: float | None = None
+    usage: object | None = None  # llm.Usage da chamada
 
 
 def score_candidate(
@@ -53,7 +54,7 @@ def score_candidate(
         '  "best_start_s": melhor inicio (segundos absolutos, dentro do trecho),\n'
         '  "best_end_s": melhor fim (segundos absolutos, dentro do trecho).\n'
     )
-    data = chat_json(_SYSTEM, user)
+    data, usage = chat_json(_SYSTEM, user)
 
     score = _clamp(_to_float(data.get("virality_score"), 0.0), 0.0, 100.0)
     rs = _refined(data.get("best_start_s"), candidate.start, candidate.end)
@@ -66,6 +67,7 @@ def score_candidate(
         virality_score=score,
         refined_start=rs,
         refined_end=re_,
+        usage=usage,
     )
 
 

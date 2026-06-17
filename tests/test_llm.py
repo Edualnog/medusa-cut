@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import pytest
+from pytest import approx
 
 from medusacut.hooks.base import _clamp, _refined
-from medusacut.llm import load_dotenv, parse_json
+from medusacut.llm import Usage, extract_usage, load_dotenv, parse_json
 
 
 def test_parse_json_plain():
@@ -39,6 +40,41 @@ def test_load_dotenv_sets_without_overwriting(tmp_path, monkeypatch):
     monkeypatch.setenv("MEDUSA_TEST_KEY", "ja-existe")
     load_dotenv(str(env))
     assert os.environ["MEDUSA_TEST_KEY"] == "ja-existe"
+
+
+def test_usage_add_accumulates():
+    s = Usage("m", 10, 5, 15, 0.001, 1) + Usage("m", 20, 10, 30, 0.002, 1)
+    assert (s.prompt_tokens, s.completion_tokens, s.total_tokens, s.calls) == (30, 15, 45, 2)
+    assert s.cost_usd == approx(0.003)
+    assert s.model == "m"
+
+
+def test_usage_add_different_models_and_partial_cost():
+    s = Usage("a", 1, 1, 2, None, 1) + Usage("b", 1, 1, 2, 0.001, 1)
+    assert s.model == "varios"
+    assert s.cost_usd == approx(0.001)  # soma ignorando o None
+
+
+def test_extract_usage_reads_tokens_and_cost():
+    class U:
+        def model_dump(self):
+            return {"prompt_tokens": 10, "completion_tokens": 4, "total_tokens": 14, "cost": 0.0009}
+
+    class R:
+        usage = U()
+
+    u = extract_usage(R(), "openai/gpt-4o")
+    assert (u.prompt_tokens, u.completion_tokens, u.total_tokens) == (10, 4, 14)
+    assert u.cost_usd == approx(0.0009)
+    assert u.calls == 1
+
+
+def test_extract_usage_handles_missing():
+    class R:
+        usage = None
+
+    u = extract_usage(R(), "m")
+    assert u.total_tokens == 0 and u.calls == 1 and u.cost_usd is None
 
 
 def test_clamp_and_refined():

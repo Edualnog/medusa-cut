@@ -12,9 +12,48 @@ from __future__ import annotations
 import json
 import os
 import re
+from dataclasses import dataclass
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL = "openai/gpt-4o"
+
+
+@dataclass
+class Usage:
+    """Consumo de uma ou mais chamadas de LLM (tokens + custo em USD)."""
+
+    model: str = ""
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+    cost_usd: float | None = None
+    calls: int = 0
+
+    def __add__(self, other: "Usage") -> "Usage":
+        cost = None
+        if self.cost_usd is not None or other.cost_usd is not None:
+            cost = (self.cost_usd or 0.0) + (other.cost_usd or 0.0)
+        model = self.model or other.model
+        if self.model and other.model and self.model != other.model:
+            model = "varios"
+        return Usage(
+            model=model,
+            prompt_tokens=self.prompt_tokens + other.prompt_tokens,
+            completion_tokens=self.completion_tokens + other.completion_tokens,
+            total_tokens=self.total_tokens + other.total_tokens,
+            cost_usd=cost,
+            calls=self.calls + other.calls,
+        )
+
+    def as_dict(self) -> dict:
+        return {
+            "model": self.model,
+            "prompt_tokens": self.prompt_tokens,
+            "completion_tokens": self.completion_tokens,
+            "total_tokens": self.total_tokens,
+            "cost_usd": self.cost_usd,
+            "calls": self.calls,
+        }
 
 
 def load_dotenv(path: str = ".env") -> None:
@@ -44,8 +83,10 @@ def get_client():
     return OpenAI(api_key=key, base_url=base_url)
 
 
-def chat_json(system: str, user: str, *, model: str | None = None, temperature: float = 0.4) -> dict:
-    """Manda system+user e devolve a resposta como JSON (dict)."""
+def chat_json(
+    system: str, user: str, *, model: str | None = None, temperature: float = 0.4
+) -> tuple[dict, Usage]:
+    """Manda system+user e devolve (JSON, Usage com tokens+custo)."""
     client = get_client()
     model = model or os.environ.get("LLM_MODEL", DEFAULT_MODEL)
     resp = client.chat.completions.create(
@@ -56,8 +97,31 @@ def chat_json(system: str, user: str, *, model: str | None = None, temperature: 
         ],
         temperature=temperature,
         response_format={"type": "json_object"},
+        # OpenRouter: devolve o custo (USD) junto do usage.
+        extra_body={"usage": {"include": True}},
     )
-    return parse_json(resp.choices[0].message.content or "")
+    data = parse_json(resp.choices[0].message.content or "")
+    return data, extract_usage(resp, model)
+
+
+def extract_usage(resp, model: str) -> Usage:
+    """Le tokens e custo (se houver) do objeto de resposta do SDK."""
+    u = getattr(resp, "usage", None)
+    if u is None:
+        return Usage(model=model, calls=1)
+    raw = {}
+    try:
+        raw = u.model_dump()
+    except Exception:
+        raw = {}
+    pt = int(raw.get("prompt_tokens") or getattr(u, "prompt_tokens", 0) or 0)
+    ct = int(raw.get("completion_tokens") or getattr(u, "completion_tokens", 0) or 0)
+    tt = int(raw.get("total_tokens") or getattr(u, "total_tokens", 0) or (pt + ct))
+    cost = raw.get("cost", getattr(u, "cost", None))
+    return Usage(
+        model=model, prompt_tokens=pt, completion_tokens=ct,
+        total_tokens=tt, cost_usd=cost, calls=1,
+    )
 
 
 def parse_json(text: str) -> dict:

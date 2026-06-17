@@ -46,8 +46,30 @@ def app(argv: list[str] | None = None) -> int:
 
     print(f"{len(clips)} corte(s) em {args.out}/ (ver {args.out}/manifest.json):")
     for c in clips:
-        print(f"  {c.file}  [{c.start:6.1f}-{c.end:6.1f}s]  score={c.score:+.2f}")
+        vir = f" viral={c.virality_score:.0f}" if c.virality_score is not None else ""
+        print(f"  {c.file}  [{c.start:6.1f}-{c.end:6.1f}s]  score={c.score:+.2f}{vir}")
+
+    _print_cost(args.out)
     return 0
+
+
+def _print_cost(out_dir: str) -> None:
+    import json
+    import os
+
+    try:
+        with open(os.path.join(out_dir, "manifest.json"), encoding="utf-8") as fh:
+            cost = json.load(fh).get("cost")
+    except (OSError, ValueError):
+        cost = None
+    if not cost:
+        return
+    usd = cost.get("cost_usd")
+    money = f" · ${usd:.4f} USD" if usd is not None else " · custo n/d"
+    print(
+        f"LLM: {cost.get('total_tokens', 0)} tokens ({cost.get('model')}){money}",
+        file=sys.stderr,
+    )
 
 
 # Alias historico — a ordem de implementacao falava em cli:main.

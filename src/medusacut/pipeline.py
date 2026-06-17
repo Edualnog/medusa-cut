@@ -123,13 +123,14 @@ def render_candidates(
 
     # 3+6. transcrever (p/ legenda e/ou score) + score (LLM) -> re-rank.
     if (score_virality or captions) and audio_path:
-        prepared = _prepare_candidates(
+        prepared, usage = _prepare_candidates(
             candidates, audio_path, game_context,
             score_virality=score_virality, progress=_band(progress, 0.0, 0.5),
         )
         render_progress = _band(progress, 0.5, 1.0)
     else:
         prepared = [(c, None, None) for c in candidates]
+        usage = None
         render_progress = progress
 
     total = len(prepared)
@@ -155,7 +156,7 @@ def render_candidates(
             )
         )
 
-    _write_manifest(out_dir, url=url, layout=layout_name, clips=clips)
+    _write_manifest(out_dir, url=url, layout=layout_name, clips=clips, usage=usage)
     _report(render_progress, 1.0, "Pronto")
     return clips
 
@@ -174,6 +175,7 @@ def _prepare_candidates(candidates, audio_path, game_context, *, score_virality,
 
     total = len(candidates)
     out: list[tuple[Candidate, object | None, list | None]] = []
+    usage_total = None
     for i, cand in enumerate(candidates, start=1):
         _report(progress, (i - 1) / total if total else 1.0, f"Transcrevendo e avaliando {i}/{total}…")
         words = None
@@ -192,11 +194,13 @@ def _prepare_candidates(candidates, audio_path, game_context, *, score_virality,
                     cand = Candidate(rs, re_, cand.score)
         except Exception as exc:  # whisper/LLM/rede: nao derruba o pipeline
             print(f"[medusacut] corte {i} sem transcricao/score: {exc}", file=sys.stderr)
+        if hook is not None and getattr(hook, "usage", None) is not None:
+            usage_total = hook.usage if usage_total is None else usage_total + hook.usage
         out.append((cand, hook, words))
 
     if score_virality:
         out.sort(key=lambda t: t[1].virality_score if t[1] is not None else -1.0, reverse=True)
-    return out
+    return out, usage_total
 
 
 def _floor_len(rs: float, re_: float, lo: float, hi: float, min_len: float) -> tuple[float, float]:
@@ -290,11 +294,12 @@ def _band(progress: Progress | None, lo: float, hi: float) -> Progress | None:
     return lambda f, label: progress(lo + (hi - lo) * min(1.0, max(0.0, f)), label)
 
 
-def _write_manifest(out_dir: str, *, url: str, layout: str, clips: list[Clip]) -> None:
+def _write_manifest(out_dir: str, *, url: str, layout: str, clips: list[Clip], usage=None) -> None:
     manifest = {
         "source": url,
         "layout": layout,
         "count": len(clips),
+        "cost": usage.as_dict() if usage is not None else None,
         "clips": [c.to_manifest_entry() for c in clips],
     }
     with open(os.path.join(out_dir, "manifest.json"), "w", encoding="utf-8") as fh:
