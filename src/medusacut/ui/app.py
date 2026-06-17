@@ -61,6 +61,10 @@ with st.sidebar:
         "Pontuar viralizacao (LLM)", value=True,
         help="Transcreve, da um gancho, nota de viralizacao 0-100 e re-ranqueia os cortes. Precisa da chave no .env.",
     )
+    captions = st.checkbox(
+        "Legenda karaoke (queimada)", value=True,
+        help="Legenda palavra-a-palavra, estilo gamer (palavra ativa em amarelo).",
+    )
     game_context = st.text_input(
         "Contexto do jogo/canal (opcional)", placeholder="ex.: Valorant, clutch 1v3",
         help="Ajuda o LLM a calibrar o gancho e a nota.",
@@ -128,6 +132,7 @@ if gerar:
             audio_path=ss.wav,
             game_context=game_context.strip(),
             score_virality=score_virality,
+            captions=captions,
             progress=lambda f, label: report(0.66 + 0.34 * f, label),
         )
         report(1.0, "Pronto")

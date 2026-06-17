@@ -30,6 +30,7 @@ def generate_clips(
     game_context: str = "",
     facecam_corner: str | None = None,
     score_virality: bool = True,
+    captions: bool = True,
     progress: Progress | None = None,
 ) -> list[Clip]:
     """
@@ -80,6 +81,7 @@ def generate_clips(
         audio_path=wav_path,
         game_context=game_context,
         score_virality=score_virality,
+        captions=captions,
         progress=_band(progress, 0.65, 1.0),
     )
 
@@ -95,37 +97,41 @@ def render_candidates(
     audio_path: str | None = None,
     game_context: str = "",
     score_virality: bool = False,
+    captions: bool = False,
     progress: Progress | None = None,
 ) -> list[Clip]:
-    """Score de viralizacao (opcional) + reframe + render + manifest.
+    """Score de viralizacao + reframe + render + LEGENDA + manifest.
 
     Separado de `generate_clips` de proposito: o painel local reusa o download e
     a analise (em cache) e so re-pontua/re-renderiza ao mexer nos parametros.
-    `layout='gameplay_only'` faz crop central estatico; qualquer outro valor usa o
-    enquadramento dinamico. Com `score_virality`, transcreve cada candidato, pede
-    gancho+nota ao LLM, aperta o in/out e RE-RANQUEIA por viralizacao.
+    `score_virality` transcreve+pontua+re-ranqueia (LLM); `captions` queima a
+    legenda karaoke. As duas reusam a mesma transcricao. Falha de LLM/whisper nao
+    derruba o pipeline (cai pro ranking por energia / sem legenda).
     """
     os.makedirs(out_dir, exist_ok=True)
     cache_dir = os.path.join(out_dir, ".cache")
     layout_name = _resolve_layout(layout, facecam_corner)
 
-    # 6. gancho + score (LLM) -> re-rank. Falha de LLM nao derruba o pipeline.
-    if score_virality and audio_path:
-        scored = _score_candidates(
-            media, candidates, audio_path, game_context, _band(progress, 0.0, 0.5)
+    # 3+6. transcrever (p/ legenda e/ou score) + score (LLM) -> re-rank.
+    if (score_virality or captions) and audio_path:
+        prepared = _prepare_candidates(
+            candidates, audio_path, game_context,
+            score_virality=score_virality, progress=_band(progress, 0.0, 0.5),
         )
         render_progress = _band(progress, 0.5, 1.0)
     else:
-        scored = [(c, None) for c in candidates]
+        prepared = [(c, None, None) for c in candidates]
         render_progress = progress
 
-    total = len(scored)
+    total = len(prepared)
     clips: list[Clip] = []
-    for i, (cand, hook) in enumerate(scored, start=1):
-        _report(render_progress, (i - 1) / total if total else 1.0, f"Enquadrando e renderizando {i}/{total}…")
+    for i, (cand, hook, words) in enumerate(prepared, start=1):
+        _report(render_progress, (i - 1) / total if total else 1.0, f"Renderizando corte {i}/{total}…")
         file_name = f"clip_{i:02d}.mp4"
         out_path = os.path.join(out_dir, file_name)
         _render_layout(media, cand, layout_name, facecam_corner, out_path, cache_dir)
+        if captions and words:
+            _burn_captions(out_path, words, cand, cache_dir)
         clips.append(
             Clip(
                 index=i,
@@ -144,36 +150,60 @@ def render_candidates(
     return clips
 
 
-def _score_candidates(media, candidates, audio_path, game_context, progress):
-    """Transcreve + pontua cada candidato, aperta o in/out e ordena por viralizacao.
+def _prepare_candidates(candidates, audio_path, game_context, *, score_virality, progress):
+    """Transcreve cada candidato (p/ legenda) e, se pedido, pontua viralizacao.
 
-    Retorna [(candidate_possivelmente_refinado, HookResult|None)], ja ordenado
-    (maior nota primeiro; sem nota por ultimo). Erro de LLM/whisper vira nota None.
+    Retorna [(cand_possivelmente_refinado, HookResult|None, words|None)]. Se houver
+    score, ordena por viralizacao (sem nota por ultimo). Erro nao derruba: vira
+    (cand, None, None).
     """
+    import sys
+
     from medusacut.hooks import base as hooks
     from medusacut.transcribe import whisper
 
     total = len(candidates)
-    scored: list[tuple[Candidate, object | None]] = []
+    out: list[tuple[Candidate, object | None, list | None]] = []
     for i, cand in enumerate(candidates, start=1):
         _report(progress, (i - 1) / total if total else 1.0, f"Transcrevendo e avaliando {i}/{total}…")
+        words = None
+        hook = None
         try:
             words = whisper.transcribe_segment(audio_path, cand.start, cand.end)
-            text = whisper.transcript_text(words)
-            result = hooks.score_candidate(cand, text, game_context)
-            if result.refined_start is not None and result.refined_end is not None:
-                cand = Candidate(result.refined_start, result.refined_end, cand.score)
-            scored.append((cand, result))
-        except Exception as exc:  # LLM/whisper/rede: nao derruba o pipeline
-            import sys
+            if score_virality:
+                text = whisper.transcript_text(words)
+                hook = hooks.score_candidate(cand, text, game_context)
+                if hook.refined_start is not None and hook.refined_end is not None:
+                    cand = Candidate(hook.refined_start, hook.refined_end, cand.score)
+        except Exception as exc:  # whisper/LLM/rede: nao derruba o pipeline
+            print(f"[medusacut] corte {i} sem transcricao/score: {exc}", file=sys.stderr)
+        out.append((cand, hook, words))
 
-            print(f"[medusacut] sem score de viralizacao no corte {i}: {exc}", file=sys.stderr)
-            scored.append((cand, None))
+    if score_virality:
+        out.sort(key=lambda t: t[1].virality_score if t[1] is not None else -1.0, reverse=True)
+    return out
 
-    scored.sort(
-        key=lambda t: t[1].virality_score if t[1] is not None else -1.0, reverse=True
-    )
-    return scored
+
+def _burn_captions(out_path, words, cand, cache_dir):
+    """Queima a legenda karaoke no clipe ja renderizado (substitui no lugar)."""
+    import os as _os
+    import sys
+
+    from medusacut.caption import karaoke
+
+    try:
+        in_range = [w for w in words if w.end > cand.start and w.start < cand.end]
+        cap_dir = _os.path.join(cache_dir, _os.path.splitext(_os.path.basename(out_path))[0] + "_cap")
+        states = karaoke.render_caption_images(
+            in_range, clip_start=cand.start, clip_dur=cand.end - cand.start, out_dir=cap_dir
+        )
+        if not states:
+            return
+        tmp = out_path + ".cap.mp4"
+        karaoke.burn(out_path, states, tmp)
+        _os.replace(tmp, out_path)
+    except Exception as exc:  # legenda nao deve derrubar o corte ja renderizado
+        print(f"[medusacut] sem legenda em {_os.path.basename(out_path)}: {exc}", file=sys.stderr)
 
 
 def _resolve_layout(layout: str, facecam_corner: str | None) -> str:
