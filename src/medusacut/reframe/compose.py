@@ -34,6 +34,7 @@ def render_facecam_layout(
     dynamic: bool = True,
     facecam_box: tuple[float, float, float, float] | None = None,
     facecam_h: int = FACECAM_H,
+    cuts: list[float] | None = None,
 ) -> str:
     """Rosto em cima + gameplay dinamico embaixo + blur.
 
@@ -51,7 +52,7 @@ def render_facecam_layout(
     panel = os.path.join(cache_dir, f"{base}.panel.mp4")
     plan = layouts.build_plan(
         media, candidate, dynamic=dynamic, facecam_corner=facecam_corner,
-        target_w=TARGET_W, target_h=game_h,
+        target_w=TARGET_W, target_h=game_h, cuts=cuts,
     )
     from medusacut.render import ffmpeg as render
 

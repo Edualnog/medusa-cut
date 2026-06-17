@@ -73,10 +73,12 @@ def action_path(
                 if rect is not None:
                     _mask_rect(diff, rect)
                 col = diff.sum(axis=0)
+                col = np.maximum(col - col.mean(), 0.0)  # gate: so movimento acima da media
                 total = float(col.sum())
                 if total > 1e-6:
                     xs = np.arange(col.shape[0], dtype=np.float32)
                     cx = float((xs * col).sum() / total) / col.shape[0]
+                    cx = 0.8 * cx + 0.2 * 0.5  # leve vies pro centro (menos tremido)
                 else:
                     cx = 0.5
                 samples.append(((f - start_f) / src_fps, cx))

@@ -12,11 +12,11 @@ def _track(scores: list[float], hop: float = 1.0, name: str = "t") -> ScoreTrack
 
 
 def test_picks_top_peaks_non_overlapping_within_bounds():
-    scores = [0.0] * 200
-    scores[20] = 5.0
-    scores[100] = 4.0
-    scores[180] = 3.0
-    cands = select_candidates([_track(scores)], max_clips=3, duration=200.0)
+    scores = [0.0] * 600
+    scores[60] = 5.0
+    scores[300] = 4.0
+    scores[540] = 3.0
+    cands = select_candidates([_track(scores)], max_clips=3, duration=600.0)
 
     assert len(cands) == 3
     assert [round(c.score) for c in cands] == [5, 4, 3]  # ordenado por score
@@ -28,12 +28,12 @@ def test_picks_top_peaks_non_overlapping_within_bounds():
 
 
 def test_plateau_yields_longer_clip_than_spike():
-    # plateau de acao sustentada (10..40) + um pico isolado e mais alto longe.
-    scores = [0.0] * 120
-    for i in range(10, 41):
+    # plateau de acao sustentada (>min_len) + um pico isolado e mais alto longe.
+    scores = [0.0] * 300
+    for i in range(10, 101):  # 90s de acao sustentada
         scores[i] = 3.0
-    scores[90] = 5.0  # pico isolado, score maior -> escolhido primeiro
-    cands = select_candidates([_track(scores)], max_clips=2, duration=120.0)
+    scores[200] = 5.0  # pico isolado, score maior -> escolhido primeiro
+    cands = select_candidates([_track(scores)], max_clips=2, duration=300.0)
 
     assert len(cands) == 2
     by_score = {round(c.score): c for c in cands}
@@ -47,10 +47,10 @@ def test_plateau_yields_longer_clip_than_spike():
 def test_sustained_region_expands_well_beyond_min():
     # uma regiao sustentada longa deve virar um corte bem maior que o min_len,
     # e nao colapsar no minimo (regressao do bug "tudo sai curto").
-    scores = [0.0] * 120
-    for i in range(40, 65):  # 25 janelas de 1s acima do limiar
+    scores = [0.0] * 200
+    for i in range(40, 145):  # 105 janelas de 1s acima do limiar
         scores[i] = 2.0
-    cands = select_candidates([_track(scores)], max_clips=1, duration=120.0)
+    cands = select_candidates([_track(scores)], max_clips=1, duration=200.0)
     assert len(cands) == 1
     assert cands[0].duration > MIN_LEN + 3.0  # claramente acima do minimo
     assert cands[0].duration <= MAX_LEN + 1e-6

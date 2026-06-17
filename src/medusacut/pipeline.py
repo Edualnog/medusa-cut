@@ -132,6 +132,13 @@ def render_candidates(
     cache_dir = os.path.join(out_dir, ".cache")
     layout_name = _resolve_layout(layout, facecam_corner)
 
+    # Cortes de cena (uma vez): o enquadramento dinamico salta neles em vez de varrer.
+    cuts = None
+    if layout_name in ("dynamic_gameplay", "facecam_top_gameplay_bottom"):
+        from medusacut.signals import scene
+
+        cuts = scene.detect_cuts(media.path)
+
     keep = final_count or len(candidates)
     # 3+6. transcrever (p/ legenda e/ou score) + analise viral 2 etapas -> re-rank.
     if (score_virality or captions) and audio_path:
@@ -153,7 +160,7 @@ def render_candidates(
         file_name = f"clip_{i:02d}.mp4"
         out_path = os.path.join(out_dir, file_name)
         _render_layout(media, cand, layout_name, facecam_corner, out_path, cache_dir,
-                       facecam_box=facecam_box, facecam_h=facecam_h)
+                       facecam_box=facecam_box, facecam_h=facecam_h, cuts=cuts)
         if captions and words:
             _burn_captions(out_path, words, cand, cache_dir, caption_y)
         clips.append(
@@ -237,7 +244,8 @@ def _prepare_candidates(
         hook = None
         try:
             kf_dir = os.path.join(cache_dir, f"kf_{int(cand.start * 1000)}")
-            imgs = frames.extract_keyframes(media.path, cand.start, cand.end, n=KEYFRAMES, out_dir=kf_dir)
+            n_kf = max(KEYFRAMES, min(8, round((cand.end - cand.start) / 25)))
+            imgs = frames.extract_keyframes(media.path, cand.start, cand.end, n=n_kf, out_dir=kf_dir)
             hook = hooks.judge_candidate(cand, text, imgs, game_context)
             if hook.usage is not None:
                 usage_total = hook.usage if usage_total is None else usage_total + hook.usage
@@ -312,6 +320,7 @@ def _render_layout(
     *,
     facecam_box: tuple[float, float, float, float] | None = None,
     facecam_h: int = 640,
+    cuts: list[float] | None = None,
 ) -> None:
     """Despacha o render conforme o layout resolvido."""
     from medusacut.reframe import compose, layouts
@@ -321,13 +330,13 @@ def _render_layout(
         compose.render_facecam_layout(
             media, candidate, facecam_corner=facecam_corner,
             out_path=out_path, cache_dir=cache_dir, dynamic=True,
-            facecam_box=facecam_box, facecam_h=facecam_h,
+            facecam_box=facecam_box, facecam_h=facecam_h, cuts=cuts,
         )
     elif layout_name == "gameplay_blur":
         compose.render_blur_fit(media, candidate, out_path=out_path)
     else:
         dynamic = layout_name != "gameplay_only"
-        plan = layouts.build_plan(media, candidate, dynamic=dynamic, facecam_corner=facecam_corner)
+        plan = layouts.build_plan(media, candidate, dynamic=dynamic, facecam_corner=facecam_corner, cuts=cuts)
         render.render_clip(media, candidate, plan, out_path, cache_dir=cache_dir)
 
 

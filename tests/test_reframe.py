@@ -45,6 +45,18 @@ def test_centers_to_keyframes_clamps_inside_frame():
         assert 0.0 <= x <= 700.0
 
 
+def test_centers_to_keyframes_resets_on_scene_cut():
+    # movimento salta de esquerda (0.0) pra direita (1.0) num corte de cena.
+    samples = [(0.0, 0.0), (1.0, 0.0), (2.0, 1.0), (3.0, 1.0)]
+    no_cut = dict((round(t), x) for t, x in centers_to_keyframes(samples, 1000, 300, alpha=0.25))
+    with_cut = dict(
+        (round(t), x) for t, x in centers_to_keyframes(samples, 1000, 300, alpha=0.25, cuts=[2.0])
+    )
+    # sem corte: EMA deixa o ponto pos-salto atrasado; com corte: salta de vez
+    assert with_cut[2] > no_cut[2]
+    assert with_cut[2] == 700.0  # snap total (preso na borda)
+
+
 def test_centers_to_keyframes_empty_falls_back_to_center():
     kf = centers_to_keyframes([], width=1000, crop_w=300)
     assert kf == [(0.0, 350.0)]

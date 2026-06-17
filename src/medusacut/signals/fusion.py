@@ -15,9 +15,9 @@ from __future__ import annotations
 
 from medusacut.types import Candidate, ScoreTrack
 
-# Limites e formato do corte (segundos). TikTok: 9:16, cortes curtos.
-MIN_LEN = 14.0
-MAX_LEN = 60.0
+# Limites e formato do corte (segundos). Pedido do dono: cortes longos 60s–3min.
+MIN_LEN = 60.0
+MAX_LEN = 180.0
 # Fracao do pico ate onde a janela cresce ("ainda tem acao aqui?").
 SUSTAIN_FRAC = 0.15
 # Tolera vales curtos abaixo do limiar sem encerrar a janela (segundos).

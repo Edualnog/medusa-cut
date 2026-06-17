@@ -66,19 +66,37 @@ def centers_to_keyframes(
     width: int,
     crop_w: int,
     alpha: float = SMOOTH_ALPHA,
+    cuts: list[float] | None = None,
 ) -> list[tuple[float, float]]:
     """Converte centros normalizados (0..1) em x de crop em pixels, suavizado e
-    preso pra a janela 9:16 nao sair do frame."""
+    preso pra a janela 9:16 nao sair do frame.
+
+    `cuts` sao tempos (relativos ao corte) de troca de cena: a suavizacao REINICIA
+    em cada um, entao o enquadramento salta pra a nova cena em vez de varrer por
+    cima do corte."""
     if not samples:
         return [(0.0, float((width - crop_w) // 2))]
-    times = [t for t, _ in samples]
-    smoothed = smooth_centers([c for _, c in samples], alpha)
+    cut_list = sorted(cuts or [])
     max_x = max(0, width - crop_w)
     keyframes: list[tuple[float, float]] = []
-    for t, c in zip(times, smoothed):
-        x = c * width - crop_w / 2.0
-        x = min(max(x, 0.0), float(max_x))
-        keyframes.append((t, round(x, 1)))
+
+    def flush(seg: list[tuple[float, float]]) -> None:
+        smoothed = smooth_centers([c for _, c in seg], alpha)
+        for (t, _), cs in zip(seg, smoothed):
+            x = min(max(cs * width - crop_w / 2.0, 0.0), float(max_x))
+            keyframes.append((t, round(x, 1)))
+
+    seg: list[tuple[float, float]] = []
+    ci = 0
+    for t, c in samples:
+        while ci < len(cut_list) and t >= cut_list[ci]:
+            if seg:
+                flush(seg)
+                seg = []
+            ci += 1
+        seg.append((t, c))
+    if seg:
+        flush(seg)
     return keyframes
 
 
@@ -90,8 +108,12 @@ def build_plan(
     facecam_corner: str | None = None,
     target_w: int = TARGET_W,
     target_h: int = TARGET_H,
+    cuts: list[float] | None = None,
 ) -> ReframePlan:
-    """Monta o plano de recorte de um corte (dinamico por padrao)."""
+    """Monta o plano de recorte de um corte (dinamico por padrao).
+
+    `cuts` sao tempos absolutos de troca de cena no video; o que cair dentro do
+    corte faz o enquadramento saltar (ver centers_to_keyframes)."""
     cw, ch = crop_dims(media.width, media.height, target_w, target_h)
     center_x = float((media.width - cw) // 2)
 
@@ -101,7 +123,8 @@ def build_plan(
     from medusacut.reframe import saliency
 
     samples = saliency.action_path(media, candidate, facecam_corner=facecam_corner)
-    keyframes = centers_to_keyframes(samples, media.width, cw)
+    rel_cuts = [c - candidate.start for c in (cuts or []) if candidate.start < c < candidate.end]
+    keyframes = centers_to_keyframes(samples, media.width, cw, cuts=rel_cuts)
     if keyframes and keyframes[0][0] > 0.0:
         keyframes.insert(0, (0.0, keyframes[0][1]))  # garante comando em t=0
     return ReframePlan(cw, ch, target_w, target_h, keyframes, "dynamic_gameplay")

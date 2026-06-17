@@ -72,8 +72,8 @@ with st.sidebar:
         help="Ajuda o LLM a calibrar o gancho e a nota.",
     )
     with st.expander("Avancado"):
-        min_len = st.slider("Duracao minima (s)", 5, 30, int(fusion.MIN_LEN))
-        max_len = st.slider("Duracao maxima (s)", 30, 90, int(fusion.MAX_LEN))
+        min_len = st.slider("Duracao minima (s)", 30, 150, int(fusion.MIN_LEN), 5)
+        max_len = st.slider("Duracao maxima (s)", 60, 180, int(fusion.MAX_LEN), 5)
         st.divider()
         _LAYOUTS = {
             "Gameplay (segue a acao)": "dynamic_gameplay",
