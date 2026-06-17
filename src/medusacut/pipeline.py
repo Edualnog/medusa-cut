@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import os
 
-from medusacut.types import Clip
+from medusacut.types import Candidate, Clip, Media
 
 # Duracao fixa de cada corte no Marco 1 (segundos).
 DEFAULT_CLIP_LEN = 30.0
@@ -25,6 +25,7 @@ def generate_clips(
     max_clips: int = 10,
     layout: str = "facecam_top_gameplay_bottom",
     game_context: str = "",
+    clip_len: float = DEFAULT_CLIP_LEN,
 ) -> list[Clip]:
     """
     Fluxo (Marco 1 implementado; demais passos marcados):
@@ -38,15 +39,13 @@ def generate_clips(
       8. render (ffmpeg) [+ legenda karaoke no M2]
       9. escrever clipes em out_dir/ + manifest.json
 
-    Cada etapa atras de interface — trocar implementacao sem mexer aqui.
+    `clip_len` (keyword opcional) deixa o painel local ajustar a duracao sem
+    mudar a assinatura documentada. Cada etapa atras de interface.
     """
-    from medusacut.ingest import youtube
     from medusacut import preprocess
-    from medusacut.reframe.layouts import get_layout
-    from medusacut.render import ffmpeg as render
+    from medusacut.ingest import youtube
     from medusacut.signals import audio_energy, fusion
 
-    os.makedirs(out_dir, exist_ok=True)
     cache_dir = os.path.join(out_dir, ".cache")
 
     # 1-2. baixar + extrair audio
@@ -58,11 +57,31 @@ def generate_clips(
     candidates = fusion.select_candidates(
         [audio_track],
         max_clips=max_clips,
-        clip_len=DEFAULT_CLIP_LEN,
+        clip_len=clip_len,
         duration=media.duration,
     )
 
-    # 7-8. render de cada candidato com o layout escolhido
+    # 7-9. render + manifest
+    return render_candidates(media, candidates, out_dir=out_dir, layout=layout, url=url)
+
+
+def render_candidates(
+    media: Media,
+    candidates: list[Candidate],
+    *,
+    out_dir: str,
+    layout: str,
+    url: str,
+) -> list[Clip]:
+    """Renderiza candidatos ja escolhidos e escreve o manifest.
+
+    Separado de `generate_clips` de proposito: o painel local reusa o download e
+    a analise (em cache) e so re-renderiza ao mexer nos parametros.
+    """
+    from medusacut.reframe.layouts import get_layout
+    from medusacut.render import ffmpeg as render
+
+    os.makedirs(out_dir, exist_ok=True)
     layout_impl = get_layout(layout)
     video_filter = layout_impl.video_filter(media)
 
@@ -81,7 +100,6 @@ def generate_clips(
             )
         )
 
-    # 9. manifest
     _write_manifest(out_dir, url=url, layout=layout_impl.name, clips=clips)
     return clips
 

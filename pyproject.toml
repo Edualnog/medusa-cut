@@ -11,6 +11,7 @@ dependencies = [
     "scenedetect==0.7",       # troca de cena (sinal de gameplay) (M4)
     "numpy==2.4.6",
     "openai==2.42.0",         # ganchos via LLM (M3; troque conforme provedor)
+    "streamlit==1.58.0",      # painel LOCAL (localhost) — ver ui/app.py
 ]
 
 [project.optional-dependencies]
