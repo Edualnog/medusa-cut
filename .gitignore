@@ -1,0 +1,14 @@
+out/
+.env
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+# arquivos de video/audio nunca entram no git
+*.mp4
+*.mkv
+*.webm
+*.wav
+*.m4a
+.DS_Store
+.claude/settings.local.json
