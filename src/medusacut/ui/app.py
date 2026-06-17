@@ -59,6 +59,23 @@ with st.sidebar:
     with st.expander("Avancado"):
         min_len = st.slider("Duracao minima (s)", 5, 30, int(fusion.MIN_LEN))
         max_len = st.slider("Duracao maxima (s)", 30, 90, int(fusion.MAX_LEN))
+        st.divider()
+        dynamic_reframe = st.checkbox(
+            "Enquadramento dinamico (segue a acao)", value=True,
+            help="O recorte 9:16 acompanha a acao no corte, em vez de centro fixo.",
+        )
+        _FACECAM = {
+            "Nenhum / varia": None,
+            "Topo esquerda": "tl",
+            "Topo direita": "tr",
+            "Baixo esquerda": "bl",
+            "Baixo direita": "br",
+        }
+        facecam_label = st.selectbox(
+            "Facecam (webcam do streamer)", list(_FACECAM), index=0,
+            help="Mascara esse canto pra o enquadramento focar no jogo, nao no streamer.",
+        )
+        facecam_corner = _FACECAM[facecam_label]
 
     gerar = st.button("Gerar cortes", type="primary", disabled=not url.strip())
 
@@ -90,8 +107,9 @@ if gerar:
             ss.media,
             candidates,
             out_dir=out_dir,
-            layout="gameplay_only",
+            layout="dynamic_gameplay" if dynamic_reframe else "gameplay_only",
             url=clean_url,
+            facecam_corner=facecam_corner,
             progress=lambda f, label: report(0.68 + 0.32 * f, label),
         )
         report(1.0, "Pronto")

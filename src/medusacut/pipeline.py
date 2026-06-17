@@ -28,6 +28,7 @@ def generate_clips(
     max_clips: int = 10,
     layout: str = "facecam_top_gameplay_bottom",
     game_context: str = "",
+    facecam_corner: str | None = None,
     progress: Progress | None = None,
 ) -> list[Clip]:
     """
@@ -67,13 +68,14 @@ def generate_clips(
         [audio_track], max_clips=max_clips, duration=media.duration
     )
 
-    # 7-9. render + manifest (0.68 -> 1.00)
+    # 7-9. reframe + render + manifest (0.68 -> 1.00)
     return render_candidates(
         media,
         candidates,
         out_dir=out_dir,
         layout=layout,
         url=url,
+        facecam_corner=facecam_corner,
         progress=_band(progress, 0.68, 1.0),
     )
 
@@ -85,28 +87,34 @@ def render_candidates(
     out_dir: str,
     layout: str,
     url: str,
+    facecam_corner: str | None = None,
     progress: Progress | None = None,
 ) -> list[Clip]:
-    """Renderiza candidatos ja escolhidos e escreve o manifest.
+    """Reframe (segue a acao) + render de cada candidato + manifest.
 
     Separado de `generate_clips` de proposito: o painel local reusa o download e
     a analise (em cache) e so re-renderiza ao mexer nos parametros. `progress`
-    reporta 0..1 ao longo dos renders.
+    reporta 0..1 ao longo do processo. `layout='gameplay_only'` faz crop central
+    estatico; qualquer outro valor usa o enquadramento dinamico (segue a acao).
     """
-    from medusacut.reframe.layouts import get_layout
+    from medusacut.reframe import layouts
     from medusacut.render import ffmpeg as render
 
     os.makedirs(out_dir, exist_ok=True)
-    layout_impl = get_layout(layout)
-    video_filter = layout_impl.video_filter(media)
+    cache_dir = os.path.join(out_dir, ".cache")
+    dynamic = layout != "gameplay_only"
+    layout_name = "dynamic_gameplay" if dynamic else "gameplay_only"
 
     total = len(candidates)
     clips: list[Clip] = []
     for i, cand in enumerate(candidates, start=1):
-        _report(progress, (i - 1) / total if total else 1.0, f"Renderizando corte {i}/{total}…")
+        _report(progress, (i - 1) / total if total else 1.0, f"Enquadrando e renderizando {i}/{total}…")
+        plan = layouts.build_plan(
+            media, cand, dynamic=dynamic, facecam_corner=facecam_corner
+        )
         file_name = f"clip_{i:02d}.mp4"
         out_path = os.path.join(out_dir, file_name)
-        render.render_clip(media, cand, video_filter, out_path)
+        render.render_clip(media, cand, plan, out_path, cache_dir=cache_dir)
         clips.append(
             Clip(
                 index=i,
@@ -117,7 +125,7 @@ def render_candidates(
             )
         )
 
-    _write_manifest(out_dir, url=url, layout=layout_impl.name, clips=clips)
+    _write_manifest(out_dir, url=url, layout=layout_name, clips=clips)
     _report(progress, 1.0, "Pronto")
     return clips
 
