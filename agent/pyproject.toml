@@ -28,6 +28,7 @@ ui = ["streamlit==1.58.0"]
 [project.scripts]
 medusacut = "medusacut.cli:app"
 medusacut-worker = "medusacut.worker.run:main"
+medusacut-local = "medusacut.local:run"  # app desktop: roda local, progresso em JSON
 
 [build-system]
 requires = ["hatchling"]

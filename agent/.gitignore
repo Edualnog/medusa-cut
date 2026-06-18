@@ -1,0 +1,6 @@
+
+# build do app desktop
+.buildvenv/
+dist/
+build/
+*.spec
