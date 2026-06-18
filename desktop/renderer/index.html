@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" />
+<title>Zorothax</title>
+<style>
+  :root { --bg:#0a0a0d; --fg:#fff; --muted:#9aa0a6; --dim:#6b7177; --accent:#ffd11a; --soft:#ffffff22; --soft2:#ffffff3d; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Courier New",monospace; }
+  .wrap { max-width:760px; margin:0 auto; padding:28px 24px 60px; }
+  h1 { font-size:20px; letter-spacing:2px; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:13px; margin:0 0 22px; }
+  .card { border:2px solid var(--soft); background:#0c0c10; padding:18px; margin-bottom:16px; }
+  .tabs { display:flex; gap:4px; margin-bottom:0; }
+  .tab { font-size:12px; letter-spacing:1px; padding:9px 16px; background:transparent; color:var(--dim); border:2px solid var(--soft); border-bottom:none; cursor:pointer; }
+  .tab.active { color:var(--accent); border-color:var(--soft2); }
+  .bar { display:flex; align-items:stretch; }
+  .src { flex:1; display:flex; align-items:center; gap:10px; border:2px solid var(--fg); border-right:none; background:#0a0a0d; padding:14px 16px; min-width:0; cursor:pointer; }
+  .src input { flex:1; min-width:0; border:none; outline:none; background:transparent; color:var(--fg); font-family:inherit; font-size:16px; }
+  .src .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15px; }
+  .src .name.ph { color:var(--dim); }
+  .gen { font-size:14px; letter-spacing:1px; padding:0 26px; background:var(--accent); color:#000; border:2px solid var(--accent); cursor:pointer; font-family:inherit; font-weight:bold; white-space:nowrap; }
+  .gen:disabled { background:#14151a; color:var(--dim); border-color:var(--soft); cursor:default; }
+  .opts { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end; margin-top:16px; }
+  .opt { display:flex; flex-direction:column; gap:6px; }
+  .opt span { font-size:11px; letter-spacing:1px; color:var(--muted); }
+  select, input[type=range] { background:#0a0a0d; color:var(--fg); border:2px solid var(--soft2); padding:7px 9px; font-family:inherit; font-size:14px; }
+  .check { flex-direction:row; align-items:center; gap:8px; }
+  .check input { width:18px; height:18px; accent-color:var(--accent); }
+  label.key { display:block; }
+  label.key span { font-size:11px; letter-spacing:1px; color:var(--muted); }
+  label.key input { width:100%; margin-top:6px; background:#0a0a0d; color:var(--fg); border:2px solid var(--soft2); padding:10px; font-family:inherit; font-size:14px; }
+  .hint { font-size:13px; color:var(--dim); margin:10px 0 0; }
+  .prog { display:none; }
+  .prog.show { display:block; }
+  .progtop { display:flex; justify-content:space-between; font-size:12px; letter-spacing:1px; color:var(--accent); margin-bottom:8px; }
+  .track { height:18px; border:2px solid var(--fg); background:#0a0a0d; }
+  .fill { height:100%; background:var(--accent); width:0%; transition:width .2s ease; }
+  .stage { color:var(--muted); font-size:14px; margin-top:8px; }
+  .msg { font-size:14px; padding:12px; border:2px solid var(--soft2); margin-top:8px; }
+  .msg.err { border-color:#ff6b6b; color:#ff8a8a; }
+  .clip { border:2px solid var(--soft); padding:12px; margin-top:10px; }
+  .clip .hook { font-size:14px; }
+  .clip .meta { color:var(--dim); font-size:12px; margin-top:4px; }
+  .row { display:flex; gap:10px; margin-top:12px; align-items:center; }
+  .btn2 { font-size:13px; letter-spacing:1px; padding:10px 16px; background:#0a0a0d; color:var(--fg); border:2px solid var(--soft2); cursor:pointer; font-family:inherit; }
+  .btn2:hover { background:var(--accent); color:#000; border-color:var(--accent); }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ZOROTHAX</h1>
+  <p class="sub">Cortes virais de gameplay — rodando no seu PC, com a sua chave.</p>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" data-mode="file">ESCOLHER ARQUIVO</button>
+      <button class="tab" data-mode="link">COLAR LINK</button>
+    </div>
+    <div class="bar">
+      <div class="src" id="srcFile">
+        <span class="name ph" id="fileName">Escolha o vídeo do seu gameplay…</span>
+      </div>
+      <div class="src hidden" id="srcLink">
+        <input id="linkInput" type="text" placeholder="Cole o link do YouTube, Drive ou .mp4…" />
+      </div>
+      <button class="gen" id="gen" disabled>✦ GERAR</button>
+    </div>
+
+    <div class="opts">
+      <label class="opt"><span>LAYOUT</span>
+        <select id="layout">
+          <option value="facecam_top_gameplay_bottom">Facecam em cima + gameplay</option>
+          <option value="dynamic_gameplay">Gameplay (segue a ação)</option>
+          <option value="gameplay_blur">Tela cheia + fundo desfocado</option>
+        </select>
+      </label>
+      <label class="opt"><span>DURAÇÃO</span>
+        <select id="dur">
+          <option value="15,90">Auto (15–90s)</option>
+          <option value="10,40">Curtos (10–40s)</option>
+          <option value="60,180">Longos (60–180s)</option>
+        </select>
+      </label>
+      <label class="opt"><span>FACECAM</span>
+        <select id="facecam">
+          <option value="auto">Auto (rosto)</option>
+          <option value="tr">Topo direita</option>
+          <option value="tl">Topo esquerda</option>
+          <option value="br">Baixo direita</option>
+          <option value="bl">Baixo esquerda</option>
+        </select>
+      </label>
+      <label class="opt"><span>Nº DE CORTES: <b id="clipsN">3</b></span>
+        <input id="clips" type="range" min="1" max="10" value="3" />
+      </label>
+      <label class="opt check"><input id="captions" type="checkbox" checked /><span>Legenda karaokê</span></label>
+    </div>
+    <p class="hint">ⓘ Processa local (rápido). YouTube funciona aqui — é o seu IP residencial.</p>
+  </div>
+
+  <div class="card">
+    <label class="key"><span>CHAVE DA OPENROUTER (fica só no seu PC)</span>
+      <input id="key" type="password" placeholder="sk-or-..." />
+    </label>
+  </div>
+
+  <div class="card prog" id="prog">
+    <div class="progtop"><span id="pstate">PROCESSANDO</span><span id="ppct">0%</span></div>
+    <div class="track"><div class="fill" id="pfill"></div></div>
+    <div class="stage" id="pstage">…</div>
+    <div id="result"></div>
+  </div>
+</div>
+
+<script>
+  let mode = "file";
+  let filePath = null;
+
+  const $ = (id) => document.getElementById(id);
+  function refreshGen() {
+    const ok = mode === "file" ? !!filePath : $("linkInput").value.trim().length > 6;
+    $("gen").disabled = ok ? false : true;
+  }
+
+  document.querySelectorAll(".tab").forEach((t) => t.onclick = () => {
+    document.querySelectorAll(".tab").forEach((x) => x.classList.remove("active"));
+    t.classList.add("active");
+    mode = t.dataset.mode;
+    $("srcFile").classList.toggle("hidden", mode !== "file");
+    $("srcLink").classList.toggle("hidden", mode !== "link");
+    refreshGen();
+  });
+
+  $("srcFile").onclick = async () => {
+    const p = await window.api.pickFile();
+    if (p) { filePath = p; $("fileName").textContent = p.split("/").pop(); $("fileName").classList.remove("ph"); }
+    refreshGen();
+  };
+  $("linkInput").oninput = refreshGen;
+  $("clips").oninput = (e) => ($("clipsN").textContent = e.target.value);
+
+  // chave persistida
+  window.api.getKey().then((k) => { if (k) $("key").value = k; });
+  $("key").onchange = () => window.api.setKey($("key").value.trim());
+
+  $("gen").onclick = () => {
+    const key = $("key").value.trim();
+    if (!key) { showError("Cole a sua chave da OpenRouter primeiro."); return; }
+    window.api.setKey(key);
+    const [minLen, maxLen] = $("dur").value.split(",").map(Number);
+    const source = mode === "file" ? filePath : $("linkInput").value.trim();
+    startUI();
+    window.api.generate({
+      source, key,
+      clips: Number($("clips").value),
+      minLen, maxLen,
+      layout: $("layout").value,
+      facecam: $("facecam").value,
+      captions: $("captions").checked,
+    });
+  };
+
+  function startUI() {
+    $("prog").classList.add("show");
+    $("gen").disabled = true;
+    $("pstate").textContent = "PROCESSANDO";
+    $("result").innerHTML = "";
+    setProg(2, "Iniciando…");
+  }
+  function setProg(pct, stage) {
+    $("pfill").style.width = pct + "%";
+    $("ppct").textContent = Math.round(pct) + "%";
+    if (stage) $("pstage").textContent = stage;
+  }
+  function showError(text) {
+    $("prog").classList.add("show");
+    $("pstate").textContent = "ERRO";
+    $("result").innerHTML = '<div class="msg err">⚠ ' + text + "</div>";
+    $("gen").disabled = false;
+    refreshGen();
+  }
+
+  window.api.onProgress((m) => setProg(Math.max(2, m.frac * 100), m.stage));
+  window.api.onError((m) => showError(m.message + (m.detail ? " — " + m.detail : "")));
+  window.api.onDone((m) => {
+    setProg(100, "Pronto!");
+    $("pstate").textContent = "PRONTO";
+    let html = "";
+    (m.clips || []).forEach((c) => {
+      const dur = Math.round(c.duration_s || 0);
+      const score = c.virality_score != null ? "★ " + Math.round(c.virality_score) + " · " : "";
+      html += '<div class="clip"><div class="hook">' + (c.hook || c.file) +
+        '</div><div class="meta">' + score + dur + "s · " + c.file + "</div></div>";
+    });
+    html += '<div class="row"><button class="btn2" id="openOut">ABRIR PASTA DOS CORTES</button></div>';
+    $("result").innerHTML = html;
+    document.getElementById("openOut").onclick = () => window.api.openFolder(m.out);
+    $("gen").disabled = false;
+    refreshGen();
+  });
+</script>
+</body>
+</html>

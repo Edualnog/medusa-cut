@@ -1,0 +1,37 @@
+{
+  "name": "zorothax-desktop",
+  "version": "0.1.0",
+  "description": "Zorothax — cortes virais de gameplay, rodando no seu PC",
+  "main": "main.js",
+  "author": "Zorothax",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.zorothax.app",
+    "productName": "Zorothax",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**"
+    ],
+    "extraResources": [
+      {
+        "from": "engine",
+        "to": "engine"
+      }
+    ],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.video"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
