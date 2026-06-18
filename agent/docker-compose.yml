@@ -11,8 +11,9 @@ services:
     restart: unless-stopped
     volumes:
       - whisper-cache:/cache/huggingface
-      # arquivo de cookies vive na VPS (fora do git/imagem), montado read-only
-      - /opt/zorothax/cookies:/cookies:ro
+      # cookies vivem na VPS (fora do git/imagem). Read-WRITE de proposito: o yt-dlp
+      # reescreve o arquivo com os cookies rotacionados, prolongando a sessao.
+      - /opt/zorothax/cookies:/cookies
 
 volumes:
   whisper-cache:
