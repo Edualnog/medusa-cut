@@ -17,9 +17,9 @@ const body = VT323({
 });
 
 export const metadata: Metadata = {
-  title: "Medusa Clip — clips de games perfeitos",
+  title: "Medusa Clip — cortes de gameplay no seu PC",
   description:
-    "Transforme vídeos de games em clips verticais 9:16 com IA. Ganchos, legendas e enquadramento automático.",
+    "Transforme gameplays em clips verticais 9:16 com IA, legenda e enquadramento automático, processando tudo localmente.",
 };
 
 export default function RootLayout({
