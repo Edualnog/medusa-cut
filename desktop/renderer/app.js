@@ -1,182 +1,351 @@
-// UI do app (externo — CSP nao permite inline).
+// Interface do app desktop. Toda integracao nativa passa pela ponte segura do preload.
 const $ = (id) => document.getElementById(id);
+
+const VIEW_META = {
+  inicio: { title: "INÍCIO", code: "01" },
+  biblioteca: { title: "BIBLIOTECA", code: "02" },
+  apis: { title: "CHAVES API", code: "03" },
+};
+
+const LAYOUT_LABELS = {
+  facecam_top_gameplay_bottom: "FACECAM + GAMEPLAY",
+  dynamic_gameplay: "SEGUE A AÇÃO",
+  gameplay_blur: "FUNDO DESFOCADO",
+};
+
+const DURATION_LABELS = {
+  "15,90": "AUTO · 15–90S",
+  "10,40": "CURTOS · 10–40S",
+  "60,180": "LONGOS · 60–180S",
+};
+
 let mode = "file";
 let filePath = null;
+let isProcessing = false;
+let lastWarning = "";
+let libraryClips = [];
 
-// ---------- navegacao (sidebar) ----------
-document.querySelectorAll(".nav").forEach((b) => {
-  b.onclick = () => {
-    document.querySelectorAll(".nav").forEach((x) => x.classList.remove("active"));
-    b.classList.add("active");
-    const v = b.dataset.view;
-    ["inicio", "biblioteca", "apis"].forEach((id) =>
-      $("view-" + id).classList.toggle("hidden", id !== v),
-    );
-    if (v === "biblioteca") loadLibrary();
-    if (v === "apis") { loadStats(); if ($("key").value.trim()) checkKey(); }
-  };
-});
+function setView(view) {
+  document.querySelectorAll(".nav").forEach((button) => {
+    button.classList.toggle("active", button.dataset.view === view);
+  });
+  Object.keys(VIEW_META).forEach((id) => {
+    $("view-" + id).classList.toggle("hidden", id !== view);
+  });
 
-// ---------- abas (arquivo / link) ----------
-function refreshGen() {
-  const ok = mode === "file" ? !!filePath : $("linkInput").value.trim().length > 6;
-  $("gen").disabled = !ok;
-}
-document.querySelectorAll(".tab").forEach((t) => {
-  t.onclick = () => {
-    document.querySelectorAll(".tab").forEach((x) => x.classList.remove("active"));
-    t.classList.add("active");
-    mode = t.dataset.mode;
-    $("srcFile").classList.toggle("hidden", mode !== "file");
-    $("srcLink").classList.toggle("hidden", mode !== "link");
-    refreshGen();
-  };
-});
-$("srcFile").onclick = async () => {
-  const p = await window.api.pickFile();
-  if (p) {
-    filePath = p;
-    $("fileName").textContent = p.split("/").pop();
-    $("fileName").classList.remove("ph");
+  $("topSectionTitle").textContent = VIEW_META[view].title;
+  $("topSectionCode").textContent = VIEW_META[view].code;
+
+  if (view === "biblioteca") loadLibrary();
+  if (view === "apis") {
+    loadStats();
+    if ($("key").value.trim()) checkKey();
   }
-  refreshGen();
-};
-$("linkInput").oninput = refreshGen;
-$("clips").oninput = (e) => ($("clipsN").textContent = e.target.value);
+}
 
-// ---------- chave + custo ----------
-window.api.getKey().then((k) => { if (k) $("key").value = k; });
+document.querySelectorAll(".nav").forEach((button) => {
+  button.addEventListener("click", () => setView(button.dataset.view));
+});
+
+function setMode(nextMode) {
+  mode = nextMode;
+  document.querySelectorAll(".tab").forEach((tab) => {
+    const active = tab.dataset.mode === mode;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-selected", String(active));
+  });
+  $("srcFile").classList.toggle("hidden", mode !== "file");
+  $("srcLink").classList.toggle("hidden", mode !== "link");
+  updateSummary();
+}
+
+document.querySelectorAll(".tab").forEach((tab) => {
+  tab.addEventListener("click", () => setMode(tab.dataset.mode));
+});
+
+$("srcFile").addEventListener("click", async () => {
+  const path = await window.api.pickFile();
+  if (!path) return;
+  filePath = path;
+  $("fileName").textContent = path.split(/[\\/]/).pop();
+  $("fileName").classList.remove("placeholder");
+  updateSummary();
+});
+
+$("linkInput").addEventListener("input", updateSummary);
+$("layout").addEventListener("change", updateSummary);
+$("dur").addEventListener("change", updateSummary);
+$("facecam").addEventListener("change", updateSummary);
+$("captions").addEventListener("change", updateSummary);
+$("clips").addEventListener("input", updateSummary);
+
+function sourceReady() {
+  return mode === "file" ? Boolean(filePath) : $("linkInput").value.trim().length > 6;
+}
+
+function updateSummary() {
+  const clips = Number($("clips").value);
+  const selectedLayout = $("layout").value;
+  const facecamLayout = selectedLayout === "facecam_top_gameplay_bottom";
+
+  $("clipsN").textContent = `${clips} ${clips === 1 ? "CLIP" : "CLIPS"}`;
+  $("summarySource").textContent = sourceReady()
+    ? (mode === "file" ? $("fileName").textContent : "LINK PÚBLICO")
+    : "NÃO SELECIONADA";
+  $("summaryLayout").textContent = LAYOUT_LABELS[selectedLayout] || "PERSONALIZADO";
+  $("summaryDuration").textContent = DURATION_LABELS[$("dur").value] || "PERSONALIZADA";
+  $("summaryClips").textContent = `${clips} ${clips === 1 ? "CLIP" : "CLIPS"}`;
+  $("summaryCaptions").textContent = $("captions").checked ? "ATIVADAS" : "DESATIVADAS";
+  $("facecamField").classList.toggle("hidden", !facecamLayout);
+  $("facecam").disabled = !facecamLayout;
+  $("gen").disabled = !sourceReady() || isProcessing;
+}
+
+window.api.getKey().then((key) => {
+  if (!key) return;
+  $("key").value = key;
+  $("keyHelper").textContent = "Chave OpenRouter salva neste computador.";
+  $("keyHelper").classList.add("ready");
+});
+
+$("toggleKey").addEventListener("click", () => {
+  const showing = $("key").type === "text";
+  $("key").type = showing ? "password" : "text";
+  $("toggleKey").textContent = showing ? "MOSTRAR" : "OCULTAR";
+});
+
+function setKeyStatus(text, state = "") {
+  $("keyStatus").textContent = text;
+  $("keyStatus").className = `key-status${state ? " " + state : ""}`;
+}
 
 async function checkKey() {
   const key = $("key").value.trim();
-  const el = $("keyStatus");
-  if (!key) { el.textContent = ""; return; }
-  el.style.color = "var(--muted)";
-  el.textContent = "Verificando…";
-  const r = await window.api.validateKey(key);
-  if (r.valid) {
-    el.style.color = "var(--accent)";
-    let extra = "";
-    if (r.limitRemaining != null) extra = " · resta $" + Number(r.limitRemaining).toFixed(2);
-    else if (r.usage != null) extra = " · usado $" + Number(r.usage).toFixed(4);
-    el.textContent = "✓ Chave válida" + (r.freeTier ? " (free tier)" : "") + extra;
-  } else {
-    el.style.color = "#ff8a8a";
-    el.textContent = "✗ " + (r.error || "Chave inválida.");
+  if (!key) {
+    setKeyStatus("COLE SUA CHAVE PARA CONTINUAR", "invalid");
+    return false;
   }
+
+  setKeyStatus("VERIFICANDO NA OPENROUTER…", "loading");
+  const result = await window.api.validateKey(key);
+  if (!result.valid) {
+    setKeyStatus(result.error || "CHAVE INVÁLIDA", "invalid");
+    return false;
+  }
+
+  let extra = "";
+  if (result.limitRemaining != null) extra = ` · RESTA $${Number(result.limitRemaining).toFixed(2)}`;
+  else if (result.usage != null) extra = ` · USADO $${Number(result.usage).toFixed(4)}`;
+  setKeyStatus(`CHAVE VÁLIDA${result.freeTier ? " · FREE TIER" : ""}${extra}`, "valid");
+  $("keyHelper").textContent = "Chave OpenRouter verificada e pronta.";
+  $("keyHelper").classList.add("ready");
+  return true;
 }
-$("saveKey").onclick = async () => {
-  await window.api.setKey($("key").value.trim());
-  await checkKey();
-};
+
+$("saveKey").addEventListener("click", async () => {
+  const key = $("key").value.trim();
+  $("saveKey").disabled = true;
+  $("saveKey").textContent = "VERIFICANDO…";
+  const valid = await checkKey();
+  if (valid) await window.api.setKey(key);
+  $("saveKey").disabled = false;
+  $("saveKey").textContent = "SALVAR E VERIFICAR";
+});
 
 async function loadStats() {
-  const s = await window.api.getStats();
-  $("costTotal").textContent = "$" + Number(s.totalCost || 0).toFixed(4);
-  $("costTokens").textContent = Number(s.totalTokens || 0).toLocaleString("pt-BR");
+  const stats = await window.api.getStats();
+  $("costTotal").textContent = "$" + Number(stats.totalCost || 0).toFixed(4);
+  $("costTokens").textContent = Number(stats.totalTokens || 0).toLocaleString("pt-BR");
 }
 
-// ---------- gerar ----------
-$("gen").onclick = () => {
+$("gen").addEventListener("click", async () => {
   const key = $("key").value.trim();
   if (!key) {
-    showError('Cole a sua chave da OpenRouter na aba "CHAVES API" primeiro.');
+    setView("apis");
+    setKeyStatus("CONECTE SUA CHAVE ANTES DE GERAR", "invalid");
+    $("key").focus();
     return;
   }
-  window.api.setKey(key);
+
   const [minLen, maxLen] = $("dur").value.split(",").map(Number);
   const source = mode === "file" ? filePath : $("linkInput").value.trim();
+  await window.api.setKey(key);
   startUI();
   window.api.generate({
-    source, key,
+    source,
+    key,
     clips: Number($("clips").value),
-    minLen, maxLen,
+    minLen,
+    maxLen,
     layout: $("layout").value,
     facecam: $("facecam").value,
     captions: $("captions").checked,
   });
-};
-
-let lastWarning = "";
-function startUI() {
-  lastWarning = "";
-  $("prog").classList.add("show");
-  $("gen").disabled = true;
-  $("pstate").textContent = "PROCESSANDO";
-  $("result").innerHTML = "";
-  setProg(2, "Iniciando…");
-}
-function setProg(pct, stage) {
-  $("pfill").style.width = pct + "%";
-  $("ppct").textContent = Math.round(pct) + "%";
-  if (stage) $("pstage").textContent = stage;
-}
-function showError(text) {
-  $("prog").classList.add("show");
-  $("pstate").textContent = "ERRO";
-  $("result").innerHTML = '<div class="msg err">⚠ ' + text + "</div>";
-  $("gen").disabled = false;
-  refreshGen();
-}
-
-window.api.onProgress((m) => setProg(Math.max(2, m.frac * 100), m.stage));
-window.api.onWarning((m) => (lastWarning = m.message));
-window.api.onError((m) => showError(m.message + (m.detail ? " — " + m.detail : "")));
-window.api.onDone((m) => {
-  setProg(100, "Pronto!");
-  $("pstate").textContent = "PRONTO";
-  let html = "";
-  if (lastWarning) html += '<div class="msg warn">⚠ ' + lastWarning + "</div>";
-  const cost = m.cost || {};
-  const cl = (m.clips || []).length;
-  html += '<p class="hint" style="margin-top:12px">' + cl + " corte(s) salvos · custo desta geração: $" +
-    Number(cost.cost_usd || 0).toFixed(4) + " · " + Number(cost.total_tokens || 0).toLocaleString("pt-BR") +
-    " tokens.</p>";
-  html += '<div class="row"><button class="btn2" id="goLib">VER NA BIBLIOTECA</button>' +
-    '<button class="btn2" id="openOut">ABRIR PASTA</button></div>';
-  $("result").innerHTML = html;
-  if (m.totals) {
-    $("costTotal").textContent = "$" + Number(m.totals.totalCost || 0).toFixed(4);
-    $("costTokens").textContent = Number(m.totals.totalTokens || 0).toLocaleString("pt-BR");
-  }
-  $("openOut").onclick = () => window.api.openFolder(m.out);
-  $("goLib").onclick = () => document.querySelector('.nav[data-view="biblioteca"]').click();
-  $("gen").disabled = false;
-  refreshGen();
 });
 
-// ---------- biblioteca ----------
-async function loadLibrary() {
-  const clips = await window.api.listClips();
-  const lib = $("lib");
-  if (!clips.length) {
-    lib.innerHTML = '<div class="empty">Nenhum corte ainda — gere o primeiro na aba INÍCIO.</div>';
-    return;
-  }
-  lib.innerHTML = '<div class="grid">' + clips.map(clipCard).join("") + "</div>";
-  // preview no hover
-  lib.querySelectorAll("video").forEach((v) => {
-    const wrap = v.closest(".clip-wrap");
-    wrap.onmouseenter = () => { if (v.paused && v.muted) v.play().catch(() => {}); };
-    wrap.onmouseleave = () => { if (v.muted) { v.pause(); try { v.currentTime = 0.4; } catch {} } };
-  });
-}
-function clipCard(c) {
-  const score = c.virality_score != null
-    ? '<span class="clip-viral">★ ' + Math.round(c.virality_score) + "</span>" : "";
-  const dur = c.duration_s != null ? '<span class="clip-dur">' + Math.round(c.duration_s) + "s</span>" : "";
-  const hook = (c.hook || "").trim()
-    ? '<div class="clip-hook">' + escapeHtml(c.hook) + "</div>"
-    : '<div class="clip-hook dim">' + escapeHtml(c.file) + "</div>";
-  return (
-    '<div class="clip box"><div class="clip-wrap">' +
-    '<video src="' + c.url + '#t=0.4" muted loop playsinline controls preload="metadata"></video>' +
-    '<div class="clip-badges">' + score + dur + "</div></div>" + hook + "</div>"
-  );
-}
-function escapeHtml(s) {
-  return s.replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+function startUI() {
+  lastWarning = "";
+  isProcessing = true;
+  $("appStatus").textContent = "PROCESSANDO";
+  $("prog").classList.add("show");
+  $("prog").classList.remove("error");
+  $("pstate").textContent = "PROCESSANDO";
+  $("result").replaceChildren();
+  setProg(2, "Iniciando o motor local…");
+  updateSummary();
 }
 
-$("refresh").onclick = loadLibrary;
-$("openLib").onclick = () => window.api.openFolder(null);
+function finishProcessing(status = "PRONTO") {
+  isProcessing = false;
+  $("appStatus").textContent = status;
+  updateSummary();
+}
+
+function setProg(percent, stage) {
+  $("pfill").style.width = Math.min(100, Math.max(0, percent)) + "%";
+  $("ppct").textContent = Math.round(percent) + "%";
+  if (stage) $("pstage").textContent = stage;
+}
+
+function resultMessage(text, type = "") {
+  const message = document.createElement("div");
+  message.className = `result-message${type ? " " + type : ""}`;
+  message.textContent = text;
+  $("result").append(message);
+  return message;
+}
+
+function showError(text) {
+  $("prog").classList.add("show", "error");
+  $("pstate").textContent = "ERRO";
+  $("result").replaceChildren();
+  resultMessage(text, "error");
+  finishProcessing("ERRO");
+}
+
+window.api.onProgress((message) => setProg(Math.max(2, message.frac * 100), message.stage));
+window.api.onWarning((message) => { lastWarning = message.message; });
+window.api.onError((message) => showError(message.message + (message.detail ? " — " + message.detail : "")));
+window.api.onDone((message) => {
+  setProg(100, "Clips prontos e salvos no computador.");
+  $("pstate").textContent = "CONCLUÍDO";
+  $("result").replaceChildren();
+  if (lastWarning) resultMessage(lastWarning, "warning");
+
+  const cost = message.cost || {};
+  const clipCount = (message.clips || []).length;
+  resultMessage(
+    `${clipCount} ${clipCount === 1 ? "clip salvo" : "clips salvos"} · $${Number(cost.cost_usd || 0).toFixed(4)} · ${Number(cost.total_tokens || 0).toLocaleString("pt-BR")} tokens.`,
+  );
+
+  const actions = document.createElement("div");
+  actions.className = "result-actions";
+  const libraryButton = document.createElement("button");
+  libraryButton.className = "primary-button";
+  libraryButton.textContent = "VER BIBLIOTECA";
+  libraryButton.addEventListener("click", () => setView("biblioteca"));
+  const folderButton = document.createElement("button");
+  folderButton.className = "secondary-button";
+  folderButton.textContent = "ABRIR PASTA";
+  folderButton.addEventListener("click", () => window.api.openFolder(message.out));
+  actions.append(libraryButton, folderButton);
+  $("result").append(actions);
+
+  if (message.totals) {
+    $("costTotal").textContent = "$" + Number(message.totals.totalCost || 0).toFixed(4);
+    $("costTokens").textContent = Number(message.totals.totalTokens || 0).toLocaleString("pt-BR");
+  }
+  finishProcessing("PRONTO");
+});
+
+async function loadLibrary() {
+  libraryClips = await window.api.listClips();
+  $("libCount").textContent = `${libraryClips.length} ${libraryClips.length === 1 ? "ARQUIVO" : "ARQUIVOS"}`;
+
+  if (!libraryClips.length) {
+    $("lib").innerHTML = `
+      <div class="empty-state">
+        <div>
+          <span>BIBLIOTECA VAZIA</span>
+          <h3>SEUS CLIPS APARECEM AQUI.</h3>
+          <p>Volte ao Início, selecione um gameplay e gere o primeiro projeto local.</p>
+        </div>
+      </div>`;
+    return;
+  }
+
+  $("lib").innerHTML = `<div class="clip-grid">${libraryClips.map(clipCard).join("")}</div>`;
+  $("lib").querySelectorAll("video").forEach((video) => {
+    const wrap = video.closest(".clip-wrap");
+    wrap.addEventListener("mouseenter", () => {
+      if (video.paused && video.muted) video.play().catch(() => {});
+    });
+    wrap.addEventListener("mouseleave", () => {
+      if (!video.muted) return;
+      video.pause();
+      try { video.currentTime = 0.4; } catch { /* arquivo ainda carregando */ }
+    });
+  });
+}
+
+function clipCard(clip, index) {
+  const score = clip.virality_score != null
+    ? `<span class="clip-viral">SCORE ${Math.round(clip.virality_score)}</span>`
+    : "";
+  const duration = clip.duration_s != null
+    ? `<span class="clip-duration">${Math.round(clip.duration_s)}S</span>`
+    : "";
+  const title = (clip.hook || "").trim() || clip.file;
+  const description = (clip.description || "").trim();
+
+  return `
+    <article class="clip-card">
+      <div class="clip-wrap">
+        <video src="${escapeAttr(clip.url)}#t=0.4" muted loop playsinline controls preload="metadata"></video>
+        <div class="clip-badges">${score}${duration}</div>
+      </div>
+      <div class="clip-body">
+        <div class="clip-hook">${escapeHtml(title)}</div>
+        ${description ? `<p class="clip-description">${escapeHtml(description)}</p>` : ""}
+        <div class="clip-actions">
+          <button type="button" data-action="open" data-index="${index}">ABRIR</button>
+          <button type="button" data-action="copy" data-index="${index}" ${description ? "" : "disabled"}>COPIAR TEXTO</button>
+        </div>
+      </div>
+    </article>`;
+}
+
+$("lib").addEventListener("click", async (event) => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+  const clip = libraryClips[Number(button.dataset.index)];
+  if (!clip) return;
+
+  if (button.dataset.action === "open") {
+    await window.api.openFolder(clip.path);
+  } else if (button.dataset.action === "copy" && clip.description) {
+    await navigator.clipboard.writeText(clip.description);
+    button.textContent = "COPIADO";
+    setTimeout(() => { button.textContent = "COPIAR TEXTO"; }, 1400);
+  }
+});
+
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  })[char]);
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+$("refresh").addEventListener("click", loadLibrary);
+$("openLib").addEventListener("click", () => window.api.openFolder(null));
+
+updateSummary();
+loadStats();

@@ -47,9 +47,10 @@ protocol.registerSchemesAsPrivileged([
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 1080,
-    height: 820,
-    minWidth: 900,
+    width: 1280,
+    height: 860,
+    minWidth: 960,
+    minHeight: 700,
     backgroundColor: "#060608",
     title: "Medusa Clip",
     webPreferences: {

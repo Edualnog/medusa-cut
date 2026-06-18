@@ -1,220 +1,270 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self' zclip:;" />
-<title>Medusa Clip</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-<style>
-  :root {
-    --bg:#060608; --fg:#fff; --muted:#9aa0a6; --dim:#6b7177; --accent:#ffd11a;
-    --soft:#ffffff22; --soft2:#ffffff3d;
-    --pixel:"Press Start 2P", monospace; --body:"VT323","Courier New",monospace;
-  }
-  * { box-sizing:border-box; }
-  html, body { height:100%; }
-  body {
-    margin:0; color:var(--fg); font-family:var(--body); font-size:20px; background-color:var(--bg);
-    background-image:
-      radial-gradient(1px 1px at 20px 30px,#ffffff22 50%,transparent 50%),
-      radial-gradient(1px 1px at 120px 90px,#ffffff1a 50%,transparent 50%),
-      radial-gradient(1px 1px at 200px 160px,#ffffff22 50%,transparent 50%),
-      radial-gradient(2px 2px at 300px 60px,#ffffff14 50%,transparent 50%),
-      radial-gradient(1px 1px at 80px 220px,#ffffff1c 50%,transparent 50%);
-    background-repeat:repeat; background-size:360px 280px; image-rendering:pixelated;
-  }
-  ::selection { background:#fff; color:#000; }
-
-  .shell { display:grid; grid-template-columns:108px 1fr; height:100vh; }
-  .side { border-right:2px solid var(--soft); background:#08080b; display:flex; flex-direction:column; align-items:center; gap:14px; padding:18px 8px; }
-  .logo { width:46px; height:46px; image-rendering:auto; }
-  .nav { display:flex; flex-direction:column; align-items:center; gap:5px; width:100%; padding:9px 2px; border:2px solid transparent; background:none; color:var(--dim); cursor:pointer; font-family:var(--pixel); font-size:7px; letter-spacing:.5px; line-height:1.4; }
-  .nav svg { width:22px; height:22px; }
-  .nav:hover { color:#fff; border-color:#ffffff22; }
-  .nav.active { color:#000; background:var(--accent); border-color:var(--accent); }
-
-  .main { overflow:auto; padding:34px 48px 70px; }
-  .inner { max-width:920px; margin:0 auto; }
-  h2 { font-family:var(--pixel); font-size:15px; letter-spacing:2px; margin:0 0 4px; }
-  .sub { color:var(--muted); font-size:19px; margin:0 0 22px; }
-
-  .box {
-    position:relative; border:2px solid var(--soft); background:#0a0a0d; padding:20px; margin-bottom:16px;
-    clip-path: polygon(0 8px,8px 8px,8px 0,calc(100% - 8px) 0,calc(100% - 8px) 8px,100% 8px,100% calc(100% - 8px),calc(100% - 8px) calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,8px calc(100% - 8px),0 calc(100% - 8px));
-  }
-
-  .tabs { display:flex; gap:4px; }
-  .tab { font-family:var(--pixel); font-size:10px; letter-spacing:1px; padding:10px 16px; background:transparent; color:var(--dim); border:2px solid var(--soft); border-bottom:none; cursor:pointer; }
-  .tab:hover { color:#fff; }
-  .tab.active { color:var(--accent); border-color:var(--soft2); }
-
-  .bar { display:flex; align-items:stretch; margin-top:2px; }
-  .src { flex:1; display:flex; align-items:center; gap:10px; border:2px solid var(--fg); border-right:none; background:#0a0a0d; padding:15px 18px; min-width:0; cursor:pointer; transition:border-color .1s ease; }
-  .src input { flex:1; min-width:0; border:none; outline:none; background:transparent; color:var(--fg); font-family:var(--body); font-size:22px; }
-  .src .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:22px; }
-  .src .name.ph { color:var(--dim); }
-  .bar:focus-within .src { border-color:var(--accent); }
-  .gen { font-family:var(--pixel); font-size:14px; letter-spacing:1px; padding:0 28px; background:var(--accent); color:#000; border:2px solid var(--accent); cursor:pointer; white-space:nowrap; }
-  .gen:hover:not(:disabled) { background:#000; color:var(--accent); }
-  .gen:disabled { background:#14151a; color:var(--dim); border-color:var(--soft); cursor:default; }
-
-  .opts { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end; margin-top:18px; }
-  .opt { display:flex; flex-direction:column; gap:8px; }
-  .opt > span { font-family:var(--pixel); font-size:10px; letter-spacing:1px; color:var(--muted); }
-  select, input[type=range] { background:#0a0a0d; color:var(--fg); border:2px solid var(--soft2); padding:8px 10px; font-family:var(--body); font-size:19px; min-width:170px; transition:border-color .1s ease; }
-  select:hover, select:focus { outline:none; border-color:var(--accent); }
-  input[type=range] { padding:0; accent-color:var(--accent); min-width:160px; }
-  .check { flex-direction:row; align-items:center; gap:10px; }
-  .check input { width:20px; height:20px; accent-color:var(--accent); }
-  .check span { font-family:var(--pixel); font-size:11px; }
-  .hint { font-family:var(--body); font-size:18px; color:var(--dim); margin:14px 0 0; }
-
-  .key-card label span { font-family:var(--pixel); font-size:10px; letter-spacing:1px; color:var(--muted); }
-  .key-card input { width:100%; margin-top:10px; background:#0a0a0d; color:var(--fg); border:2px solid var(--soft2); padding:12px; font-family:var(--body); font-size:20px; transition:border-color .1s ease; }
-  .key-card input:focus { outline:none; border-color:var(--accent); }
-  .saved { font-family:var(--body); font-size:17px; color:var(--accent); margin-top:10px; min-height:20px; }
-
-  .prog { display:none; }
-  .prog.show { display:block; }
-  .progtop { display:flex; justify-content:space-between; font-family:var(--pixel); font-size:12px; letter-spacing:1px; color:var(--accent); margin-bottom:10px; }
-  .track { height:18px; border:2px solid var(--fg); background:#0a0a0d; }
-  .fill { height:100%; background:var(--accent); width:0%; transition:width .2s ease; }
-  .stage { color:var(--muted); font-size:19px; margin-top:10px; }
-  .msg { font-family:var(--body); font-size:18px; padding:12px; border:2px solid var(--soft2); margin-top:10px; }
-  .msg.err { border-color:#ff6b6b; color:#ff8a8a; }
-  .msg.warn { border-color:var(--accent); color:var(--accent); }
-
-  .libhead { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
-  .clip { padding:10px; }
-  .clip-wrap { position:relative; width:100%; aspect-ratio:9/16; background:#000; border:2px solid var(--soft2); overflow:hidden; }
-  .clip-wrap video { width:100%; height:100%; object-fit:cover; display:block; }
-  .clip-badges { position:absolute; top:0; left:0; right:0; display:flex; gap:6px; padding:8px; pointer-events:none; }
-  .clip-viral { display:inline-flex; align-items:center; gap:4px; font-family:var(--pixel); font-size:10px; color:#000; background:#fff; padding:3px 7px; }
-  .clip-dur { margin-left:auto; font-family:var(--pixel); font-size:10px; color:#fff; background:#000000b0; border:1px solid #ffffff44; padding:3px 7px; }
-  .clip-hook { font-family:var(--pixel); font-size:10px; line-height:1.6; margin-top:10px; min-height:30px; }
-  .clip-hook.dim { color:var(--dim); }
-  .empty { border:2px dashed var(--soft2); padding:40px; text-align:center; color:var(--muted); font-size:19px; }
-  .btn2 { font-family:var(--pixel); font-size:11px; letter-spacing:1px; padding:11px 16px; background:#0a0a0d; color:var(--fg); border:2px solid var(--soft2); cursor:pointer; }
-  .btn2:hover { background:var(--accent); color:#000; border-color:var(--accent); }
-  .row { display:flex; gap:10px; margin-top:14px; }
-  .hidden { display:none; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; media-src 'self' zclip: blob:;"
+  />
+  <title>Medusa Clip</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div class="shell">
-  <aside class="side">
-    <img class="logo" src="logo.png" alt="Medusa Clip" />
-    <button class="nav active" data-view="inicio">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg>
-      INÍCIO
-    </button>
-    <button class="nav" data-view="biblioteca">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="7"/><rect x="13" y="4" width="8" height="7"/><rect x="3" y="14" width="8" height="6"/><rect x="13" y="14" width="8" height="6"/></svg>
-      BIBLIOTECA
-    </button>
-    <button class="nav" data-view="apis">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="4"/><path d="M11 11l8 8M16 16l2-2M18 18l2-2"/></svg>
-      CHAVES API
-    </button>
-  </aside>
-
-  <main class="main">
-    <div class="inner">
-
-      <section id="view-inicio">
-        <h2>INICIO</h2>
-        <p class="sub">Cortes virais — rodando no seu PC, com a sua chave.</p>
-        <div class="box">
-          <div class="tabs">
-            <button class="tab active" data-mode="file">ESCOLHER ARQUIVO</button>
-            <button class="tab" data-mode="link">COLAR LINK</button>
-          </div>
-          <div class="bar">
-            <div class="src" id="srcFile"><span class="name ph" id="fileName">Escolha o vídeo do seu gameplay…</span></div>
-            <div class="src hidden" id="srcLink"><input id="linkInput" type="text" placeholder="Cole o link do YouTube, Drive ou .mp4…" /></div>
-            <button class="gen" id="gen" disabled>✦ GERAR</button>
-          </div>
-          <div class="opts">
-            <label class="opt"><span>LAYOUT</span>
-              <select id="layout">
-                <option value="facecam_top_gameplay_bottom">Facecam em cima + gameplay</option>
-                <option value="dynamic_gameplay">Gameplay (segue a ação)</option>
-                <option value="gameplay_blur">Tela cheia + fundo desfocado</option>
-              </select>
-            </label>
-            <label class="opt"><span>DURAÇÃO</span>
-              <select id="dur">
-                <option value="15,90">Auto (15–90s)</option>
-                <option value="10,40">Curtos (10–40s)</option>
-                <option value="60,180">Longos (60–180s)</option>
-              </select>
-            </label>
-            <label class="opt"><span>FACECAM</span>
-              <select id="facecam">
-                <option value="auto">Auto (rosto)</option>
-                <option value="tr">Topo direita</option>
-                <option value="tl">Topo esquerda</option>
-                <option value="br">Baixo direita</option>
-                <option value="bl">Baixo esquerda</option>
-              </select>
-            </label>
-            <label class="opt"><span>Nº DE CORTES: <b id="clipsN">3</b></span>
-              <input id="clips" type="range" min="1" max="10" value="3" />
-            </label>
-            <label class="opt check"><input id="captions" type="checkbox" checked /><span>Legenda karaokê</span></label>
-          </div>
-          <p class="hint">ⓘ Processa local (rápido). YouTube funciona aqui — é o seu IP residencial.</p>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <img class="logo" src="logo.png" alt="" />
+        <div>
+          <strong>MEDUSA</strong>
+          <span>CLIP</span>
         </div>
+      </div>
 
-        <div class="box prog" id="prog">
-          <div class="progtop"><span id="pstate">PROCESSANDO</span><span id="ppct">0%</span></div>
-          <div class="track"><div class="fill" id="pfill"></div></div>
-          <div class="stage" id="pstage">…</div>
-          <div id="result"></div>
+      <div class="local-pill">PROCESSAMENTO LOCAL</div>
+
+      <nav class="side-nav" aria-label="Navegação principal">
+        <button class="nav active" data-view="inicio" type="button">
+          <span class="nav-index">01</span>
+          <span>INÍCIO</span>
+        </button>
+        <button class="nav" data-view="biblioteca" type="button">
+          <span class="nav-index">02</span>
+          <span>BIBLIOTECA</span>
+        </button>
+        <button class="nav" data-view="apis" type="button">
+          <span class="nav-index">03</span>
+          <span>CHAVES API</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <span>MEDUSA CLIP</span>
+        <strong>V0.1.0</strong>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <span class="topbar-kicker">DESKTOP / <b id="topSectionCode">01</b></span>
+          <h1 id="topSectionTitle">INÍCIO</h1>
         </div>
-      </section>
+        <div class="topbar-status">
+          <span>APP LOCAL</span>
+          <strong id="appStatus">PRONTO</strong>
+        </div>
+      </header>
 
-      <section id="view-biblioteca" class="hidden">
-        <div class="libhead">
-          <div><h2>BIBLIOTECA</h2><p class="sub" style="margin:0">Seus cortes — salvos no seu PC.</p></div>
-          <div class="row" style="margin:0">
-            <button class="btn2" id="refresh">ATUALIZAR</button>
-            <button class="btn2" id="openLib">ABRIR PASTA</button>
+      <div class="content">
+        <section id="view-inicio" class="view">
+          <div class="page-intro">
+            <div>
+              <span class="eyebrow">NOVO PROJETO</span>
+              <h2>CRIE SEUS<br /><em>PRÓXIMOS CLIPS.</em></h2>
+            </div>
+            <p>
+              Escolha o gameplay, ajuste o formato e deixe o motor encontrar os
+              melhores momentos sem enviar seu vídeo para uma nuvem.
+            </p>
           </div>
-        </div>
-        <div id="lib"></div>
-      </section>
 
-      <section id="view-apis" class="hidden">
-        <h2>CHAVES API</h2>
-        <p class="sub">Sua chave da OpenRouter — fica só no seu PC, nunca sai daqui.</p>
-        <div class="box key-card">
-          <label><span>CHAVE DA OPENROUTER</span>
-            <input id="key" type="password" placeholder="sk-or-..." />
-          </label>
-          <div class="saved" id="keyStatus"></div>
-          <div class="row"><button class="btn2" id="saveKey">SALVAR E VERIFICAR</button></div>
-        </div>
+          <div class="creation-grid">
+            <section class="panel composer" aria-labelledby="sourceTitle">
+              <div class="panel-head">
+                <div>
+                  <span class="panel-index">01</span>
+                  <h3 id="sourceTitle">FONTE DO GAMEPLAY</h3>
+                </div>
+                <span>ARQUIVO OU LINK</span>
+              </div>
 
-        <div class="box">
-          <div style="font-family:var(--pixel);font-size:11px;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:8px;">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M14.5 9.5c0-1.2-1.1-2-2.5-2s-2.5.8-2.5 2 1.1 1.8 2.5 1.8 2.5.8 2.5 2-1.1 2-2.5 2-2.5-.8-2.5-2"/></svg>
-            CUSTO DE IA · SUA CHAVE
+              <div class="tabs" role="tablist" aria-label="Tipo de fonte">
+                <button class="tab active" data-mode="file" type="button" role="tab" aria-selected="true">
+                  ESCOLHER ARQUIVO
+                </button>
+                <button class="tab" data-mode="link" type="button" role="tab" aria-selected="false">
+                  COLAR LINK
+                </button>
+              </div>
+
+              <button class="source-control" id="srcFile" type="button">
+                <span class="source-label">VÍDEO LOCAL</span>
+                <span class="source-value placeholder" id="fileName">Selecione MP4, MOV, MKV ou WEBM</span>
+                <span class="source-action">PROCURAR</span>
+              </button>
+
+              <label class="source-control hidden" id="srcLink">
+                <span class="source-label">LINK PÚBLICO</span>
+                <input id="linkInput" type="url" placeholder="YouTube, Drive ou arquivo .mp4" />
+                <span class="source-action">COLAR</span>
+              </label>
+
+              <div class="divider-label"><span>CONFIGURAÇÃO DO CLIP</span></div>
+
+              <div class="options-grid">
+                <label class="field field-wide">
+                  <span>LAYOUT</span>
+                  <select id="layout">
+                    <option value="facecam_top_gameplay_bottom">Facecam em cima + gameplay</option>
+                    <option value="dynamic_gameplay">Gameplay segue a ação</option>
+                    <option value="gameplay_blur">Tela cheia + fundo desfocado</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>DURAÇÃO</span>
+                  <select id="dur">
+                    <option value="15,90">Auto · 15–90s</option>
+                    <option value="10,40">Curtos · 10–40s</option>
+                    <option value="60,180">Longos · 60–180s</option>
+                  </select>
+                </label>
+                <label class="field" id="facecamField">
+                  <span>FACECAM</span>
+                  <select id="facecam">
+                    <option value="auto">Detectar automaticamente</option>
+                    <option value="tr">Topo direita</option>
+                    <option value="tl">Topo esquerda</option>
+                    <option value="br">Baixo direita</option>
+                    <option value="bl">Baixo esquerda</option>
+                  </select>
+                </label>
+                <label class="field range-field">
+                  <span>QUANTIDADE <b id="clipsN">3 CLIPS</b></span>
+                  <input id="clips" type="range" min="1" max="10" value="3" />
+                </label>
+                <label class="check-field">
+                  <input id="captions" type="checkbox" checked />
+                  <span>
+                    <strong>LEGENDA KARAOKÊ</strong>
+                    <small>Palavra ativa em destaque</small>
+                  </span>
+                </label>
+              </div>
+
+              <p class="local-note">O ARQUIVO É PROCESSADO E SALVO NESTE COMPUTADOR.</p>
+            </section>
+
+            <aside class="panel summary-panel" aria-labelledby="summaryTitle">
+              <div class="panel-head">
+                <div>
+                  <span class="panel-index">02</span>
+                  <h3 id="summaryTitle">RESUMO</h3>
+                </div>
+                <span>ANTES DE GERAR</span>
+              </div>
+
+              <dl class="summary-list">
+                <div><dt>FONTE</dt><dd id="summarySource">NÃO SELECIONADA</dd></div>
+                <div><dt>LAYOUT</dt><dd id="summaryLayout">FACECAM + GAMEPLAY</dd></div>
+                <div><dt>DURAÇÃO</dt><dd id="summaryDuration">AUTO · 15–90S</dd></div>
+                <div><dt>SAÍDA</dt><dd id="summaryClips">3 CLIPS</dd></div>
+                <div><dt>LEGENDAS</dt><dd id="summaryCaptions">ATIVADAS</dd></div>
+              </dl>
+
+              <button class="generate-button" id="gen" type="button" disabled>
+                GERAR CLIPS
+              </button>
+              <p class="key-helper" id="keyHelper">Conecte sua chave OpenRouter na aba Chaves API.</p>
+            </aside>
           </div>
-          <div style="display:flex;gap:48px;margin-top:18px;">
-            <div><div id="costTotal" style="font-family:var(--pixel);font-size:24px;color:var(--accent);">$0.0000</div><div style="font-family:var(--pixel);font-size:9px;color:var(--dim);margin-top:8px;">TOTAL GASTO</div></div>
-            <div><div id="costTokens" style="font-family:var(--pixel);font-size:24px;">0</div><div style="font-family:var(--pixel);font-size:9px;color:var(--dim);margin-top:8px;">TOKENS</div></div>
-          </div>
-          <p class="hint" style="border-top:1px solid var(--soft);padding-top:14px;">ⓘ Você paga só a IA, direto na sua chave — sem markup nosso.</p>
-        </div>
-      </section>
 
-    </div>
-  </main>
-</div>
-<script src="app.js"></script>
+          <section class="panel progress-panel" id="prog" aria-live="polite">
+            <div class="progress-top">
+              <div>
+                <span id="pstate">PROCESSANDO</span>
+                <strong id="pstage">Iniciando…</strong>
+              </div>
+              <span id="ppct">0%</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="pfill"></div></div>
+            <div id="result"></div>
+          </section>
+        </section>
+
+        <section id="view-biblioteca" class="view hidden">
+          <div class="page-intro page-intro-library">
+            <div>
+              <span class="eyebrow">ARQUIVOS LOCAIS</span>
+              <h2>SUA<br /><em>BIBLIOTECA.</em></h2>
+            </div>
+            <div class="page-actions">
+              <button class="secondary-button" id="refresh" type="button">ATUALIZAR</button>
+              <button class="primary-button" id="openLib" type="button">ABRIR PASTA</button>
+            </div>
+          </div>
+
+          <div class="library-toolbar">
+            <span>CLIPS GERADOS</span>
+            <strong id="libCount">0 ARQUIVOS</strong>
+          </div>
+          <div id="lib"></div>
+        </section>
+
+        <section id="view-apis" class="view hidden">
+          <div class="page-intro">
+            <div>
+              <span class="eyebrow">CONFIGURAÇÃO</span>
+              <h2>SUA CHAVE.<br /><em>SEU CUSTO.</em></h2>
+            </div>
+            <p>
+              A chave fica salva neste dispositivo e é enviada diretamente à
+              OpenRouter para autenticar as chamadas de IA.
+            </p>
+          </div>
+
+          <div class="key-layout">
+            <section class="panel key-panel">
+              <div class="panel-head">
+                <div>
+                  <span class="panel-index">01</span>
+                  <h3>OPENROUTER</h3>
+                </div>
+                <span>CHAVE PESSOAL</span>
+              </div>
+
+              <label class="field key-input-field">
+                <span>API KEY</span>
+                <div class="key-input-row">
+                  <input id="key" type="password" placeholder="sk-or-v1-..." autocomplete="off" />
+                  <button id="toggleKey" type="button">MOSTRAR</button>
+                </div>
+              </label>
+              <div class="key-status" id="keyStatus">NENHUMA CHAVE VERIFICADA</div>
+              <button class="primary-button full-button" id="saveKey" type="button">
+                SALVAR E VERIFICAR
+              </button>
+              <p class="panel-note">A VERIFICAÇÃO NÃO GERA CUSTO NA OPENROUTER.</p>
+            </section>
+
+            <section class="panel cost-panel">
+              <div class="panel-head">
+                <div>
+                  <span class="panel-index">02</span>
+                  <h3>CONSUMO</h3>
+                </div>
+                <span>HISTÓRICO LOCAL</span>
+              </div>
+              <div class="cost-metrics">
+                <div>
+                  <span>TOTAL GASTO</span>
+                  <strong id="costTotal">$0.0000</strong>
+                </div>
+                <div>
+                  <span>TOKENS USADOS</span>
+                  <strong id="costTokens">0</strong>
+                </div>
+              </div>
+              <p class="cost-copy">
+                Você paga os modelos diretamente na sua conta OpenRouter. A Medusa
+                Clip não adiciona margem sobre esse consumo.
+              </p>
+            </section>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="app.js"></script>
 </body>
 </html>
