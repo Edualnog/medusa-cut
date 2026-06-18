@@ -47,9 +47,12 @@ def main() -> int:
             print(f"[worker] job {job['id']} concluido", flush=True)
         except Exception as exc:
             print(f"[worker] job {job['id']} FALHOU: {exc}", file=sys.stderr, flush=True)
-            client.update_job(
-                sb, job["id"], status="error", error=str(exc)[:500], finished_at=_now()
-            )
+            try:
+                client.update_job(
+                    sb, job["id"], status="error", error=str(exc)[:500], finished_at=_now()
+                )
+            except Exception as e2:  # marcar erro nunca pode derrubar o worker
+                print(f"[worker] falha ao marcar erro: {e2}", file=sys.stderr, flush=True)
 
 
 def _process(sb, job) -> None:
@@ -110,15 +113,38 @@ def _process(sb, job) -> None:
                     "start_s": c.start,
                     "end_s": c.end,
                     "duration_s": c.end - c.start,
+                    "description": c.description or None,
                 },
             )
 
+        # 3. custo real (do manifest do motor) -> grava no job
         client.update_job(
-            sb, job_id, status="done", progress=1.0, stage="Pronto", finished_at=_now()
+            sb, job_id, status="done", progress=1.0, stage="Pronto",
+            finished_at=_now(), **_read_cost(workdir),
         )
+        # 4. limite de storage: mantem so os ultimos N clipes do usuario
+        client.enforce_clip_cap(sb, user_id)
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
         os.environ.pop("LLM_API_KEY", None)  # nao deixa a chave vazar pro proximo job
+
+
+def _read_cost(workdir: str) -> dict:
+    """Le o custo (tokens+USD) do manifest do motor pra gravar no job."""
+    import json
+
+    try:
+        with open(os.path.join(workdir, "manifest.json"), encoding="utf-8") as fh:
+            cost = (json.load(fh) or {}).get("cost") or {}
+        out = {
+            "cost_usd": cost.get("cost_usd"),
+            "total_tokens": cost.get("total_tokens"),
+            "triage_model": cost.get("triage_model"),
+            "judge_model": cost.get("judge_model"),
+        }
+        return {k: v for k, v in out.items() if v is not None}
+    except Exception:
+        return {}
 
 
 if __name__ == "__main__":

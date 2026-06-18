@@ -21,7 +21,7 @@ export async function GET() {
 
   const { data: clips } = await admin
     .from("clips")
-    .select("id, job_id, idx, hook, reason, virality_score, duration_s, storage_path, created_at")
+    .select("id, job_id, idx, hook, reason, description, virality_score, duration_s, storage_path, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(60);
@@ -42,6 +42,7 @@ export async function GET() {
     idx: c.idx,
     hook: c.hook,
     reason: c.reason,
+    description: c.description,
     virality_score: c.virality_score,
     duration_s: c.duration_s,
     created_at: c.created_at,
@@ -52,14 +53,28 @@ export async function GET() {
     .from("clips")
     .select("*", { count: "exact", head: true })
     .eq("user_id", user.id);
-  const { count: jobsDone } = await admin
+
+  // custo agregado (soma dos jobs) — o "contador de custos"
+  const { data: jobsCost } = await admin
     .from("jobs")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .eq("status", "done");
+    .select("status, cost_usd, total_tokens")
+    .eq("user_id", user.id);
+  let costUsd = 0;
+  let totalTokens = 0;
+  let jobsDone = 0;
+  for (const j of jobsCost ?? []) {
+    if (j.status === "done") jobsDone += 1;
+    costUsd += j.cost_usd ?? 0;
+    totalTokens += j.total_tokens ?? 0;
+  }
 
   return NextResponse.json({
     clips: out,
-    stats: { clipsTotal: clipsTotal ?? 0, jobsDone: jobsDone ?? 0 },
+    stats: {
+      clipsTotal: clipsTotal ?? 0,
+      jobsDone,
+      costUsd: Math.round(costUsd * 1e6) / 1e6,
+      totalTokens,
+    },
   });
 }

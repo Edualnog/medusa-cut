@@ -197,6 +197,7 @@ def render_candidates(
                 hook=hook.hook if hook else "",
                 reason=hook.reason if hook else "",
                 virality_score=hook.virality_score if hook else None,
+                description=hook.description if hook else "",
             )
         )
 

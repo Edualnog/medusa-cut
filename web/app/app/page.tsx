@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Job = {
   id: string;
@@ -15,34 +15,60 @@ type Clip = {
   id: string;
   idx: number;
   hook: string | null;
+  description: string | null;
   virality_score: number | null;
   duration_s: number;
   url: string | null;
+  created_at: string;
 };
+
+type Stats = { clipsTotal: number; jobsDone: number; costUsd: number; totalTokens: number };
 
 export default function PainelPage() {
   const [url, setUrl] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [clips, setClips] = useState<Clip[]>([]);
-  const [stats, setStats] = useState({ clipsTotal: 0, jobsDone: 0 });
+  // mapa por id: clipes ja carregados NAO sao refetchados (evita o video recarregar)
+  const [clipsById, setClipsById] = useState<Map<string, Clip>>(new Map());
+  const [stats, setStats] = useState<Stats>({ clipsTotal: 0, jobsDone: 0, costUsd: 0, totalTokens: 0 });
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [creating, setCreating] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  const hadActive = useRef(false);
 
-  const load = useCallback(async () => {
-    const [jr, cr] = await Promise.all([fetch("/api/jobs"), fetch("/api/clips")]);
-    if (jr.ok) setJobs((await jr.json()).jobs);
-    if (cr.ok) {
-      const d = await cr.json();
-      setClips(d.clips);
-      setStats(d.stats);
-    }
+  const loadClips = useCallback(async () => {
+    const r = await fetch("/api/clips");
+    if (!r.ok) return;
+    const d = await r.json();
+    setStats(d.stats);
+    setClipsById((prev) => {
+      const next = new Map(prev);
+      let changed = false;
+      for (const c of d.clips as Clip[]) {
+        if (!next.has(c.id)) {
+          next.set(c.id, c);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
   }, []);
 
+  const loadJobs = useCallback(async () => {
+    const r = await fetch("/api/jobs");
+    if (!r.ok) return;
+    const list: Job[] = (await r.json()).jobs;
+    setJobs(list);
+    const active = list.some((j) => j.status === "queued" || j.status === "processing");
+    if (hadActive.current && !active) loadClips(); // um job acabou -> busca clipes novos
+    hadActive.current = active;
+  }, [loadClips]);
+
   useEffect(() => {
-    load();
-    const t = setInterval(load, 4000);
+    loadClips();
+    loadJobs();
+    const t = setInterval(loadJobs, 4000);
     return () => clearInterval(t);
-  }, [load]);
+  }, [loadClips, loadJobs]);
 
   async function gerar(e: React.FormEvent) {
     e.preventDefault();
@@ -55,21 +81,31 @@ export default function PainelPage() {
     });
     const data = await r.json().catch(() => ({}));
     if (r.ok) {
-      setMsg({ kind: "ok", text: "Job criado! Está na fila — o processamento começa já." });
+      setMsg({ kind: "ok", text: "Job criado! Está na fila — começa já." });
       setUrl("");
-      await load();
+      await loadJobs();
     } else {
       setMsg({ kind: "err", text: data.error ?? "Falhou ao criar o job." });
     }
     setCreating(false);
   }
 
+  async function copy(id: string, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(id);
+      setTimeout(() => setCopied((c) => (c === id ? null : c)), 1500);
+    } catch {
+      /* clipboard bloqueado */
+    }
+  }
+
+  const clips = [...clipsById.values()].sort((a, b) => b.created_at.localeCompare(a.created_at));
   const active = jobs.find((j) => j.status === "queued" || j.status === "processing");
   const failed = jobs.find((j) => j.status === "error");
 
   return (
     <div>
-      {/* header */}
       <div className="painel-head">
         <div>
           <h1 className="painel-title">PAINEL DE CLIPS</h1>
@@ -78,7 +114,6 @@ export default function PainelPage() {
         <div className="painel-badge">🎬 {stats.clipsTotal} CLIPS</div>
       </div>
 
-      {/* gerar */}
       <form onSubmit={gerar} className="box gen-box">
         <label className="input">
           <span aria-hidden>🔗</span>
@@ -95,7 +130,6 @@ export default function PainelPage() {
       <p className="gen-hint">ⓘ Suporta YouTube, TikTok e muito mais — processa na nuvem com a sua chave.</p>
       {msg && <p className={msg.kind === "ok" ? "dash-note" : "msg"}>{msg.text}</p>}
 
-      {/* job ativo */}
       {active && (
         <div className="box job-active">
           <div className="job-active-top">
@@ -108,11 +142,8 @@ export default function PainelPage() {
           <div className="job-stage">{active.stage ?? "Aguardando o worker pegar o job…"}</div>
         </div>
       )}
-      {failed && !active && (
-        <div className="box job-failed">⚠ Último job falhou: {failed.error}</div>
-      )}
+      {failed && !active && <div className="box job-failed">⚠ Último job falhou: {failed.error}</div>}
 
-      {/* clips */}
       <div className="painel-section">
         <div className="badge">CLIPS GERADOS ({clips.length})</div>
       </div>
@@ -124,18 +155,21 @@ export default function PainelPage() {
             <div className="clip-card box" key={c.id}>
               <div className="clip-card-top">
                 <span className="clip-num">{String(c.idx).padStart(2, "0")}</span>
+                {c.virality_score != null && <span className="clip-viral">🔥 {Math.round(c.virality_score)}</span>}
                 <span className="clip-dur">{Math.round(c.duration_s)}s</span>
               </div>
               {c.url ? (
-                <video className="clip-video" src={c.url} controls preload="metadata" />
+                <video className="clip-video" src={c.url} controls preload="metadata" playsInline />
               ) : (
                 <div className="clip-video clip-novideo" />
               )}
-              <div className="clip-hook">{c.hook || "Clip"}</div>
-              {c.virality_score != null && (
-                <div className="vbar">
-                  <div className="vbar-fill" style={{ width: `${c.virality_score}%` }} />
-                  <span>🔥 {Math.round(c.virality_score)}</span>
+              {c.hook && <div className="clip-hook">{c.hook}</div>}
+              {c.description && (
+                <div className="clip-desc">
+                  <p>{c.description}</p>
+                  <button className="copy-btn" onClick={() => copy(c.id, c.description!)}>
+                    {copied === c.id ? "COPIADO ✓" : "COPIAR LEGENDA"}
+                  </button>
                 </div>
               )}
               {c.url && (
@@ -148,7 +182,6 @@ export default function PainelPage() {
         </div>
       )}
 
-      {/* stats */}
       <div className="box stats-bar">
         <div className="stat">
           <span className="stat-label">VÍDEOS ANALISADOS</span>
@@ -157,6 +190,11 @@ export default function PainelPage() {
         <div className="stat">
           <span className="stat-label">TOTAL DE CLIPS</span>
           <span className="stat-val">{stats.clipsTotal}</span>
+        </div>
+        <div className="stat">
+          <span className="stat-label">💸 GASTO DE IA (SUA CHAVE)</span>
+          <span className="stat-val">${stats.costUsd.toFixed(4)}</span>
+          <span className="stat-sub">{stats.totalTokens.toLocaleString("pt-BR")} tokens</span>
         </div>
       </div>
     </div>

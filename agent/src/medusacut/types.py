@@ -68,6 +68,7 @@ class Clip:
     hook: str = ""
     reason: str = ""
     virality_score: float | None = None
+    description: str = ""  # legenda/descricao pronta pra postar (TikTok)
 
     def to_manifest_entry(self) -> dict:
         return {
@@ -79,4 +80,5 @@ class Clip:
             "hook": self.hook,
             "reason": self.reason,
             "virality_score": self.virality_score,
+            "description": self.description,
         }

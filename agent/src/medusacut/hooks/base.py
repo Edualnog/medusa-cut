@@ -41,6 +41,7 @@ class HookResult:
     hook: str
     reason: str
     virality_score: float
+    description: str = ""  # legenda pronta pra postar (TikTok), com hashtags
     refined_start: float | None = None
     refined_end: float | None = None
     usage: object | None = None  # llm.Usage da chamada
@@ -56,6 +57,8 @@ def _judge_user(candidate: Candidate, transcript_slice: str, game_context: str) 
         '  "hook": titulo/gancho curto e punchy (max ~60 caracteres),\n'
         '  "reason": 1-2 frases dizendo POR QUE prende (cite o principio de retencao),\n'
         '  "virality_score": inteiro 0-100 calibrado,\n'
+        '  "description": legenda PRONTA PRA POSTAR no TikTok (1-2 frases chamativas '
+        "em PT-BR + 3-5 hashtags relevantes de games no final),\n"
         '  "best_start_s": melhor inicio (segundos absolutos, dentro do trecho),\n'
         '  "best_end_s": melhor fim (segundos absolutos, dentro do trecho).\n'
     )
@@ -71,6 +74,7 @@ def _hook_from_data(data: dict, candidate: Candidate, usage) -> HookResult:
         hook=str(data.get("hook", "")).strip(),
         reason=str(data.get("reason", "")).strip(),
         virality_score=score,
+        description=str(data.get("description", "")).strip(),
         refined_start=rs,
         refined_end=re_,
         usage=usage,

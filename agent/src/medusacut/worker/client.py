@@ -20,7 +20,11 @@ def claim_job(sb):
     data = sb.rpc("claim_job", {}).execute().data
     if not data:
         return None
-    return data[0] if isinstance(data, list) else data
+    job = data[0] if isinstance(data, list) else data
+    # defesa: fila vazia pode vir como linha toda-NULL (ver migration 0003)
+    if not job or not job.get("id"):
+        return None
+    return job
 
 
 def update_job(sb, job_id: str, **fields) -> None:
@@ -44,3 +48,33 @@ def upload_clip(sb, storage_path: str, local_path: str) -> None:
 
 def insert_clip(sb, row: dict) -> None:
     sb.table("clips").insert(row).execute()
+
+
+# Limite de storage: quantos clipes manter por usuario (Supabase Storage e caro
+# pra video; em producao migrar pra Cloudflare R2). Ajustavel por env.
+CLIP_CAP = int(os.environ.get("WORKER_CLIP_CAP", "24"))
+
+
+def enforce_clip_cap(sb, user_id: str, cap: int | None = None) -> None:
+    """Apaga (Storage + banco) os clipes do usuario alem dos `cap` mais recentes."""
+    cap = cap or CLIP_CAP
+    rows = (
+        sb.table("clips")
+        .select("id, storage_path, created_at")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .execute()
+        .data
+        or []
+    )
+    extra = rows[cap:]
+    if not extra:
+        return
+    paths = [r["storage_path"] for r in extra]
+    ids = [r["id"] for r in extra]
+    try:
+        sb.storage.from_("clips").remove(paths)
+    except Exception:
+        pass
+    for i in range(0, len(ids), 50):
+        sb.table("clips").delete().in_("id", ids[i : i + 50]).execute()

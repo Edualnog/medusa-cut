@@ -35,6 +35,11 @@ def download(
         "no_warnings": True,
         "noprogress": True,
         "noplaylist": True,
+        # 403 do YouTube costuma ser intermitente — retries resolvem (robustez de
+        # download normal, nao e burlar bloqueio).
+        "retries": 10,
+        "fragment_retries": 10,
+        "extractor_retries": 3,
     }
     if on_progress is not None:
         ydl_opts["progress_hooks"] = [_make_progress_hook(on_progress)]

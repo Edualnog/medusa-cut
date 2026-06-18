@@ -1146,3 +1146,50 @@ h1.hero .ghost {
   font-family: var(--pixel);
   font-size: 24px;
 }
+
+/* ---------- clip card: viral badge, descricao, copiar ---------- */
+.clip-viral {
+  font-family: var(--pixel);
+  font-size: 10px;
+  color: #ff9a3c;
+  align-self: center;
+  margin-left: auto;
+  margin-right: 10px;
+}
+
+.clip-desc {
+  border: 2px solid #ffffff22;
+  background: #0c0c10;
+  padding: 10px;
+}
+
+.clip-desc p {
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.copy-btn {
+  font-family: var(--pixel);
+  font-size: 9px;
+  letter-spacing: 1px;
+  width: 100%;
+  padding: 8px;
+  background: #14151a;
+  color: var(--fg);
+  border: 2px solid var(--line);
+  cursor: pointer;
+}
+
+.copy-btn:hover {
+  background: #fff;
+  color: #000;
+}
+
+.stat-sub {
+  font-family: var(--body);
+  font-size: 15px;
+  color: var(--dim);
+}
