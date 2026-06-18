@@ -1634,3 +1634,61 @@ h1.hero .ghost {
   align-items: center;
   gap: 6px;
 }
+
+/* ---------- card de custo (diferencial BYO-key) ---------- */
+.cost-card {
+  margin-top: 24px;
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cost-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--pixel);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+
+.cost-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 48px;
+}
+
+.cost-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cost-val {
+  font-family: var(--pixel);
+  font-size: 26px;
+  color: var(--fg);
+  line-height: 1;
+}
+
+.cost-hero .cost-val {
+  color: var(--accent);
+}
+
+.cost-label {
+  font-family: var(--pixel);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--dim);
+}
+
+.cost-note {
+  font-family: var(--body);
+  font-size: 17px;
+  color: var(--muted);
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--soft);
+}

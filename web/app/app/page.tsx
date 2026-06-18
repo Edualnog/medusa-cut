@@ -119,6 +119,7 @@ export default function PainelPage() {
     .slice(0, 6);
   const active = jobs.find((j) => j.status === "queued" || j.status === "processing");
   const failed = jobs.find((j) => j.status === "error");
+  const perClip = stats.clipsTotal > 0 ? stats.costUsd / stats.clipsTotal : 0;
 
   return (
     <div className="painel2">
@@ -126,11 +127,8 @@ export default function PainelPage() {
       <div className="top2">
         <span className="top2-title">INICIO</span>
         <div className="top2-right">
-          <span className="top2-chip" title="Gasto de IA na sua chave OpenRouter">
-            <Icon name="coin" size={15} /> ${stats.costUsd.toFixed(4)}
-          </span>
-          <span className="top2-chip">
-            <Icon name="film" size={15} /> {stats.clipsTotal}
+          <span className="top2-chip" title="Total de clipes gerados">
+            <Icon name="film" size={15} /> {stats.clipsTotal} clipes
           </span>
         </div>
       </div>
@@ -222,21 +220,29 @@ export default function PainelPage() {
         </div>
       )}
 
-      {/* stats */}
-      <div className="box stats-bar">
-        <div className="stat">
-          <span className="stat-label">VIDEOS ANALISADOS</span>
-          <span className="stat-val">{stats.jobsDone}</span>
+      {/* custo de IA — o diferencial: você paga só a IA, na sua chave, sem markup */}
+      <div className="box cost-card">
+        <div className="cost-head">
+          <Icon name="coin" size={14} />
+          <span>CUSTO DE IA · SUA CHAVE OPENROUTER</span>
         </div>
-        <div className="stat">
-          <span className="stat-label">TOTAL DE CLIPS</span>
-          <span className="stat-val">{stats.clipsTotal}</span>
+        <div className="cost-metrics">
+          <div className="cost-metric">
+            <span className="cost-val">${stats.costUsd.toFixed(4)}</span>
+            <span className="cost-label">TOTAL GASTO</span>
+          </div>
+          <div className="cost-metric cost-hero">
+            <span className="cost-val">${perClip.toFixed(4)}</span>
+            <span className="cost-label">MEDIA / CORTE</span>
+          </div>
+          <div className="cost-metric">
+            <span className="cost-val">{stats.totalTokens.toLocaleString("pt-BR")}</span>
+            <span className="cost-label">TOKENS</span>
+          </div>
         </div>
-        <div className="stat">
-          <span className="stat-label"><Icon name="coin" size={12} /> GASTO DE IA</span>
-          <span className="stat-val">${stats.costUsd.toFixed(4)}</span>
-          <span className="stat-sub">{stats.totalTokens.toLocaleString("pt-BR")} tokens</span>
-        </div>
+        <p className="cost-note">
+          ⓘ Você paga só a IA, direto na sua chave — sem markup nosso.
+        </p>
       </div>
     </div>
   );
