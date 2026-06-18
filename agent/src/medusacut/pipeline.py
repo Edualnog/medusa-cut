@@ -60,7 +60,7 @@ def generate_clips(
     """
     from medusacut import preprocess
     from medusacut.ingest import youtube
-    from medusacut.signals import audio_energy, fusion
+    from medusacut.signals import audio_energy, fusion, motion
 
     cache_dir = os.path.join(out_dir, ".cache")
 
@@ -72,16 +72,29 @@ def generate_clips(
     _report(progress, 0.45, "Extraindo audio…")
     wav_path = preprocess.extract_audio(media, cache_dir)
 
-    # 4-5. sinal de audio -> fusao -> candidatos
+    # 4-5. sinais (audio + movimento visual) -> fusao -> candidatos
     _report(progress, 0.55, "Medindo energia…")
     audio_track = audio_energy.analyze(wav_path)
+    tracks = [audio_track]
+    weights = [1.0]
+    # Movimento visual: pega clutch/explosao silenciosos que o audio perde. Opcional —
+    # se o cv2 falhar, segue so com audio (nao derruba o job).
+    try:
+        _report(progress, 0.6, "Medindo acao na tela…")
+        motion_track = motion.analyze(media, audio_track)
+        tracks.append(motion_track)
+        weights.append(0.7)  # audio ainda manda; visual complementa
+    except Exception as exc:  # noqa: BLE001
+        print(f"[medusacut] sinal de movimento indisponivel ({exc}); so audio", file=__import__("sys").stderr)
+
     _report(progress, 0.65, "Selecionando os melhores momentos…")
     # Sobre-seleciona quando vai pontuar: a analise viral escolhe os melhores.
     pool = max_clips * OVERSELECT_FACTOR if score_virality else max_clips
     lo = min_len if min_len is not None else fusion.MIN_LEN
     hi = max_len if max_len is not None else fusion.MAX_LEN
     candidates = fusion.select_candidates(
-        [audio_track], max_clips=pool, duration=media.duration, min_len=lo, max_len=hi
+        tracks, max_clips=pool, duration=media.duration, weights=weights,
+        min_len=lo, max_len=hi,
     )
 
     # 6-9. analise viral (2 etapas) + reframe + render + manifest (0.65 -> 1.00)
