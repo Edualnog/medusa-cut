@@ -874,3 +874,49 @@ h1.hero .ghost {
 .link-btn:hover {
   color: #ff5a5a;
 }
+
+/* ---------- lista de jobs (Gerar) ---------- */
+.jobs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.job-row {
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.job-url {
+  font-family: var(--body);
+  font-size: 18px;
+  color: var(--muted);
+  flex: 1;
+  min-width: 200px;
+  word-break: break-all;
+}
+
+.job-badge {
+  font-family: var(--pixel);
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 8px 12px;
+  border: 3px solid var(--line);
+  white-space: nowrap;
+}
+
+.job-queued { color: var(--muted); }
+.job-processing { color: #ffd11a; border-color: #ffd11a; }
+.job-done { color: #000; background: #7CFC9B; border-color: #7CFC9B; }
+.job-error { color: #ff5a5a; border-color: #ff5a5a; }
+
+.job-err {
+  font-family: var(--body);
+  font-size: 16px;
+  color: #ff5a5a;
+  flex: 1 1 100%;
+}
