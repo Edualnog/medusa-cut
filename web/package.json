@@ -13,7 +13,6 @@
     "@aws-sdk/s3-request-presigner": "^3.1071.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
-    "mp4box": "^0.5.4",
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

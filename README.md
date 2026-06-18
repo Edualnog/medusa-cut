@@ -12,7 +12,7 @@ legendas karaokê para encontrar e renderizar os melhores momentos.
 O Medusa Clip é um SaaS **local-first**:
 
 - o site público será uma landing page com autenticação e download do aplicativo;
-- o Firebase será usado para contas, autenticação e controle de acesso/assinatura;
+- o Supabase será usado para contas, autenticação e controle de acesso/assinatura;
 - vídeos, transcrição e renderização serão processados localmente pelo app desktop;
 - cada usuário utilizará sua própria chave da OpenRouter para as etapas de IA;
 - não haverá VPS processando ou armazenando os vídeos dos usuários.
@@ -55,7 +55,7 @@ vídeo local ou link público
 agent/      motor Python, pipeline de vídeo, worker legado e testes
 desktop/    aplicativo Electron e empacotamento multiplataforma
 web/        site Next.js; será reduzido para landing, autenticação e downloads
-supabase/   migrations existentes do protótipo cloud, mantidas como histórico
+supabase/   schemas e policies; inclui tabelas legadas do protótipo cloud
 docs/       documentação de arquitetura e setup
 ```
 
@@ -68,7 +68,8 @@ docs/       documentação de arquitetura e setup
 - reframe dinâmico, detecção de facecam e legenda karaokê;
 - aplicativo Electron funcional e build `.dmg` sem assinatura;
 - protótipo web/cloud ainda presente no código e pendente de simplificação;
-- autenticação Firebase, licenciamento e builds automatizados ainda pendentes.
+- autenticação Supabase já existe na web; login desktop, licenciamento e builds
+  automatizados ainda estão pendentes.
 
 ## Desenvolvimento
 
@@ -117,13 +118,13 @@ npm run dev
 - o vídeo é processado e salvo localmente no computador do usuário;
 - a chave da OpenRouter é usada apenas pelo aplicativo e pelo provedor de IA;
 - o usuário paga diretamente à OpenRouter pelo consumo dos modelos;
-- o Firebase armazenará somente dados de conta, autenticação e acesso ao produto;
+- o Supabase armazenará somente dados de conta, autenticação e acesso ao produto;
 - nenhum vídeo precisa ser enviado para a infraestrutura do Medusa Clip.
 
 ## Roadmap
 
-1. Simplificar o site para landing page, autenticação Firebase e downloads.
-2. Integrar login e controle de acesso do Firebase ao aplicativo desktop.
+1. Simplificar o site para landing page, autenticação Supabase e downloads.
+2. Integrar login e controle de acesso do Supabase ao aplicativo desktop.
 3. Corrigir e estabilizar o fluxo local completo em macOS.
 4. Automatizar builds para macOS `arm64` e `x64`, Windows `x64` e Linux `x64`.
 5. Assinar/notarizar os builds e publicar releases versionadas.

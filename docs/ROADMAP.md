@@ -5,14 +5,13 @@
 ```text
 SITE NEXT.JS
   landing pública
-  autenticação Firebase
+  autenticação Supabase
   conta/assinatura e download autorizado
              │
              ▼
-FIREBASE
+SUPABASE
   Authentication
-  dados mínimos de usuário e entitlement
-  distribuição/versionamento dos instaladores
+  Postgres com dados mínimos de usuário e entitlement
              │
              ▼
 APP ELECTRON
@@ -22,7 +21,7 @@ APP ELECTRON
   processamento e biblioteca 100% locais
 ```
 
-Firebase continua sendo infraestrutura do SaaS, mas não participa do pipeline de
+Supabase continua sendo infraestrutura do SaaS, mas não participa do pipeline de
 vídeo. Nenhum arquivo de gameplay precisa passar pelo backend do produto.
 
 ## Estado em 18/06/2026
@@ -36,15 +35,15 @@ vídeo. Nenhum arquivo de gameplay precisa passar pelo backend do produto.
 - Electron com geração, progresso, biblioteca e custo acumulado;
 - empacotamento inicial para macOS com PyInstaller e electron-builder;
 - landing e identidade visual em Next.js;
+- autenticação Supabase implementada no protótipo web;
 - 49 testes unitários do motor passando.
 
 ### Parcial ou legado
 
-- web ainda contém painel SaaS, Supabase, R2 e APIs de processamento cloud;
+- web ainda contém painel, R2 e APIs de processamento cloud do protótipo anterior;
 - worker de VPS e migrations Supabase permanecem no repositório como legado;
 - chave OpenRouter do desktop ainda é salva em arquivo local sem cofre do sistema;
-- build web falha no type-check da página experimental `/spike` por falta da
-  declaração TypeScript de `mp4box`;
+- build web passa após a remoção da página experimental `/spike` e de `mp4box`;
 - auto-detecção de facecam não é acionada no fluxo padrão por uma inconsistência
   na resolução do layout;
 - não existem testes end-to-end do aplicativo empacotado ou do render real.
@@ -55,7 +54,7 @@ Objetivo: transformar `web/` em site de aquisição e distribuição.
 
 - manter landing, branding, preço, FAQ e documentação de requisitos;
 - remover da navegação pública o painel de geração e a biblioteca cloud;
-- substituir Supabase Auth por Firebase Auth;
+- manter Supabase Auth e adaptar o fluxo para aquisição/download;
 - definir uma área mínima de conta para sessão, assinatura e downloads;
 - remover dependências cloud não utilizadas do bundle web;
 - manter `supabase/migrations/` no repositório, sem executar novas migrations;
@@ -64,15 +63,15 @@ Objetivo: transformar `web/` em site de aquisição e distribuição.
 Critério de conclusão: visitante cria conta, autentica e chega ao download correto
 para seu sistema, sem qualquer rota de processamento de vídeo na web.
 
-## Etapa 2 — Identidade e acesso com Firebase
+## Etapa 2 — Identidade e acesso com Supabase
 
 Objetivo: compartilhar a identidade do usuário entre site e aplicativo.
 
-- configurar projetos Firebase separados para desenvolvimento e produção;
+- configurar projetos Supabase separados para desenvolvimento e produção;
 - habilitar provedores de autenticação definidos pelo produto;
-- modelar usuário, plano, status da assinatura e entitlement;
+- modelar usuário, plano, status da assinatura e entitlement no Postgres com RLS;
 - implementar login no site e no Electron;
-- validar Firebase ID tokens em operações privilegiadas;
+- validar os JWTs do Supabase em operações privilegiadas;
 - guardar sessão e chave OpenRouter com o cofre nativo do sistema operacional;
 - definir comportamento offline e período de tolerância da licença.
 
@@ -133,7 +132,7 @@ Objetivo: publicar versões sem processo manual frágil.
 - executar testes e checks antes de gerar instaladores;
 - versionar app, motor e formato do manifest em conjunto;
 - gerar checksums SHA-256 e notas de versão;
-- enviar artefatos para armazenamento de releases compatível com Firebase;
+- enviar artefatos para armazenamento de releases com acesso integrado ao Supabase;
 - entregar URLs temporárias conforme autenticação/entitlement;
 - configurar atualização automática por canal estável e beta;
 - implementar rollback para uma versão anterior.
@@ -156,7 +155,7 @@ Objetivo: fechar o ciclo SaaS sem introduzir processamento cloud de vídeo.
 ## Ordem recomendada imediata
 
 1. Etapa 1: simplificar a web e corrigir o build.
-2. Etapa 2: definir e implementar Firebase Auth/entitlement.
+2. Etapa 2: adaptar Supabase Auth e implementar entitlement.
 3. Etapa 3: estabilizar o app local no macOS Apple Silicon.
 4. Etapas 4 e 5: expandir builds e distribuição.
 5. Etapa 6: conectar pagamento quando o download autenticado estiver estável.
