@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ClipCard, type Clip } from "./clip-card";
+import { Icon } from "./icons";
 
 type Job = {
   id: string;
@@ -34,12 +35,12 @@ const FACECAM: Record<string, string> = {
   bl: "Baixo esquerda",
 };
 const FEATURES = [
-  { icon: "✦", label: "GANCHO IA" },
-  { icon: "🅒🅒", label: "LEGENDA KARAOKÊ" },
-  { icon: "⛶", label: "REENQUADRAR IA" },
-  { icon: "📈", label: "ANÁLISE VIRAL" },
-  { icon: "✍", label: "DESCRIÇÃO IA" },
-  { icon: "🙂", label: "FACECAM AUTO" },
+  { icon: "spark", label: "GANCHO IA" },
+  { icon: "cc", label: "LEGENDA KARAOKÊ" },
+  { icon: "crop", label: "REENQUADRAR IA" },
+  { icon: "chart", label: "ANÁLISE VIRAL" },
+  { icon: "script", label: "DESCRIÇÃO IA" },
+  { icon: "face", label: "FACECAM AUTO" },
 ];
 
 export default function PainelPage() {
@@ -135,16 +136,18 @@ export default function PainelPage() {
         <span className="top2-title">INÍCIO</span>
         <div className="top2-right">
           <span className="top2-chip" title="Gasto de IA na sua chave OpenRouter">
-            💸 ${stats.costUsd.toFixed(4)}
+            <Icon name="coin" size={15} /> ${stats.costUsd.toFixed(4)}
           </span>
-          <span className="top2-chip">🎬 {stats.clipsTotal}</span>
+          <span className="top2-chip">
+            <Icon name="film" size={15} /> {stats.clipsTotal}
+          </span>
         </div>
       </div>
 
       {/* hero: gerar */}
       <form onSubmit={gerar} className="gen2 box">
         <label className="gen2-input">
-          <span aria-hidden>🔗</span>
+          <span aria-hidden><Icon name="link" size={20} /></span>
           <input
             placeholder="Cole o link do seu vídeo de gameplay aqui..."
             value={url}
@@ -200,7 +203,7 @@ export default function PainelPage() {
       <div className="feat2">
         {FEATURES.map((f) => (
           <div className="feat2-item" key={f.label}>
-            <div className="feat2-icon">{f.icon}</div>
+            <div className="feat2-icon"><Icon name={f.icon} size={26} /></div>
             <div className="feat2-label">{f.label}</div>
           </div>
         ))}

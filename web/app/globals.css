@@ -1563,3 +1563,30 @@ h1.hero .ghost {
     flex-wrap: wrap;
   }
 }
+
+/* ---------- refinos de elegancia ---------- */
+.top2-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.side2-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gen2-input > span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.feat2-icon svg {
+  display: block;
+}
+
+/* grid dos "ultimos clipes" no inicio um pouco mais compacto */
+.painel2 .clip-grid {
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+}

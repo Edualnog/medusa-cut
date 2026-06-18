@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { MedusaLogo } from "../medusa-logo";
+import { Icon } from "./icons";
 
 const LINKS = [
-  { href: "/app", label: "INÍCIO", icon: "🏠" },
-  { href: "/app/biblioteca", label: "BIBLIOTECA", icon: "🎬" },
-  { href: "/app/apis", label: "CHAVES API", icon: "🔑" },
-  { href: "/app/conta", label: "CONTA", icon: "👤" },
+  { href: "/app", label: "INÍCIO", icon: "home" },
+  { href: "/app/biblioteca", label: "BIBLIOTECA", icon: "library" },
+  { href: "/app/apis", label: "CHAVES API", icon: "key" },
+  { href: "/app/conta", label: "CONTA", icon: "user" },
 ];
 
 export default function Sidebar({ email }: { email: string }) {
@@ -36,7 +37,7 @@ export default function Sidebar({ email }: { email: string }) {
           const active = l.href === "/app" ? path === "/app" : path.startsWith(l.href);
           return (
             <Link key={l.href} href={l.href} className={`side2-link${active ? " active" : ""}`}>
-              <span className="side2-icon" aria-hidden>{l.icon}</span>
+              <span className="side2-icon" aria-hidden><Icon name={l.icon} size={22} /></span>
               <span className="side2-label">{l.label}</span>
             </Link>
           );
@@ -44,7 +45,7 @@ export default function Sidebar({ email }: { email: string }) {
       </nav>
 
       <button className="side2-link side2-logout" onClick={logout}>
-        <span className="side2-icon" aria-hidden>⎋</span>
+        <span className="side2-icon" aria-hidden><Icon name="logout" size={22} /></span>
         <span className="side2-label">SAIR</span>
       </button>
     </aside>
