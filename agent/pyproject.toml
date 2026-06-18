@@ -12,8 +12,9 @@ dependencies = [
     "numpy==2.4.6",
     "openai==2.42.0",         # ganchos via LLM (M3; troque conforme provedor)
     "pillow==12.2.0",         # legenda karaoke (desenho); ffmpeg local nao tem libass
-    "supabase==2.31.0",       # worker: fila de jobs + storage (SaaS)
+    "supabase==2.31.0",       # worker: fila de jobs (SaaS)
     "cryptography==49.0.0",   # worker: decifra a chave de API do usuario (AES-GCM)
+    "boto3==1.43.32",         # worker: upload dos clipes pro Cloudflare R2 (S3-compat)
 ]
 
 [project.optional-dependencies]

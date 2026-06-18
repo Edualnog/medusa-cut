@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { signedClipUrl } from "@/lib/r2";
 
 export const runtime = "nodejs";
 
@@ -27,15 +28,17 @@ export async function GET() {
     .limit(60);
 
   const rows = clips ?? [];
-  let signedByPath = new Map<string, string>();
-  if (rows.length) {
-    const { data: signed } = await admin.storage
-      .from("clips")
-      .createSignedUrls(rows.map((c) => c.storage_path), 3600);
-    for (const s of signed ?? []) {
-      if (s.path && s.signedUrl) signedByPath.set(s.path, s.signedUrl);
-    }
-  }
+  // links assinados do Cloudflare R2 (preview/download)
+  const signedByPath = new Map<string, string>();
+  await Promise.all(
+    rows.map(async (c) => {
+      try {
+        signedByPath.set(c.storage_path, await signedClipUrl(c.storage_path));
+      } catch {
+        /* R2 nao configurado ainda ou objeto ausente */
+      }
+    }),
+  );
 
   const out = rows.map((c) => ({
     id: c.id,

@@ -38,12 +38,9 @@ def get_key_cipher(sb, user_id: str) -> str | None:
 
 
 def upload_clip(sb, storage_path: str, local_path: str) -> None:
-    with open(local_path, "rb") as fh:
-        sb.storage.from_("clips").upload(
-            storage_path,
-            fh.read(),
-            {"content-type": "video/mp4", "upsert": "true"},
-        )
+    from medusacut.worker import storage  # R2 (Cloudflare)
+
+    storage.upload(storage_path, local_path)
 
 
 def insert_clip(sb, row: dict) -> None:
@@ -73,7 +70,9 @@ def enforce_clip_cap(sb, user_id: str, cap: int | None = None) -> None:
     paths = [r["storage_path"] for r in extra]
     ids = [r["id"] for r in extra]
     try:
-        sb.storage.from_("clips").remove(paths)
+        from medusacut.worker import storage  # R2 (Cloudflare)
+
+        storage.delete(paths)
     except Exception:
         pass
     for i in range(0, len(ids), 50):
