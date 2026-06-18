@@ -1485,11 +1485,6 @@ h1.hero .ghost {
   border-color: var(--accent);
 }
 
-.gen2-bar:focus-within .gen2-btn:not(:disabled) {
-  border-color: var(--accent);
-  background: var(--accent);
-}
-
 .gen2-input span {
   font-size: 20px;
   color: var(--dim);
@@ -1694,4 +1689,24 @@ h1.hero .ghost {
   margin: 0;
   padding-top: 14px;
   border-top: 1px solid var(--soft);
+}
+
+/* ---------- seletor de upload (hero) ---------- */
+.gen2-file {
+  cursor: pointer;
+}
+
+.gen2-filename {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--body);
+  font-size: 22px;
+  color: var(--fg);
+}
+
+.gen2-placeholder {
+  color: var(--dim);
 }

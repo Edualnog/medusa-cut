@@ -67,6 +67,14 @@ def download(
     return Media(path=path, fps=fps, width=width, height=height, duration=duration)
 
 
+def probe_media(path: str) -> Media:
+    """Le fps/dimensoes/duracao de um arquivo LOCAL ja baixado (ex.: upload do R2)."""
+    if not os.path.exists(path):
+        raise RuntimeError(f"arquivo de video nao encontrado: {path!r}")
+    fps, width, height, duration = _probe(path, {})
+    return Media(path=path, fps=fps, width=width, height=height, duration=duration)
+
+
 def _resolve_path(ydl, info: dict) -> str | None:
     """Caminho final do arquivo (apos merge), de forma robusta."""
     requested = info.get("requested_downloads")

@@ -33,9 +33,19 @@ export async function POST(req: Request) {
   const user = await requireUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const { url, options } = await req.json().catch(() => ({ url: undefined }));
-  if (typeof url !== "string" || !/^https?:\/\/.+/.test(url.trim())) {
-    return NextResponse.json({ error: "Cole um link de vídeo válido." }, { status: 400 });
+  const { url, upload_key, options } = await req.json().catch(() => ({}));
+
+  // duas fontes: upload (chave do R2) OU url http. Upload tem prioridade.
+  let sourceKind: "upload" | "url";
+  let sourceUrl: string;
+  if (typeof upload_key === "string" && upload_key.startsWith(`uploads/${user.id}/`)) {
+    sourceKind = "upload";
+    sourceUrl = upload_key;
+  } else if (typeof url === "string" && /^https?:\/\/.+/.test(url.trim())) {
+    sourceKind = "url";
+    sourceUrl = url.trim();
+  } else {
+    return NextResponse.json({ error: "Envie um vídeo ou cole um link válido." }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -55,7 +65,12 @@ export async function POST(req: Request) {
 
   const { data, error } = await admin
     .from("jobs")
-    .insert({ user_id: user.id, source_url: url.trim(), options: options ?? {} })
+    .insert({
+      user_id: user.id,
+      source_url: sourceUrl,
+      source_kind: sourceKind,
+      options: options ?? {},
+    })
     .select("id")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

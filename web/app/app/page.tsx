@@ -35,8 +35,32 @@ const FACECAM: Record<string, string> = {
   br: "Baixo direita",
   bl: "Baixo esquerda",
 };
+// PUT do arquivo direto no R2, com progresso (XHR — fetch nao reporta upload).
+function putWithProgress(
+  url: string,
+  file: File,
+  contentType: string,
+  onPct: (p: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url);
+    xhr.setRequestHeader("Content-Type", contentType);
+    xhr.upload.onprogress = (ev) => {
+      if (ev.lengthComputable) onPct(Math.round((ev.loaded / ev.total) * 100));
+    };
+    xhr.onload = () =>
+      xhr.status >= 200 && xhr.status < 300
+        ? resolve()
+        : reject(new Error(`Falha no upload (HTTP ${xhr.status}).`));
+    xhr.onerror = () => reject(new Error("Erro de rede no upload."));
+    xhr.send(file);
+  });
+}
+
 export default function PainelPage() {
-  const [url, setUrl] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [clipsById, setClipsById] = useState<Map<string, Clip>>(new Map());
   const [stats, setStats] = useState<Stats>({ clipsTotal: 0, jobsDone: 0, costUsd: 0, totalTokens: 0 });
@@ -125,33 +149,52 @@ export default function PainelPage() {
 
   async function gerar(e: React.FormEvent) {
     e.preventDefault();
+    if (!file || creating) return;
     setCreating(true);
     setMsg(null);
-    const [min_len, max_len] = DUR[durPreset];
-    const options = {
-      layout,
-      captions,
-      max_clips: maxClips,
-      min_len,
-      max_len,
-      facecam_auto: facecamCorner === "auto",
-      facecam_corner: facecamCorner === "auto" ? null : facecamCorner,
-      score_virality: true,
-    };
-    const r = await fetch("/api/jobs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, options }),
-    });
-    const data = await r.json().catch(() => ({}));
-    if (r.ok) {
-      setMsg({ kind: "ok", text: "Job criado! Está na fila — começa já." });
-      setUrl("");
+    const ct = file.type || "video/mp4";
+    try {
+      // 1. pede a URL assinada de upload (valida formato/tamanho + BYO key)
+      const up = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentType: ct, size: file.size }),
+      });
+      const upData = await up.json().catch(() => ({}));
+      if (!up.ok) throw new Error(upData.error ?? "Falha ao preparar o upload.");
+
+      // 2. sobe o arquivo direto pro R2 (com barra de progresso)
+      await putWithProgress(upData.uploadUrl, file, ct, setUploadPct);
+
+      // 3. cria o job apontando pra chave do upload
+      const [min_len, max_len] = DUR[durPreset];
+      const options = {
+        layout,
+        captions,
+        max_clips: maxClips,
+        min_len,
+        max_len,
+        facecam_auto: facecamCorner === "auto",
+        facecam_corner: facecamCorner === "auto" ? null : facecamCorner,
+        score_virality: true,
+      };
+      const r = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ upload_key: upData.key, options }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error ?? "Falhou ao criar o job.");
+
+      setMsg({ kind: "ok", text: "Vídeo enviado! Está na fila — começa já." });
+      setFile(null);
       await loadJobs();
-    } else {
-      setMsg({ kind: "err", text: data.error ?? "Falhou ao criar o job." });
+    } catch (err) {
+      setMsg({ kind: "err", text: err instanceof Error ? err.message : "Erro inesperado." });
+    } finally {
+      setUploadPct(null);
+      setCreating(false);
     }
-    setCreating(false);
   }
 
   const recent = [...clipsById.values()]
@@ -176,16 +219,20 @@ export default function PainelPage() {
       {/* hero: gerar */}
       <form onSubmit={gerar} className="gen2 box">
         <div className="gen2-bar">
-          <label className="gen2-input">
-            <span aria-hidden><Icon name="link" size={20} /></span>
+          <label className="gen2-input gen2-file">
+            <span aria-hidden><Icon name="film" size={20} /></span>
             <input
-              placeholder="Cole o link do seu vídeo de gameplay aqui..."
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              type="file"
+              accept="video/mp4,video/quicktime,video/webm,video/x-matroska"
+              hidden
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
+            <span className={file ? "gen2-filename" : "gen2-filename gen2-placeholder"}>
+              {file ? file.name : "Escolha o vídeo do seu gameplay (MP4/MOV)…"}
+            </span>
           </label>
-          <button className="gen2-btn" type="submit" disabled={creating || url.trim().length < 8}>
-            {creating ? "..." : "✦ GERAR"}
+          <button className="gen2-btn" type="submit" disabled={creating || !file}>
+            {creating ? (uploadPct != null ? `${uploadPct}%` : "...") : "✦ GERAR"}
           </button>
         </div>
 
@@ -226,7 +273,7 @@ export default function PainelPage() {
           </label>
         </div>
 
-        <p className="gen2-hint">ⓘ Suporta YouTube, TikTok e muito mais — processa na nuvem com a sua chave.</p>
+        <p className="gen2-hint">ⓘ Suba o seu gameplay (MP4/MOV até 2 GB) — processa na nuvem com a sua chave.</p>
       </form>
       {msg && <p className={msg.kind === "ok" ? "dash-note" : "msg"} style={{ textAlign: "center" }}>{msg.text}</p>}
 

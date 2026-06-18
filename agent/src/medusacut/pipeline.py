@@ -41,6 +41,7 @@ def generate_clips(
     captions: bool = True,
     min_len: float | None = None,
     max_len: float | None = None,
+    local_source: str | None = None,
     progress: Progress | None = None,
 ) -> list[Clip]:
     """
@@ -63,10 +64,15 @@ def generate_clips(
     from medusacut.signals import audio_energy, fusion, motion
 
     cache_dir = os.path.join(out_dir, ".cache")
+    os.makedirs(cache_dir, exist_ok=True)
 
-    # 1. baixar (reporta 0.00 -> 0.45 conforme o yt-dlp baixa)
-    _report(progress, 0.0, "Baixando video…")
-    media = youtube.download(url, cache_dir, on_progress=_band(progress, 0.0, 0.45))
+    # 1. obter o video: arquivo local (upload do usuario) ou download por URL
+    if local_source:
+        _report(progress, 0.3, "Lendo video enviado…")
+        media = youtube.probe_media(local_source)
+    else:
+        _report(progress, 0.0, "Baixando video…")
+        media = youtube.download(url, cache_dir, on_progress=_band(progress, 0.0, 0.45))
 
     # 2. extrair audio
     _report(progress, 0.45, "Extraindo audio…")

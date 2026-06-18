@@ -43,6 +43,23 @@ def upload_clip(sb, storage_path: str, local_path: str) -> None:
     storage.upload(storage_path, local_path)
 
 
+def download_source(key: str, local_path: str) -> None:
+    """Baixa do R2 o video que o usuario subiu (jobs source_kind='upload')."""
+    from medusacut.worker import storage  # R2 (Cloudflare)
+
+    storage.download(key, local_path)
+
+
+def delete_source(key: str) -> None:
+    """Apaga o video-fonte do R2 depois de processar (upload nao acumula)."""
+    from medusacut.worker import storage
+
+    try:
+        storage.delete([key])
+    except Exception:
+        pass
+
+
 def insert_clip(sb, row: dict) -> None:
     sb.table("clips").insert(row).execute()
 

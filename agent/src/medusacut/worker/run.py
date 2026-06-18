@@ -63,6 +63,7 @@ def _process(sb, job) -> None:
     job_id = job["id"]
     user_id = job["user_id"]
     url = job["source_url"]
+    source_kind = job.get("source_kind") or "url"
     opts = job.get("options") or {}
 
     # 1. decifra a chave da OpenRouter do usuario e injeta no ambiente
@@ -83,6 +84,13 @@ def _process(sb, job) -> None:
             except Exception:
                 pass  # nao deixa um update de progresso derrubar o job
 
+    # Upload: `url` e a chave do objeto no R2 -> baixa pro workdir e processa local.
+    local_source = None
+    if source_kind == "upload":
+        progress(0.1, "Baixando seu video…")
+        local_source = os.path.join(workdir, "source.mp4")
+        client.download_source(url, local_source)
+
     try:
         clips = pipeline.generate_clips(
             url,
@@ -95,6 +103,7 @@ def _process(sb, job) -> None:
             captions=bool(opts.get("captions", True)),
             min_len=opts.get("min_len"),
             max_len=opts.get("max_len"),
+            local_source=local_source,
             progress=progress,
         )
 
@@ -130,6 +139,8 @@ def _process(sb, job) -> None:
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
         os.environ.pop("LLM_API_KEY", None)  # nao deixa a chave vazar pro proximo job
+        if source_kind == "upload":
+            client.delete_source(url)  # apaga o video-fonte do R2 (nao acumula)
 
 
 def _read_cost(workdir: str) -> dict:

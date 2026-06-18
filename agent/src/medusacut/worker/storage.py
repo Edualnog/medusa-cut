@@ -30,6 +30,11 @@ def upload(key: str, local_path: str, content_type: str = "video/mp4") -> None:
     _client().upload_file(local_path, _bucket(), key, ExtraArgs={"ContentType": content_type})
 
 
+def download(key: str, local_path: str) -> None:
+    """Baixa um objeto do R2 (ex.: o video que o usuario subiu) pra um arquivo local."""
+    _client().download_file(_bucket(), key, local_path)
+
+
 def delete(keys: list[str]) -> None:
     if not keys:
         return

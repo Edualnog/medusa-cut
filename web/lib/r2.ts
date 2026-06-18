@@ -1,4 +1,4 @@
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Cloudflare R2 (S3-compativel). Credenciais SO no servidor.
@@ -18,6 +18,20 @@ export async function signedClipUrl(key: string, expiresIn = 3600): Promise<stri
   return getSignedUrl(
     r2(),
     new GetObjectCommand({ Bucket: process.env.R2_BUCKET, Key: key }),
+    { expiresIn },
+  );
+}
+
+// Link assinado de ESCRITA (upload direto do navegador pro R2, sem passar pela
+// Vercel — evita limite de corpo serverless e aguenta arquivo grande).
+export async function signedUploadUrl(
+  key: string,
+  contentType: string,
+  expiresIn = 900,
+): Promise<string> {
+  return getSignedUrl(
+    r2(),
+    new PutObjectCommand({ Bucket: process.env.R2_BUCKET, Key: key, ContentType: contentType }),
     { expiresIn },
   );
 }
