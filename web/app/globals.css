@@ -538,7 +538,7 @@ h1.hero .ghost {
 /* ---------- shell do dashboard (area logada) ---------- */
 .shell {
   display: grid;
-  grid-template-columns: 168px 1fr;
+  grid-template-columns: 96px 1fr;
   min-height: 100vh;
 }
 
@@ -615,8 +615,10 @@ h1.hero .ghost {
 }
 
 .content {
-  padding: 40px 36px 90px;
-  max-width: 1000px;
+  padding: 48px 56px 96px;
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .panel-card {
@@ -1321,11 +1323,11 @@ h1.hero .ghost {
 .side2 {
   border-right: 3px solid var(--line);
   background: #08080b;
-  padding: 22px 10px;
+  padding: 20px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
   position: sticky;
   top: 0;
   height: 100vh;
@@ -1337,15 +1339,15 @@ h1.hero .ghost {
 }
 
 .side2-user {
-  width: 46px;
-  height: 46px;
+  width: 38px;
+  height: 38px;
   border: 3px solid var(--line);
   background: #14151a;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--pixel);
-  font-size: 18px;
+  font-size: 13px;
   color: var(--fg);
 }
 
@@ -1362,9 +1364,9 @@ h1.hero .ghost {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 4px;
-  border: 3px solid transparent;
+  gap: 5px;
+  padding: 10px 2px;
+  border: 2px solid transparent;
   color: var(--muted);
   text-decoration: none;
   background: none;
@@ -1390,8 +1392,9 @@ h1.hero .ghost {
 
 .side2-label {
   font-family: var(--pixel);
-  font-size: 9px;
-  letter-spacing: 1px;
+  font-size: 7px;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
   text-align: center;
 }
 

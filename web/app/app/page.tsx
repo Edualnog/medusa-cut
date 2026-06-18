@@ -34,15 +34,6 @@ const FACECAM: Record<string, string> = {
   br: "Baixo direita",
   bl: "Baixo esquerda",
 };
-const FEATURES = [
-  { icon: "spark", label: "GANCHO IA" },
-  { icon: "cc", label: "LEGENDA KARAOKÊ" },
-  { icon: "crop", label: "REENQUADRAR IA" },
-  { icon: "chart", label: "ANÁLISE VIRAL" },
-  { icon: "script", label: "DESCRIÇÃO IA" },
-  { icon: "face", label: "FACECAM AUTO" },
-];
-
 export default function PainelPage() {
   const [url, setUrl] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -198,16 +189,6 @@ export default function PainelPage() {
         <p className="gen2-hint">ⓘ Suporta YouTube, TikTok e muito mais — processa na nuvem com a sua chave.</p>
       </form>
       {msg && <p className={msg.kind === "ok" ? "dash-note" : "msg"} style={{ textAlign: "center" }}>{msg.text}</p>}
-
-      {/* vitrine de features (reais) */}
-      <div className="feat2">
-        {FEATURES.map((f) => (
-          <div className="feat2-item" key={f.label}>
-            <div className="feat2-icon"><Icon name={f.icon} size={26} /></div>
-            <div className="feat2-label">{f.label}</div>
-          </div>
-        ))}
-      </div>
 
       {/* job ativo */}
       {active && (
