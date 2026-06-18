@@ -28,7 +28,8 @@
     ],
     "mac": {
       "target": "dmg",
-      "category": "public.app-category.video"
+      "category": "public.app-category.video",
+      "identity": null
     },
     "win": {
       "target": "nsis"
