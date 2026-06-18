@@ -17,6 +17,7 @@ dependencies = [
     "supabase==2.31.0",       # worker: fila de jobs (SaaS)
     "cryptography==49.0.0",   # worker: decifra a chave de API do usuario (AES-GCM)
     "boto3==1.43.32",         # worker: upload dos clipes pro Cloudflare R2 (S3-compat)
+    "bgutil-ytdlp-pot-provider==1.3.1",  # plugin do yt-dlp: PO token (YouTube de IP de datacenter)
 ]
 
 [project.optional-dependencies]

@@ -47,6 +47,10 @@ def download(
     cookies = os.environ.get("YTDLP_COOKIES")
     if cookies and os.path.exists(cookies):
         ydl_opts["cookiefile"] = cookies
+    # PO token provider (plugin bgutil): YouTube de IP de datacenter exige PO token.
+    pot_base = os.environ.get("YTDLP_POT_BASEURL")
+    if pot_base:
+        ydl_opts["extractor_args"] = {"youtubepot-bgutilhttp": {"base_url": [pot_base]}}
     if on_progress is not None:
         ydl_opts["progress_hooks"] = [_make_progress_hook(on_progress)]
 
