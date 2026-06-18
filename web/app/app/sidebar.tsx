@@ -7,7 +7,7 @@ import { MedusaLogo } from "../medusa-logo";
 import { Icon } from "./icons";
 
 const LINKS = [
-  { href: "/app", label: "INÍCIO", icon: "home" },
+  { href: "/app", label: "INICIO", icon: "home" },
   { href: "/app/biblioteca", label: "BIBLIOTECA", icon: "library" },
   { href: "/app/apis", label: "CHAVES API", icon: "key" },
   { href: "/app/conta", label: "CONTA", icon: "user" },

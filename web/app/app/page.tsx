@@ -124,7 +124,7 @@ export default function PainelPage() {
     <div className="painel2">
       {/* top bar */}
       <div className="top2">
-        <span className="top2-title">INÍCIO</span>
+        <span className="top2-title">INICIO</span>
         <div className="top2-right">
           <span className="top2-chip" title="Gasto de IA na sua chave OpenRouter">
             <Icon name="coin" size={15} /> ${stats.costUsd.toFixed(4)}

@@ -1501,7 +1501,10 @@ h1.hero .ghost {
 }
 
 .gen2-btn:disabled {
-  opacity: 0.5;
+  background: #14151a;
+  background-image: none;
+  color: var(--dim);
+  border-color: #ffffff22;
   cursor: default;
 }
 
