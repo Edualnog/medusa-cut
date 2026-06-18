@@ -1,15 +1,12 @@
 """Sinal de MOVIMENTO visual: intensidade de acao por janela (z-score).
 
-Complementa o audio na escolha do corte. Sozinho, o audio perde momento que e
-VISUALMENTE intenso mas silencioso (clutch sem grito, explosao, kill rapido). Aqui
-medimos a diferenca media entre frames amostrados (baixa resolucao, cinza) e
-agregamos na MESMA grade de tempo do track de audio — pra `fusion.combine` poder
-somar as duas trilhas.
+Complementa o audio na escolha do corte (clutch/explosao silenciosos que o audio
+perde). Agregado na MESMA grade de tempo do track de audio pra `fusion.combine`.
 
-DECODE via FFMPEG (um passe, em C): muito mais rapido que abrir frame-a-frame no
-Python e funciona em qualquer codec (inclusive HEVC). O ffmpeg cospe frames cinza
-160x90 em rawvideo num pipe; aqui so somamos as diferencas. numpy importado dentro;
-`_zscore` e puro (testavel).
+RAPIDO em video longo: decodifica so os KEYFRAMES (esparsos) via ffmpeg, em vez de
+todo frame — o que tornava o passo lento (decode floor) em VOD de 1-2h. Em video
+curto (poucos keyframes) cai pro decode completo a `analysis_fps`. numpy dentro;
+`_zscore` puro (testavel).
 """
 
 from __future__ import annotations
@@ -18,38 +15,89 @@ import subprocess
 
 from medusacut.types import Media, ScoreTrack
 
-# resolucao de analise (pequena de proposito — energia de movimento, nao qualidade)
 _W = 160
 _H = 90
 
 
-def analyze(
-    media: Media,
-    like: ScoreTrack,
-    *,
-    analysis_fps: float = 4.0,
-) -> ScoreTrack:
-    """Trilha de movimento alinhada a `like` (mesma grade/hop), z-score.
-
-    `like` e tipicamente o track de audio — copiamos a grade de tempo dele pra as
-    trilhas baterem na fusao. Le frames cinza do ffmpeg e mede a diferenca media.
-    """
-    import numpy as np  # noqa: PLC0415
-
+def analyze(media: Media, like: ScoreTrack, *, analysis_fps: float = 4.0) -> ScoreTrack:
+    """Trilha de movimento alinhada a `like`, z-score. Keyframes (rapido) ou full."""
     hop = like.hop
     n = len(like.times)
     if n == 0:
         return ScoreTrack(times=[], scores=[], hop=hop, name="motion")
 
+    times = _keyframe_times(media.path)
+    if len(times) >= 8:  # keyframes suficientes -> caminho RAPIDO
+        raw = _keyframe_motion(media.path, times, hop, n)
+    else:  # video curto/sem keyframes -> decode completo (ainda barato)
+        raw = _full_motion(media.path, hop, n, analysis_fps)
+    return ScoreTrack(times=list(like.times), scores=_zscore(raw), hop=hop, name="motion")
+
+
+def _keyframe_times(path: str) -> list[float]:
+    """Tempos (s) dos keyframes — via PACOTES (sem decodificar), rapido."""
+    pr = subprocess.run(
+        ["ffprobe", "-loglevel", "error", "-select_streams", "v:0",
+         "-show_entries", "packet=pts_time,flags", "-of", "csv=p=0", path],
+        capture_output=True, text=True,
+    )
+    out: list[float] = []
+    for line in pr.stdout.splitlines():
+        parts = line.split(",")
+        if len(parts) >= 2 and "K" in parts[1]:
+            try:
+                out.append(float(parts[0]))
+            except ValueError:
+                pass
+    return sorted(out)
+
+
+def _keyframe_motion(path: str, times: list[float], hop: float, n: int) -> list[float]:
+    """Diferenca entre keyframes consecutivos (decodifica so eles)."""
+    import numpy as np  # noqa: PLC0415
+
     cmd = [
-        "ffmpeg", "-nostdin", "-loglevel", "error",
-        "-i", media.path,
+        "ffmpeg", "-nostdin", "-loglevel", "error", "-skip_frame", "nokey",
+        "-i", path, "-vf", f"scale={_W}:{_H},format=gray",
+        "-fps_mode", "passthrough", "-f", "rawvideo", "-",
+    ]
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=10**7)
+    fb = _W * _H
+    frames: list = []
+    try:
+        assert proc.stdout is not None
+        while True:
+            raw = proc.stdout.read(fb)
+            if len(raw) < fb:
+                break
+            frames.append(np.frombuffer(raw, dtype=np.uint8).astype(np.float32))
+    finally:
+        if proc.stdout:
+            proc.stdout.close()
+        proc.wait()
+
+    acc = [0.0] * n
+    cnt = [0] * n
+    m = min(len(frames), len(times))
+    for i in range(1, m):
+        wi = int(times[i] / hop)
+        if 0 <= wi < n:
+            acc[wi] += float(np.abs(frames[i] - frames[i - 1]).mean())
+            cnt[wi] += 1
+    return [acc[i] / cnt[i] if cnt[i] else 0.0 for i in range(n)]
+
+
+def _full_motion(path: str, hop: float, n: int, analysis_fps: float) -> list[float]:
+    """Decode completo a `analysis_fps` (fallback p/ video curto)."""
+    import numpy as np  # noqa: PLC0415
+
+    cmd = [
+        "ffmpeg", "-nostdin", "-loglevel", "error", "-i", path,
         "-vf", f"fps={analysis_fps},scale={_W}:{_H},format=gray",
         "-f", "rawvideo", "-",
     ]
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=10**7)
-    frame_bytes = _W * _H
-
+    fb = _W * _H
     acc = [0.0] * n
     cnt = [0] * n
     prev = None
@@ -57,8 +105,8 @@ def analyze(
     try:
         assert proc.stdout is not None
         while True:
-            raw = proc.stdout.read(frame_bytes)
-            if len(raw) < frame_bytes:
+            raw = proc.stdout.read(fb)
+            if len(raw) < fb:
                 break
             cur = np.frombuffer(raw, dtype=np.uint8).astype(np.float32)
             if prev is not None:
@@ -72,12 +120,7 @@ def analyze(
         if proc.stdout:
             proc.stdout.close()
         proc.wait()
-
-    if proc.returncode not in (0, None) and idx == 0:
-        raise RuntimeError(f"ffmpeg falhou ao ler frames (rc={proc.returncode})")
-
-    raw_track = [acc[i] / cnt[i] if cnt[i] else 0.0 for i in range(n)]
-    return ScoreTrack(times=list(like.times), scores=_zscore(raw_track), hop=hop, name="motion")
+    return [acc[i] / cnt[i] if cnt[i] else 0.0 for i in range(n)]
 
 
 def _zscore(raw: list[float]) -> list[float]:
