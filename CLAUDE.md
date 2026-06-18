@@ -1,4 +1,4 @@
-# CLAUDE.md — Medusa Cut
+# CLAUDE.md — Zorothax
 
 Contexto para o Claude Code. Leia antes de codar.
 

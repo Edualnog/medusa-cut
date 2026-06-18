@@ -1,4 +1,4 @@
-# Guia de montagem — Medusa Cut (SaaS)
+# Guia de montagem — Zorothax (SaaS)
 
 Mapa pra subir tudo. Arquitetura **Caminho A**: Vercel (site) + Supabase (dados) +
 VPS (worker). Você cria as contas e cola as chaves; eu (Claude) escrevo o código e
@@ -40,7 +40,7 @@ servidor). Rode `cd web && npm run dev`.
 1. Conecte o repositório na vercel.com, root = `web/`.
 2. Em **Settings → Environment Variables**, cole as MESMAS 4 variáveis.
 3. Deploy. (HTTPS e CDN automáticos.)
-4. **Domínio `medusacut.com.br`**: Vercel → Settings → Domains → adicionar o
+4. **Domínio `zorothax.com`**: Vercel → Settings → Domains → adicionar o
    domínio; a Vercel te dá os registros DNS (um `A`/`CNAME`) pra colar no painel do
    teu registrador. HTTPS sai automático.
 

@@ -53,7 +53,7 @@ export default function ApisPage() {
       <div className="box panel-card">
         <p className="dash-list" style={{ margin: 0 }}>
           Conecte sua <b>chave da OpenRouter</b>. Você paga o custo da IA direto pra
-          OpenRouter (centavos por vídeo) — por isso a Medusa é mais barata, sem
+          OpenRouter (centavos por vídeo) — por isso a Zorothax é mais barata, sem
           créditos inflados.
         </p>
 

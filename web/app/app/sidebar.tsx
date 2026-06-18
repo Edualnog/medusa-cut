@@ -25,7 +25,7 @@ export default function Sidebar({ email }: { email: string }) {
   return (
     <aside className="sidebar">
       <Link href="/app" className="side-brand">
-        <MedusaLogo size={26} /> MEDUSA
+        <MedusaLogo size={26} /> ZOROTHAX
       </Link>
 
       <nav className="side-nav">

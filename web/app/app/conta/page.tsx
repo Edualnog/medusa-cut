@@ -4,7 +4,7 @@ export default function ContaPage() {
       <div className="badge">CONTA · ASSINATURA</div>
       <div className="box panel-card">
         <div className="plan">
-          <div className="plan-name">MEDUSA PRO</div>
+          <div className="plan-name">ZOROTHAX PRO</div>
           <div className="plan-price">
             R$11,90<span>/mês</span>
           </div>

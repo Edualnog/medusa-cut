@@ -1,4 +1,4 @@
-// Landing 8-bit do Medusa Cut. Estatica por enquanto — auth + app vem nas
+// Landing 8-bit do Zorothax. Estatica por enquanto — auth + app vem nas
 // proximas fases. O design segue a referencia pixel/gamer.
 import { Fragment } from "react";
 import Link from "next/link";
@@ -23,7 +23,7 @@ const FEATURES = [
   {
     icon: "🎮",
     title: "FEITO PRA GAMES",
-    text: "Genéricos tipo OpusClip cortam por transcrição e não entendem gameplay. A Medusa acha o momento por FUSÃO DE SINAIS (áudio + cena): kill, clutch, fail, reação.",
+    text: "Genéricos tipo OpusClip cortam por transcrição e não entendem gameplay. A Zorothax acha o momento por FUSÃO DE SINAIS (áudio + cena): kill, clutch, fail, reação.",
   },
   {
     icon: "👁",
@@ -39,19 +39,18 @@ const FEATURES = [
 
 const USAGE = [
   { n: "1", title: "CRIE SUA CONTA", text: "Cadastro rápido, sem cartão pra testar." },
-  { n: "2", title: "CONECTE SUA CHAVE", text: "Cole sua chave da OpenRouter (fica segura). Você paga só o uso real da IA." },
-  { n: "3", title: "BAIXE O AGENTE", text: "Um app leve que roda no SEU PC — é ele que corta o vídeo (rápido e privado)." },
-  { n: "4", title: "COLE O LINK E GERE", text: "Cole o link do gameplay e receba os melhores cortes, prontos pro TikTok." },
+  { n: "2", title: "CONECTE SUA CHAVE", text: "Cole sua chave da OpenRouter (fica segura, criptografada). Você paga só o uso real da IA." },
+  { n: "3", title: "COLE O LINK E GERE", text: "A Zorothax processa na nuvem e te entrega os melhores cortes, prontos pro TikTok." },
 ];
 
 const FAQ = [
   {
     q: "É melhor que o OpusClip pra games?",
-    a: "Sim. Eles são genéricos; a Medusa é focada em gameplay — acha kill/clutch/fail por sinais de áudio e cena, e a IA vê a tela.",
+    a: "Sim. Eles são genéricos; a Zorothax é focada em gameplay — acha kill/clutch/fail por sinais de áudio e cena, e a IA vê a tela.",
   },
   {
     q: "Preciso instalar algo?",
-    a: "Um agente leve que roda no seu PC. O corte é local — por isso é rápido e barato (sem servidor caro no meio).",
+    a: "Não — roda 100% na nuvem, direto no navegador. Você só conecta sua chave e cola o link.",
   },
   {
     q: "Por que usar minha própria chave?",
@@ -102,7 +101,7 @@ export default function Home() {
     <>
       <nav className="nav">
         <span className="brand">
-          <MedusaLogo size={30} /> MEDUSA CUT
+          <MedusaLogo size={30} /> ZOROTHAX
         </span>
         <Link href="/login" className="nav-link">ENTRAR</Link>
       </nav>
@@ -201,7 +200,7 @@ export default function Home() {
 
       {/* por que medusa (foco gamer vs opusclip) */}
       <div className="section-tag">
-        <div className="badge">POR QUE MEDUSA CUT</div>
+        <div className="badge">POR QUE ZOROTHAX</div>
       </div>
       <div className="features">
         {FEATURES.map((f) => (
@@ -233,7 +232,7 @@ export default function Home() {
       </div>
       <div className="row-center">
         <div className="box price-card">
-          <div className="plan-name">MEDUSA PRO</div>
+          <div className="plan-name">ZOROTHAX PRO</div>
           <div className="plan-price">
             R$11,90<span>/mês</span>
           </div>
@@ -262,7 +261,7 @@ export default function Home() {
         ))}
       </div>
 
-      <p className="foot">Medusa Cut · clips de games nível Opus Clip</p>
+      <p className="foot">Zorothax · clips de games nível Opus Clip</p>
       </main>
     </>
   );

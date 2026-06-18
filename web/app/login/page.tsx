@@ -49,7 +49,7 @@ export default function LoginPage() {
           className="brand"
           style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}
         >
-          <MedusaLogo size={28} /> MEDUSA CUT
+          <MedusaLogo size={28} /> ZOROTHAX
         </Link>
         <h1>{mode === "login" ? "ENTRAR" : "CRIAR CONTA"}</h1>
         <form onSubmit={submit}>
