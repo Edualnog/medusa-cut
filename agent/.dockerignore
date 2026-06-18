@@ -1,0 +1,9 @@
+.venv
+out
+tests
+**/__pycache__
+*.pyc
+.env
+.env.*
+docs
+Makefile

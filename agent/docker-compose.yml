@@ -1,0 +1,13 @@
+# Sobe o worker na VPS:  docker compose up -d --build
+# Precisa de um arquivo .env ao lado (ver .env.example) com SUPABASE_URL,
+# SUPABASE_SERVICE_ROLE_KEY e KEY_ENCRYPTION_SECRET (os mesmos do web).
+services:
+  worker:
+    build: .
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      - whisper-cache:/cache/huggingface
+
+volumes:
+  whisper-cache:
