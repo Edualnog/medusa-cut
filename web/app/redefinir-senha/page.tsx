@@ -21,8 +21,41 @@ export default function RedefinirSenhaPage() {
 
   useEffect(() => {
     const supabase = createClient();
-    // A sessão de recuperação vem na URL (hash) e é detectada na inicialização.
-    supabase.auth.getSession().then(({ data }) => setHasSession(Boolean(data.session)));
+
+    async function init() {
+      // O link do e-mail traz os tokens no HASH (#access_token=...&refresh_token=...).
+      // O cliente @supabase/ssr (fluxo PKCE) não processa o hash sozinho, então
+      // lemos e estabelecemos a sessão de recuperação manualmente.
+      const raw = typeof window !== "undefined" ? window.location.hash : "";
+      const params = new URLSearchParams(raw.startsWith("#") ? raw.slice(1) : raw);
+
+      const errorDesc = params.get("error_description");
+      if (errorDesc) {
+        setMsg(decodeURIComponent(errorDesc.replace(/\+/g, " ")));
+        setHasSession(false);
+        return;
+      }
+
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      if (accessToken && refreshToken) {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        setHasSession(!error && Boolean(data.session));
+        // Remove os tokens da URL (não deixa vazar no histórico/refresh).
+        window.history.replaceState(null, "", window.location.pathname);
+        return;
+      }
+
+      // Sem hash: talvez já exista sessão.
+      const { data } = await supabase.auth.getSession();
+      setHasSession(Boolean(data.session));
+    }
+
+    init();
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) setHasSession(true);
     });
