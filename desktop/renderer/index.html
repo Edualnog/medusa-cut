@@ -11,7 +11,40 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="app-shell">
+  <div class="auth-gate" id="authGate">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <img class="logo" src="logo.png" alt="" />
+        <div>
+          <strong>MEDUSA</strong>
+          <span>CLIP</span>
+        </div>
+      </div>
+      <div class="auth-pill">PROCESSAMENTO LOCAL</div>
+      <h1 id="authTitle">ENTRAR</h1>
+      <form id="authForm" novalidate>
+        <label class="field">
+          <span>E-MAIL</span>
+          <input id="authEmail" type="email" required autocomplete="username" placeholder="voce@email.com" />
+        </label>
+        <label class="field">
+          <span>SENHA</span>
+          <input id="authPassword" type="password" required minlength="6" autocomplete="current-password" placeholder="••••••••" />
+        </label>
+        <p class="auth-msg hidden" id="authMsg"></p>
+        <button class="primary-button full-button" id="authSubmit" type="submit">ENTRAR →</button>
+      </form>
+      <p class="auth-forgot-row">
+        <button type="button" id="forgotPass" class="auth-link">Esqueci a senha</button>
+      </p>
+      <p class="auth-switch">
+        <span id="authSwitchText">Não tem conta?</span>
+        <button type="button" id="authSwitch">Criar conta</button>
+      </p>
+    </div>
+  </div>
+
+  <div class="app-shell hidden" id="appShell">
     <aside class="sidebar">
       <div class="brand-block">
         <img class="logo" src="logo.png" alt="" />
@@ -36,7 +69,16 @@
           <span class="nav-index">03</span>
           <span>CHAVES API</span>
         </button>
+        <button class="nav" data-view="conta" type="button">
+          <span class="nav-index">04</span>
+          <span>CONTA</span>
+        </button>
       </nav>
+
+      <div class="account-block">
+        <span class="account-label">CONECTADO COMO</span>
+        <span class="account-email" id="accountEmail">—</span>
+      </div>
 
       <div class="sidebar-foot">
         <span>MEDUSA CLIP</span>
@@ -274,11 +316,208 @@
                 Clip não adiciona margem sobre esse consumo.
               </p>
             </section>
+
+            <section class="panel folder-panel">
+              <div class="panel-head">
+                <div>
+                  <span class="panel-index">03</span>
+                  <h3>PASTA DOS CLIPS</h3>
+                </div>
+                <span>ONDE OS CLIPS FICAM</span>
+              </div>
+              <div class="folder-row">
+                <span class="folder-path" id="cfgLibraryPath">—</span>
+                <div class="folder-actions">
+                  <button class="secondary-button" id="cfgOpenFolder" type="button">ABRIR</button>
+                  <button class="primary-button" id="cfgChangeFolder" type="button">TROCAR</button>
+                </div>
+              </div>
+              <p class="panel-note">OS CLIPS SÃO SALVOS E PROCESSADOS NESTE COMPUTADOR.</p>
+            </section>
+
+            <section class="panel docs-panel">
+              <div class="panel-head">
+                <div>
+                  <span class="panel-index">04</span>
+                  <h3>DOCUMENTOS</h3>
+                </div>
+                <span>LEGAL</span>
+              </div>
+              <div class="docs-links">
+                <button type="button" data-legal="terms">TERMOS DE USO</button>
+                <button type="button" data-legal="privacy">POLÍTICA DE PRIVACIDADE</button>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="view-conta" class="view hidden">
+          <div class="page-intro">
+            <div>
+              <span class="eyebrow">SUA CONTA</span>
+              <h2>CONTA<br /><em>E ACESSO.</em></h2>
+            </div>
+            <p>Gerencie seu acesso e os dados guardados neste dispositivo.</p>
+          </div>
+
+          <div class="key-layout">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <span class="panel-index">01</span>
+                  <h3>IDENTIDADE</h3>
+                </div>
+                <span>LOGIN</span>
+              </div>
+              <dl class="summary-list">
+                <div><dt>E-MAIL</dt><dd id="contaEmail">—</dd></div>
+              </dl>
+              <button class="primary-button full-button" id="resetPass" type="button">
+                TROCAR SENHA POR EMAIL
+              </button>
+              <p class="panel-note" id="resetPassNote">ENVIAMOS UM LINK DE REDEFINIÇÃO PARA O SEU EMAIL.</p>
+              <button class="secondary-button full-button" id="signOut" type="button">SAIR DA CONTA</button>
+            </section>
+
+            <section class="panel danger-panel">
+              <div class="panel-head">
+                <div>
+                  <span class="panel-index">02</span>
+                  <h3>DADOS LOCAIS</h3>
+                </div>
+                <span>LGPD</span>
+              </div>
+              <p class="cost-copy">
+                Remove deste computador a chave da OpenRouter, a sessão de login e suas
+                preferências. <strong>Os clips já gerados não são apagados.</strong> Você
+                precisará entrar e configurar novamente.
+              </p>
+              <button class="danger-button full-button" id="wipeData" type="button">
+                APAGAR DADOS DESTE DISPOSITIVO
+              </button>
+              <p class="panel-note" id="wipeNote"></p>
+
+              <div class="danger-divider"></div>
+              <p class="cost-copy">
+                <strong>Excluir conta</strong> remove sua conta do Medusa Clip de forma
+                permanente. Esta ação <strong>não pode ser desfeita</strong>.
+              </p>
+              <button class="danger-button full-button" id="deleteAccount" type="button">
+                EXCLUIR MINHA CONTA
+              </button>
+              <p class="panel-note" id="deleteAccountNote"></p>
+            </section>
           </div>
         </section>
       </div>
     </main>
   </div>
+
+  <div class="onboarding hidden" id="onboarding">
+    <div class="onboarding-card">
+      <div class="onboarding-head">
+        <div class="auth-brand">
+          <img class="logo" src="logo.png" alt="" />
+          <div>
+            <strong>MEDUSA</strong>
+            <span>CLIP</span>
+          </div>
+        </div>
+        <ol class="ob-steps" aria-hidden="true">
+          <li class="active" data-dot="1"></li>
+          <li data-dot="2"></li>
+          <li data-dot="3"></li>
+        </ol>
+      </div>
+
+      <section class="ob-step" id="obStep1">
+        <span class="eyebrow">PRIMEIRO ACESSO</span>
+        <h2>BEM-VINDO AO<br /><em>MEDUSA CLIP.</em></h2>
+        <p>
+          Tudo roda no seu computador: seu gameplay é analisado, cortado e renderizado
+          localmente — <strong>os vídeos não sobem para nenhuma nuvem nossa</strong>.
+        </p>
+        <ul class="ob-list">
+          <li>Para gerar cortes, a IA usa <strong>sua chave da OpenRouter</strong>; o custo é cobrado direto por lá.</li>
+          <li>A análise envia transcrição e quadros do vídeo à OpenRouter. Detalhes na Política de Privacidade.</li>
+          <li>O login usa seu e-mail no Supabase. Sem telemetria.</li>
+        </ul>
+        <div class="ob-actions">
+          <button class="primary-button" data-ob-next="2" type="button">COMEÇAR →</button>
+        </div>
+      </section>
+
+      <section class="ob-step hidden" id="obStep2">
+        <span class="eyebrow">ANTES DE USAR</span>
+        <h2>ACEITES.</h2>
+        <p>Leia e aceite para continuar. Você pode reler a qualquer momento na aba Chaves API.</p>
+        <div class="ob-accepts">
+          <label class="check-field">
+            <input id="acTerms" type="checkbox" data-accept />
+            <span>
+              <strong>LI E ACEITO OS TERMOS DE USO</strong>
+              <small><button type="button" class="legal-link" data-legal="terms">ler os Termos</button></small>
+            </span>
+          </label>
+          <label class="check-field">
+            <input id="acPrivacy" type="checkbox" data-accept />
+            <span>
+              <strong>LI E ACEITO A POLÍTICA DE PRIVACIDADE</strong>
+              <small><button type="button" class="legal-link" data-legal="privacy">ler a Política</button></small>
+            </span>
+          </label>
+          <label class="check-field">
+            <input id="acContent" type="checkbox" data-accept />
+            <span>
+              <strong>TENHO DIREITOS SOBRE O CONTEÚDO</strong>
+              <small>Declaro ser responsável pelos vídeos que processo.</small>
+            </span>
+          </label>
+          <label class="check-field">
+            <input id="acAge" type="checkbox" data-accept />
+            <span>
+              <strong>TENHO 18 ANOS OU MAIS</strong>
+              <small>Confirmo minha maioridade.</small>
+            </span>
+          </label>
+        </div>
+        <div class="ob-actions">
+          <button class="secondary-button" data-ob-back="1" type="button">VOLTAR</button>
+          <button class="primary-button" id="obToStep3" data-ob-next="3" type="button" disabled>CONTINUAR →</button>
+        </div>
+      </section>
+
+      <section class="ob-step hidden" id="obStep3">
+        <span class="eyebrow">QUASE LÁ</span>
+        <h2>PASTA DOS CLIPS.</h2>
+        <p>Escolha onde os clips gerados serão salvos. Você pode trocar depois.</p>
+        <div class="ob-folder">
+          <span class="folder-path" id="obLibraryPath">—</span>
+          <div class="folder-actions">
+            <button class="secondary-button" id="obUseDefault" type="button">USAR PADRÃO</button>
+            <button class="primary-button" id="obPickFolder" type="button">ESCOLHER PASTA</button>
+          </div>
+        </div>
+        <p class="panel-note" id="obFolderNote">No macOS, escolher uma pasta concede ao app o acesso a ela.</p>
+        <div class="ob-actions">
+          <button class="secondary-button" data-ob-back="2" type="button">VOLTAR</button>
+          <button class="primary-button" id="obFinish" type="button" disabled>CONCLUIR</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="legal-modal hidden" id="legalModal" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle">
+    <div class="legal-modal-card">
+      <div class="legal-modal-head">
+        <strong id="legalModalTitle">DOCUMENTO</strong>
+        <button class="legal-close" id="legalClose" type="button" aria-label="Fechar">FECHAR</button>
+      </div>
+      <div class="legal-modal-body" id="legalModalBody"></div>
+    </div>
+  </div>
+
+  <script src="legal.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
