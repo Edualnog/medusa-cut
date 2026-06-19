@@ -38,4 +38,15 @@ The comparison was reviewed as a single side-by-side image. The redesigned app p
 - Removed reliance on remote Google Fonts by bundling the same landing fonts with the desktop renderer, preserving the design offline.
 - No cropped content, broken grids, inconsistent radii or unintended horizontal overflow were found in the reviewed states.
 
+## YouTube link preview
+
+- Previous compact link state: `/tmp/medusa-desktop-compact.png`
+- Final preview at the same 960 × 700 window: `/tmp/medusa-youtube-preview-compact.png`
+- Side-by-side comparison: `/tmp/medusa-youtube-preview-comparison.png`
+- Full-size final state: `/tmp/medusa-youtube-preview-final.png`
+- Confirmed public metadata rendering with both `youtube.com/watch` and `youtu.be` URLs.
+- Confirmed thumbnail, title, channel and canonical URL output without loading external HTML in the renderer.
+- Confirmed malformed URLs display an error and keep the Generate button disabled.
+- No clipping, horizontal overflow or renderer console errors were found in the preview states.
+
 final result: passed

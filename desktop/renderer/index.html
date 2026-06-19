@@ -94,11 +94,25 @@
                 <span class="source-action">PROCURAR</span>
               </button>
 
-              <label class="source-control hidden" id="srcLink">
-                <span class="source-label">LINK PÚBLICO</span>
-                <input id="linkInput" type="url" placeholder="YouTube, Drive ou arquivo .mp4" />
-                <span class="source-action">COLAR</span>
-              </label>
+              <div class="link-source-group hidden" id="srcLinkGroup">
+                <div class="source-control link-control" id="srcLink">
+                  <label class="source-label" for="linkInput">LINK PÚBLICO</label>
+                  <input id="linkInput" type="url" placeholder="YouTube, Drive ou arquivo .mp4" />
+                  <button class="source-action" id="pasteLink" type="button">COLAR</button>
+                </div>
+
+                <article class="link-preview hidden" id="linkPreview" aria-live="polite">
+                  <div class="link-preview-media" id="linkPreviewMedia">
+                    <img id="linkPreviewImage" alt="" />
+                  </div>
+                  <div class="link-preview-copy">
+                    <span id="linkPreviewStatus">ANALISANDO LINK</span>
+                    <strong id="linkPreviewTitle">Buscando vídeo…</strong>
+                    <p id="linkPreviewAuthor"></p>
+                    <small id="linkPreviewUrl"></small>
+                  </div>
+                </article>
+              </div>
 
               <div class="divider-label"><span>CONFIGURAÇÃO DO CLIP</span></div>
 

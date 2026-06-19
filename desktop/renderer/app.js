@@ -24,6 +24,9 @@ let filePath = null;
 let isProcessing = false;
 let lastWarning = "";
 let libraryClips = [];
+let linkPreviewData = null;
+let linkPreviewTimer = null;
+let linkPreviewRequest = 0;
 
 function setView(view) {
   document.querySelectorAll(".nav").forEach((button) => {
@@ -55,7 +58,7 @@ function setMode(nextMode) {
     tab.setAttribute("aria-selected", String(active));
   });
   $("srcFile").classList.toggle("hidden", mode !== "file");
-  $("srcLink").classList.toggle("hidden", mode !== "link");
+  $("srcLinkGroup").classList.toggle("hidden", mode !== "link");
   updateSummary();
 }
 
@@ -72,15 +75,135 @@ $("srcFile").addEventListener("click", async () => {
   updateSummary();
 });
 
-$("linkInput").addEventListener("input", updateSummary);
+$("linkInput").addEventListener("input", queueLinkPreview);
 $("layout").addEventListener("change", updateSummary);
 $("dur").addEventListener("change", updateSummary);
 $("facecam").addEventListener("change", updateSummary);
 $("captions").addEventListener("change", updateSummary);
 $("clips").addEventListener("input", updateSummary);
 
+$("pasteLink").addEventListener("click", async () => {
+  try {
+    const clipboardText = await navigator.clipboard.readText();
+    if (clipboardText.trim()) {
+      $("linkInput").value = clipboardText.trim();
+      $("linkInput").dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  } catch {
+    $("linkInput").focus();
+  }
+});
+
+function validPublicUrl(rawUrl) {
+  try {
+    const parsed = new URL(rawUrl);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function isYoutubeUrl(rawUrl) {
+  try {
+    const parsed = new URL(rawUrl);
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    return ["youtu.be", "youtube.com", "m.youtube.com", "music.youtube.com"].includes(host);
+  } catch {
+    return false;
+  }
+}
+
+function resetLinkPreview() {
+  linkPreviewData = null;
+  $("linkPreview").className = "link-preview hidden";
+  $("linkPreviewImage").removeAttribute("src");
+  $("linkPreviewImage").alt = "";
+  $("linkPreviewTitle").textContent = "";
+  $("linkPreviewAuthor").textContent = "";
+  $("linkPreviewUrl").textContent = "";
+}
+
+function showLinkPreviewState(state, data = {}) {
+  const preview = $("linkPreview");
+  preview.className = `link-preview ${state}`.trim();
+
+  if (state === "loading") {
+    $("linkPreviewStatus").textContent = "YOUTUBE · ANALISANDO LINK";
+    $("linkPreviewTitle").textContent = "Buscando informações do vídeo…";
+    $("linkPreviewAuthor").textContent = "";
+    $("linkPreviewUrl").textContent = "";
+    return;
+  }
+
+  if (state === "error") {
+    $("linkPreviewStatus").textContent = "PRÉVIA NÃO DISPONÍVEL";
+    $("linkPreviewTitle").textContent = data.error || "Não foi possível identificar este vídeo.";
+    $("linkPreviewAuthor").textContent = "Confira o link e tente novamente.";
+    $("linkPreviewUrl").textContent = "";
+    return;
+  }
+
+  const hasThumbnail = Boolean(data.thumbnail);
+  preview.classList.toggle("no-image", !hasThumbnail);
+  $("linkPreviewStatus").textContent = `${data.provider || "YOUTUBE"} · VÍDEO ENCONTRADO`;
+  $("linkPreviewTitle").textContent = data.title;
+  $("linkPreviewAuthor").textContent = data.authorName;
+  $("linkPreviewUrl").textContent = data.canonicalUrl;
+  if (hasThumbnail) {
+    $("linkPreviewImage").src = data.thumbnail;
+    $("linkPreviewImage").alt = `Miniatura do vídeo ${data.title}`;
+  }
+}
+
+function queueLinkPreview() {
+  const rawUrl = $("linkInput").value.trim();
+  clearTimeout(linkPreviewTimer);
+  linkPreviewRequest += 1;
+  resetLinkPreview();
+  updateSummary();
+
+  if (!rawUrl) return;
+  if (!validPublicUrl(rawUrl)) {
+    showLinkPreviewState("error", { error: "COLE UM LINK COMPLETO, COMEÇANDO COM HTTPS://" });
+    return;
+  }
+  if (!isYoutubeUrl(rawUrl)) return;
+
+  const requestId = linkPreviewRequest;
+  showLinkPreviewState("loading");
+  linkPreviewTimer = setTimeout(async () => {
+    let result;
+    try {
+      result = await window.api.getLinkPreview(rawUrl);
+    } catch {
+      result = { ok: false, error: "NÃO FOI POSSÍVEL CARREGAR A PRÉVIA" };
+    }
+    if (requestId !== linkPreviewRequest || $("linkInput").value.trim() !== rawUrl) return;
+
+    if (result.unsupported) {
+      resetLinkPreview();
+      updateSummary();
+      return;
+    }
+
+    if (!result.ok) {
+      showLinkPreviewState("error", result);
+      updateSummary();
+      return;
+    }
+
+    linkPreviewData = { ...result, sourceUrl: rawUrl };
+    showLinkPreviewState("ready", result);
+    updateSummary();
+  }, 450);
+}
+
 function sourceReady() {
-  return mode === "file" ? Boolean(filePath) : $("linkInput").value.trim().length > 6;
+  if (mode === "file") return Boolean(filePath);
+  const sourceUrl = $("linkInput").value.trim();
+  if (!validPublicUrl(sourceUrl)) return false;
+  if (!isYoutubeUrl(sourceUrl)) return true;
+  return linkPreviewData?.sourceUrl === sourceUrl;
 }
 
 function updateSummary() {
@@ -90,7 +213,9 @@ function updateSummary() {
 
   $("clipsN").textContent = `${clips} ${clips === 1 ? "CLIP" : "CLIPS"}`;
   $("summarySource").textContent = sourceReady()
-    ? (mode === "file" ? $("fileName").textContent : "LINK PÚBLICO")
+    ? (mode === "file"
+      ? $("fileName").textContent
+      : (linkPreviewData?.sourceUrl === $("linkInput").value.trim() ? "YOUTUBE · CONFIRMADO" : "LINK PÚBLICO"))
     : "NÃO SELECIONADA";
   $("summaryLayout").textContent = LAYOUT_LABELS[selectedLayout] || "PERSONALIZADO";
   $("summaryDuration").textContent = DURATION_LABELS[$("dur").value] || "PERSONALIZADA";

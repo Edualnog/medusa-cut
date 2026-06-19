@@ -40,6 +40,66 @@ function libraryRoot() {
   return dir;
 }
 
+function youtubeVideoId(rawUrl) {
+  let parsed;
+  try {
+    parsed = new URL(String(rawUrl || "").trim());
+  } catch {
+    return null;
+  }
+
+  if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+  const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+  let videoId = null;
+
+  if (host === "youtu.be") {
+    videoId = parsed.pathname.split("/").filter(Boolean)[0];
+  } else if (["youtube.com", "m.youtube.com", "music.youtube.com"].includes(host)) {
+    if (parsed.pathname === "/watch") videoId = parsed.searchParams.get("v");
+    else {
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      if (["shorts", "live", "embed"].includes(parts[0])) videoId = parts[1];
+    }
+  }
+
+  return /^[a-zA-Z0-9_-]{11}$/.test(videoId || "") ? videoId : null;
+}
+
+function isYoutubeUrl(rawUrl) {
+  try {
+    const parsed = new URL(String(rawUrl || "").trim());
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    return ["youtu.be", "youtube.com", "m.youtube.com", "music.youtube.com"].includes(host);
+  } catch {
+    return false;
+  }
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function thumbnailDataUrl(rawUrl) {
+  if (!rawUrl) return null;
+  const parsed = new URL(rawUrl);
+  const host = parsed.hostname.toLowerCase();
+  if (parsed.protocol !== "https:" || !(host === "ytimg.com" || host.endsWith(".ytimg.com"))) return null;
+
+  const response = await fetchWithTimeout(parsed.toString());
+  if (!response.ok) return null;
+  const contentType = (response.headers.get("content-type") || "").split(";")[0];
+  if (!contentType.startsWith("image/")) return null;
+  const bytes = Buffer.from(await response.arrayBuffer());
+  if (bytes.length > 1_500_000) return null;
+  return `data:${contentType};base64,${bytes.toString("base64")}`;
+}
+
 // esquema privilegiado pra tocar os clipes locais no <video> (CSP-safe)
 protocol.registerSchemesAsPrivileged([
   { scheme: "zclip", privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
@@ -90,6 +150,49 @@ ipcMain.handle("set-key", (_e, k) => {
   return true;
 });
 ipcMain.handle("open-folder", (_e, p) => shell.openPath(p || libraryRoot()));
+
+// Busca somente metadados publicos do YouTube para confirmar o link na interface.
+ipcMain.handle("get-link-preview", async (_e, rawUrl) => {
+  if (!isYoutubeUrl(rawUrl)) {
+    return { ok: false, unsupported: true };
+  }
+
+  const videoId = youtubeVideoId(rawUrl);
+  if (!videoId) {
+    return { ok: false, error: "COLE UM LINK VÁLIDO DO YOUTUBE" };
+  }
+
+  const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  const endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(canonicalUrl)}&format=json`;
+
+  try {
+    const response = await fetchWithTimeout(endpoint, {
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) {
+      return { ok: false, error: "VÍDEO INDISPONÍVEL OU PRIVADO" };
+    }
+
+    const data = await response.json();
+    let thumbnail = null;
+    try {
+      thumbnail = await thumbnailDataUrl(data.thumbnail_url);
+    } catch {
+      // A confirmação textual continua útil quando a miniatura não responde.
+    }
+
+    return {
+      ok: true,
+      provider: "YOUTUBE",
+      title: String(data.title || "Vídeo do YouTube"),
+      authorName: String(data.author_name || "Canal não informado"),
+      canonicalUrl,
+      thumbnail,
+    };
+  } catch {
+    return { ok: false, error: "NÃO FOI POSSÍVEL CARREGAR A PRÉVIA" };
+  }
+});
 
 // Valida a chave na OpenRouter (e traz info de credito). NAO gera custo.
 ipcMain.handle("validate-key", async (_e, key) => {

@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld("api", {
   getKey: () => ipcRenderer.invoke("get-key"),
   setKey: (k) => ipcRenderer.invoke("set-key", k),
   openFolder: (p) => ipcRenderer.invoke("open-folder", p),
+  getLinkPreview: (url) => ipcRenderer.invoke("get-link-preview", url),
   validateKey: (k) => ipcRenderer.invoke("validate-key", k),
   getStats: () => ipcRenderer.invoke("get-stats"),
   listClips: () => ipcRenderer.invoke("list-clips"),
