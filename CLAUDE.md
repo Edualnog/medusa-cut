@@ -89,6 +89,18 @@ docs/     # SETUP.md
 > nem pro git. O desktop chama essa rota mandando o access_token do usuario (`API_BASE`,
 > default `https://medusaclip.com`, override via `MEDUSA_API_BASE`). Ver `web/.env.example`.
 
+## Deploy da web (Vercel)
+
+- **Monorepo**: na Vercel, **Root Directory = `web`** (o Next.js nao esta na raiz).
+- **Env vars** (Settings → Environment Variables): `NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY` (publicas) e `SUPABASE_SERVICE_ROLE_KEY` (secreta).
+  As `NEXT_PUBLIC_*` sao embutidas no build -> ao mudar, **rebuildar**.
+- **Sem middleware**: a web nao tem `middleware.ts` (auth e client-side; a rota de
+  exclusao valida o token sozinha). Nao reintroduzir o middleware do Supabase SSR
+  (quebrava no Edge -> `MIDDLEWARE_INVOCATION_FAILED`).
+- Auto-deploy da Vercel exige que o **email do autor do commit** exista na conta do
+  GitHub (`git config user.email`). Email errado -> deploy recusado.
+
 ## Convencoes
 
 **Motor (Python)**: Python 3.11+, type hints, `from __future__ import annotations`.
