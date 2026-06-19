@@ -82,8 +82,11 @@ web/      # Next.js (App Router) @ Vercel: landing 8-bit + downloads + login
 docs/     # SETUP.md
 ```
 
-> Supabase: **so auth** (`auth.users` nativo) — **sem schema custom** no repo. Login
-> usa email/senha pelo painel; nada de tabelas/migrations. App gratuito — sem billing.
+> Supabase: **auth** (`auth.users` nativo) + **1 tabela**: `legal_acceptances`
+> (`supabase/migrations/0001_legal_acceptances.sql`) — **prova de aceite** dos termos
+> (user_id/version/accepts/accepted_at, RLS, imutavel). O desktop grava cada aceite via
+> sessao do user (`recordAcceptance`/`syncAcceptance` no `main.js`, com retry/backfill).
+> App gratuito — sem billing.
 >
 > Backend minimo na web: rota privilegiada `web/app/api/account/delete` (runtime
 > nodejs) usa a **`SUPABASE_SERVICE_ROLE_KEY`** (server-only, env da Vercel / `.env.local`)

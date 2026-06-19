@@ -1,6 +1,6 @@
 # Política de Privacidade — Medusa Clip
 
-> **Minuta — revisar com advogado.** Versão 2026-06-18.
+> **Minuta — revisar com advogado.** Versão 2026-06-19.
 > Fonte canônica. A cópia exibida no app vive em `desktop/renderer/legal.js` —
 > manter as duas em sincronia.
 
@@ -20,6 +20,8 @@ computador. **Nós não recebemos seus vídeos.** Não coletamos telemetria nem 
 ## 3. Dados que saem do seu dispositivo
 - **Login (Supabase):** seu e-mail e senha são enviados ao Supabase para autenticar sua
   conta.
+- **Aceites legais (Supabase):** registramos a versão dos Termos e desta Política que
+  você aceitou, com data e hora, vinculados à sua conta — como prova de consentimento.
 - **Análise por IA (OpenRouter):** para gerar os cortes, o Aplicativo envia à OpenRouter
   — usando a *sua* chave — a transcrição do áudio, instruções (prompts) e **quadros
   (imagens) do seu vídeo**. Esse tratamento fica sujeito às políticas da OpenRouter e dos

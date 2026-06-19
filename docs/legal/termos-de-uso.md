@@ -1,6 +1,6 @@
 # Termos de Uso — Medusa Clip
 
-> **Minuta — revisar com advogado.** Versão 2026-06-18.
+> **Minuta — revisar com advogado.** Versão 2026-06-19.
 > Fonte canônica destes termos. A cópia exibida no app vive em
 > `desktop/renderer/legal.js` — manter as duas em sincronia.
 

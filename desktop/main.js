@@ -358,6 +358,7 @@ ipcMain.handle("auth-get-session", async () => {
   const s = loadConfig().sessionEnc;
   if (!s || !s.refresh) return null;
   if (s.expires_at && s.expires_at * 1000 > Date.now() + 60_000) {
+    syncAcceptance(); // backfill/retry da prova de aceite (background)
     return { email: s.email };
   }
   const refreshToken = decryptSecret(s.refresh);
@@ -368,6 +369,7 @@ ipcMain.handle("auth-get-session", async () => {
     });
     if (status === 200 && data.access_token) {
       storeSession(data);
+      syncAcceptance(); // backfill/retry da prova de aceite (background)
       return { email: data.user && data.user.email };
     }
   } catch {
@@ -412,8 +414,50 @@ ipcMain.handle("set-library-dir", (_e, dir) => {
   return { ok: true, dir };
 });
 
+// Prova de aceite: grava no Supabase (trilha de auditoria) usando a sessao do user.
+async function recordAcceptance(version, accepts, acceptedAt) {
+  const token = await getValidAccessToken();
+  if (!token) return false;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/legal_acceptances`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: "Bearer " + token,
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        version,
+        accepts: accepts || {},
+        app_version: app.getVersion(),
+        accepted_at: acceptedAt || new Date().toISOString(),
+      }),
+    });
+    return r.ok; // 201 Created
+  } catch {
+    return false;
+  }
+}
+
+// Garante que o aceite local esteja registrado no banco (best-effort + retry).
+// Cobre: novo aceite, re-aceite, retry offline e backfill de aceites locais antigos.
+async function syncAcceptance() {
+  const c = loadConfig();
+  const ob = c.onboarding;
+  if (!ob || ob.synced) return;
+  const ok = await recordAcceptance(ob.version, ob.accepts, ob.acceptedAt);
+  if (ok) {
+    const c2 = loadConfig();
+    if (c2.onboarding && c2.onboarding.version === ob.version) {
+      c2.onboarding.synced = true;
+      saveConfig(c2);
+    }
+  }
+}
+
 // --- Onboarding de primeiro acesso (aceites + pasta) ---
-const LEGAL_VERSION = "2026-06-18";
+const LEGAL_VERSION = "2026-06-19";
 ipcMain.handle("get-onboarding", () => {
   const c = loadConfig();
   const ob = c.onboarding;
@@ -434,13 +478,19 @@ ipcMain.handle("complete-onboarding", (_e, payload = {}) => {
 
   const c = loadConfig();
   c.libraryDir = dir;
-  c.onboarding = { version: LEGAL_VERSION, acceptedAt: new Date().toISOString(), accepts: a };
+  c.onboarding = {
+    version: LEGAL_VERSION,
+    acceptedAt: new Date().toISOString(),
+    accepts: a,
+    synced: false,
+  };
   saveConfig(c);
   try {
     fs.mkdirSync(dir, { recursive: true });
   } catch {
     /* idem */
   }
+  syncAcceptance(); // grava a prova no banco em background (retry no proximo boot)
   return { ok: true };
 });
 

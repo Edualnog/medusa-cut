@@ -3,10 +3,10 @@
 // FONTE CANONICA: docs/legal/*.md — manter em sincronia ao editar.
 // AVISO: minutas para MVP. Revisar com advogado antes de produção.
 window.LEGAL = {
-  version: "2026-06-18",
+  version: "2026-06-19",
 
   terms: `
-    <p class="legal-draft">Minuta — revisar com advogado. Versão 2026-06-18.</p>
+    <p class="legal-draft">Minuta — revisar com advogado. Versão 2026-06-19.</p>
     <h2>Termos de Uso — Medusa Clip</h2>
     <p>Ao instalar, acessar ou usar o aplicativo Medusa Clip ("Aplicativo"), você
     concorda com estes Termos de Uso. Se não concordar, não use o Aplicativo.</p>
@@ -82,7 +82,7 @@ window.LEGAL = {
   `,
 
   privacy: `
-    <p class="legal-draft">Minuta — revisar com advogado. Versão 2026-06-18.</p>
+    <p class="legal-draft">Minuta — revisar com advogado. Versão 2026-06-19.</p>
     <h2>Política de Privacidade — Medusa Clip</h2>
     <p>Esta Política explica como o Medusa Clip trata dados pessoais, em conformidade com
     a Lei Geral de Proteção de Dados (LGPD, Lei nº 13.709/2018).</p>
@@ -105,6 +105,9 @@ window.LEGAL = {
     <ul>
       <li><strong>Login (Supabase):</strong> seu e-mail e senha são enviados ao Supabase
       para autenticar sua conta.</li>
+      <li><strong>Aceites legais (Supabase):</strong> registramos a versão dos Termos e
+      desta Política que você aceitou, com data e hora, vinculados à sua conta — como
+      prova de consentimento.</li>
       <li><strong>Análise por IA (OpenRouter):</strong> para gerar os cortes, o
       Aplicativo envia à OpenRouter — usando a <em>sua</em> chave — a transcrição do
       áudio, instruções (prompts) e <strong>quadros (imagens) do seu vídeo</strong>. Esse
