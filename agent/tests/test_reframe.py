@@ -7,7 +7,11 @@ from medusacut.reframe.layouts import (
     crop_dims,
     smooth_centers,
 )
-from medusacut.reframe.saliency import facecam_rect
+from medusacut.reframe.saliency import (
+    _center_weight,
+    _weighted_center,
+    facecam_rect,
+)
 
 
 def test_crop_dims_169_source_gives_916_column():
@@ -60,3 +64,40 @@ def test_centers_to_keyframes_resets_on_scene_cut():
 def test_centers_to_keyframes_empty_falls_back_to_center():
     kf = centers_to_keyframes([], width=1000, crop_w=300)
     assert kf == [(0.0, 350.0)]
+
+
+# --- tracking novo: vies de centro + lock-on (usa numpy, sem video) ---
+
+def test_center_weight_peaks_at_middle():
+    import numpy as np
+
+    w = _center_weight(np, 9)
+    assert w.argmax() == 4              # pico no meio
+    assert w[0] < w[4] and w[-1] < w[4]  # bordas pesam menos
+    assert abs(w[0] - w[-1]) < 1e-6      # simetrico
+
+
+def test_weighted_center_holds_previous_when_idle():
+    import numpy as np
+
+    col = np.zeros(20, dtype=np.float32)  # frame parado (sem movimento)
+    assert _weighted_center(np, col, _center_weight(np, 20), 0.7) == 0.7
+
+
+def test_weighted_center_biases_edge_action_toward_center():
+    import numpy as np
+
+    col = np.zeros(21, dtype=np.float32)
+    col[-1] = 1.0  # toda a energia na borda direita
+    w = _center_weight(np, 21)
+    cx = _weighted_center(np, col, w, 0.5)
+    assert 0.5 < cx < 1.0  # move pra acao, mas o vies de centro + lock seguram
+
+
+def test_weighted_center_symmetric_stays_centered():
+    import numpy as np
+
+    col = np.zeros(21, dtype=np.float32)
+    col[0] = col[-1] = 1.0  # energia simetrica nas duas bordas
+    cx = _weighted_center(np, col, _center_weight(np, 21), 0.5)
+    assert abs(cx - 0.5) < 1e-6

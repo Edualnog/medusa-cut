@@ -68,6 +68,11 @@ No motor (`agent/src/medusacut/`), inalterado pela virada local-first:
    Build de ffmpeg local sem libass/drawtext — legenda via Pillow + overlay.
 3. **Reframe** (`reframe/`): segue a acao (ciente de corte de cena), facecam
    auto-detectado, layouts (facecam-em-cima, fundo desfocado).
+   - **Tracking** (`saliency.py`): optical flow (Farneback) + **vies de centro**
+     (mira do FPS) + **lock-on** (trava no foco; segura em frame parado). Mascara a
+     caixa do facecam (canto OU auto-detectada). Tuning em `CENTER_SIGMA`/`LOCK_BETA`.
+   - **Layout default** = `facecam_top_gameplay_bottom` **quando ha rosto**; sem rosto
+     (YuNet+VLM falham) cai pra `gameplay_blur` (tela cheia), nao faixa vazia.
 
 ## Monorepo
 

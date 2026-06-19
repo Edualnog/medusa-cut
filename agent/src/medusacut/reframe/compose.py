@@ -52,7 +52,7 @@ def render_facecam_layout(
     panel = os.path.join(cache_dir, f"{base}.panel.mp4")
     plan = layouts.build_plan(
         media, candidate, dynamic=dynamic, facecam_corner=facecam_corner,
-        target_w=TARGET_W, target_h=game_h, cuts=cuts,
+        facecam_box=rect, target_w=TARGET_W, target_h=game_h, cuts=cuts,
     )
     from medusacut.render import ffmpeg as render
 

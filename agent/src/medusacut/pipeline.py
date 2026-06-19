@@ -160,7 +160,7 @@ def render_candidates(
     """
     os.makedirs(out_dir, exist_ok=True)
     cache_dir = os.path.join(out_dir, ".cache")
-    layout_name = _resolve_layout(layout, facecam_corner)
+    layout_name = _resolve_layout(layout, facecam_corner, facecam_auto)
 
     # Cortes de cena (uma vez): o enquadramento dinamico salta neles em vez de varrer.
     cuts = None
@@ -175,7 +175,6 @@ def render_candidates(
         import sys
 
         from medusacut.reframe import facecam as facecam_mod
-        from medusacut.reframe.saliency import facecam_rect
 
         _report(progress, 0.0, "Detectando facecam (rosto)…")
         detected = facecam_mod.detect_facecam(media.path)
@@ -198,10 +197,12 @@ def render_candidates(
                 facecam_box = vlm_box
                 facecam_info = {"auto": True, "method": "vlm", "box": list(vlm_box)}
             else:
-                facecam_box = facecam_rect("tr")  # ultimo fallback: preset
-                facecam_info = {"auto": True, "method": "preset", "box": list(facecam_box)}
+                # Sem rosto (nem YuNet nem VLM) -> nao force faixa de facecam vazia.
+                # Cai pra tela cheia com fundo desfocado (decisao de produto).
+                layout_name = "gameplay_blur"
+                facecam_info = {"auto": True, "method": "none", "fallback": "gameplay_blur"}
                 print(
-                    "[medusacut] facecam nao detectado (rosto nem VLM); usando preset top-right",
+                    "[medusacut] facecam nao detectado (rosto nem VLM); usando gameplay_blur (tela cheia)",
                     file=sys.stderr,
                 )
 
@@ -373,10 +374,12 @@ def _burn_captions(out_path, words, cand, cache_dir, caption_y=0.80):
         print(f"[medusacut] sem legenda em {_os.path.basename(out_path)}: {exc}", file=sys.stderr)
 
 
-def _resolve_layout(layout: str, facecam_corner: str | None) -> str:
-    """Normaliza o nome do layout; facecam sem canto definido cai pro dinamico."""
+def _resolve_layout(layout: str, facecam_corner: str | None, facecam_auto: bool = False) -> str:
+    """Normaliza o nome do layout. O split (facecam em cima) vale com canto manual
+    OU com auto-deteccao; sem nenhum dos dois cai pro dinamico. (Se a auto-deteccao
+    nao achar rosto, o pipeline depois troca pra gameplay_blur — tela cheia.)"""
     if layout == "facecam_top_gameplay_bottom":
-        return layout if facecam_corner else "dynamic_gameplay"
+        return layout if (facecam_corner or facecam_auto) else "dynamic_gameplay"
     if layout in ("gameplay_blur", "gameplay_only", "dynamic_gameplay"):
         return layout
     return "dynamic_gameplay"  # nome legado/desconhecido -> dinamico

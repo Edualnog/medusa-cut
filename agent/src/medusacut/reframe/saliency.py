@@ -1,10 +1,17 @@
 """Onde esta a ACAO em cada corte (pra o enquadramento 9:16 seguir o jogo).
 
-Mede movimento por coluna (diferenca entre frames amostrados, em baixa resolucao)
-e devolve o centro horizontal da acao ao longo do tempo. Mascara a regiao do
-facecam pra o rosto do streamer nao "puxar" o enquadramento.
+Modelo de tracking (CV classica, roda em CPU no PC do usuario):
+  1. **Optical flow** (Farneback) entre frames amostrados -> movimento COERENTE,
+     ignora flicker/compressao melhor que diferenca de pixel crua. (Cai pra
+     diferenca absoluta se o flow falhar.)
+  2. **Vies de centro** (gaussiana): em FPS a acao fica perto da mira/centro, entao
+     movimento na BORDA (muzzle flash, UI, explosao fora de foco) pesa menos.
+  3. **Lock-on**: trava no foco dominante (mistura com o alvo anterior) e, em frame
+     parado, SEGURA o enquadramento em vez de pular pro centro.
+  4. Mascara a regiao do facecam (canto OU caixa detectada) pra o rosto nao puxar.
 
-OpenCV (cv2) importado DENTRO da funcao — dep pesada. Roda em CPU.
+A suavizacao/keyframes ficam em `reframe/layouts.py`. OpenCV (cv2) importado DENTRO
+da funcao — dep pesada.
 """
 
 from __future__ import annotations
@@ -19,6 +26,11 @@ FACECAM_RECTS: dict[str, tuple[float, float, float, float]] = {
     "br": (0.62, 0.58, 1.00, 1.00),
 }
 
+# Parametros do tracking (calibrar vendo um corte real).
+CENTER_SIGMA = 0.34   # largura do vies de centro (0..1); menor = mais preso ao centro
+LOCK_BETA = 0.5       # quanto o alvo novo "puxa" vs. segurar o anterior (lock-on)
+ENERGY_GATE = 1e-6    # abaixo disso e "parado" -> segura o enquadramento
+
 
 def facecam_rect(corner: str | None) -> tuple[float, float, float, float] | None:
     """Retangulo normalizado do facecam pro canto pedido (ou None)."""
@@ -32,13 +44,14 @@ def action_path(
     candidate: Candidate,
     *,
     facecam_corner: str | None = None,
+    facecam_box: tuple[float, float, float, float] | None = None,
     analysis_fps: float = 4.0,
     analysis_width: int = 320,
 ) -> list[tuple[float, float]]:
     """Devolve [(t_relativo_s, centro_x_normalizado_0a1), …] ao longo do corte.
 
-    `centro_x` e o centroide da energia de movimento por coluna. Sem movimento
-    (ou corte minusculo) cai pra 0.5 (centro).
+    `facecam_box` (x0,y0,x1,y1 normalizado) tem prioridade sobre `facecam_corner`
+    pra mascarar o rosto — usado quando o facecam foi auto-detectado.
     """
     import cv2  # noqa: PLC0415
     import numpy as np  # noqa: PLC0415
@@ -52,10 +65,12 @@ def action_path(
     start_f = int(candidate.start * src_fps)
     end_f = int(candidate.end * src_fps)
 
-    rect = facecam_rect(facecam_corner)
+    rect = facecam_box or facecam_rect(facecam_corner)
     cap.set(cv2.CAP_PROP_POS_FRAMES, start_f)
 
-    prev = None
+    prev = None  # frame anterior em cinza (uint8)
+    weight = None  # vies de centro (cacheado por largura)
+    prev_cx = 0.5
     samples: list[tuple[float, float]] = []
     f = start_f
     while f < end_f:
@@ -67,21 +82,17 @@ def action_path(
             small = cv2.resize(
                 frame, (analysis_width, max(1, int(analysis_width * h0 / w0)))
             )
-            gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY).astype(np.float32)
+            gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
             if prev is not None:
-                diff = np.abs(gray - prev)
+                mag = _motion_magnitude(cv2, np, prev, gray)
                 if rect is not None:
-                    _mask_rect(diff, rect)
-                col = diff.sum(axis=0)
-                col = np.maximum(col - col.mean(), 0.0)  # gate: so movimento acima da media
-                total = float(col.sum())
-                if total > 1e-6:
-                    xs = np.arange(col.shape[0], dtype=np.float32)
-                    cx = float((xs * col).sum() / total) / col.shape[0]
-                    cx = 0.8 * cx + 0.2 * 0.5  # leve vies pro centro (menos tremido)
-                else:
-                    cx = 0.5
-                samples.append(((f - start_f) / src_fps, cx))
+                    _mask_rect(mag, rect)
+                col = mag.sum(axis=0)
+                col = np.maximum(col - col.mean(), 0.0)  # gate: so acima da media
+                if weight is None or weight.shape[0] != col.shape[0]:
+                    weight = _center_weight(np, col.shape[0])
+                prev_cx = _weighted_center(np, col, weight, prev_cx)
+                samples.append(((f - start_f) / src_fps, prev_cx))
             prev = gray
         else:
             if not cap.grab():  # pula frame sem decodificar (rapido)
@@ -90,6 +101,37 @@ def action_path(
 
     cap.release()
     return samples or [(0.0, 0.5)]
+
+
+def _motion_magnitude(cv2, np, prev, gray):
+    """Magnitude de movimento por pixel: optical flow (Farneback) com fallback
+    pra diferenca absoluta se o flow falhar."""
+    try:
+        flow = cv2.calcOpticalFlowFarneback(prev, gray, None, 0.5, 2, 15, 3, 5, 1.2, 0)
+        return np.sqrt(flow[..., 0] ** 2 + flow[..., 1] ** 2)
+    except Exception:
+        return np.abs(gray.astype(np.float32) - prev.astype(np.float32))
+
+
+def _center_weight(np, n: int, sigma: float = CENTER_SIGMA):
+    """Gaussiana 0..1 centrada no meio (vies pra acao do FPS perto da mira)."""
+    if n <= 0:
+        return np.ones(0, dtype=np.float32)
+    pos = np.linspace(0.0, 1.0, n, dtype=np.float32)
+    return np.exp(-((pos - 0.5) ** 2) / (2.0 * sigma * sigma))
+
+
+def _weighted_center(np, col, weight, prev_cx: float) -> float:
+    """Centro horizontal (0..1) da energia ponderada pelo vies de centro, com
+    lock-on: segura o anterior em frame parado e mistura no resto (anti ping-pong).
+    """
+    cw = col * weight
+    total = float(cw.sum())
+    if total <= ENERGY_GATE:
+        return prev_cx  # parado -> segura o enquadramento (nao pula pro centro)
+    pos = np.linspace(0.0, 1.0, col.shape[0], dtype=np.float32)
+    cx_raw = float((pos * cw).sum() / total)
+    return LOCK_BETA * cx_raw + (1.0 - LOCK_BETA) * prev_cx
 
 
 def _mask_rect(arr, rect: tuple[float, float, float, float]) -> None:

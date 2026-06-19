@@ -139,6 +139,7 @@ def build_plan(
     *,
     dynamic: bool = True,
     facecam_corner: str | None = None,
+    facecam_box: tuple[float, float, float, float] | None = None,
     target_w: int = TARGET_W,
     target_h: int = TARGET_H,
     cuts: list[float] | None = None,
@@ -146,7 +147,8 @@ def build_plan(
     """Monta o plano de recorte de um corte (dinamico por padrao).
 
     `cuts` sao tempos absolutos de troca de cena no video; o que cair dentro do
-    corte faz o enquadramento saltar (ver centers_to_keyframes)."""
+    corte faz o enquadramento saltar (ver centers_to_keyframes). `facecam_box`
+    (rect normalizado) mascara o rosto detectado no tracking."""
     cw, ch = crop_dims(media.width, media.height, target_w, target_h)
     center_x = float((media.width - cw) // 2)
 
@@ -155,7 +157,9 @@ def build_plan(
 
     from medusacut.reframe import saliency
 
-    samples = saliency.action_path(media, candidate, facecam_corner=facecam_corner)
+    samples = saliency.action_path(
+        media, candidate, facecam_corner=facecam_corner, facecam_box=facecam_box
+    )
     rel_cuts = [c - candidate.start for c in (cuts or []) if candidate.start < c < candidate.end]
     keyframes = centers_to_keyframes(
         samples, media.width, cw, alpha=SMOOTH_ALPHA_2PASS, cuts=rel_cuts,
