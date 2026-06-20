@@ -5,18 +5,18 @@ import { MedusaLogo } from "./medusa-logo";
 const BENEFITS = [
   {
     number: "01",
-    title: "SEU VÍDEO NÃO SOBE",
-    text: "O gameplay entra e sai no seu computador. Nada de esperar upload ou entregar arquivos brutos para uma nuvem.",
+    title: "ESPECIALISTA EM GAMEPLAY",
+    text: "O motor foi feito do zero e afinado só pra gameplay: combina áudio, movimento e visão pra achar clutch, fail, clímax e reação — com a precisão que recortador genérico não tem.",
   },
   {
     number: "02",
-    title: "USA A FORÇA DO SEU PC",
-    text: "Transcrição, análise de movimento, enquadramento e render usam o hardware que você já tem.",
+    title: "GRÁTIS, COM A SUA CHAVE",
+    text: "O app é 100% gratuito. A IA roda na SUA própria chave — você paga só o custo real dos modelos, direto ao provedor, sem intermediário e sem trava.",
   },
   {
     number: "03",
-    title: "FEITO PARA GAMEPLAY",
-    text: "A seleção combina áudio, movimento e visão para encontrar ação, reação, clutch, fail e payoff visual.",
+    title: "SEU GAMEPLAY, SUA LIBERDADE",
+    text: "Tudo processa no seu PC e a biblioteca fica no seu disco. Seu gameplay nunca sobe pra nuvem. Seus vídeos, suas chaves, seu controle.",
   },
 ];
 
@@ -51,16 +51,16 @@ const FAQ = [
     answer: "Para entrar na conta, usar a OpenRouter e baixar vídeos por link, sim. Arquivos locais continuam sendo analisados e renderizados no seu PC.",
   },
   {
-    question: "POR QUE USAR MINHA PRÓPRIA CHAVE DA OPENROUTER?",
-    answer: "Porque você paga o custo real dos modelos, direto ao provedor, sem comprar pacotes de créditos inflados da Medusa Clip.",
+    question: "POR QUE USAR MINHA PRÓPRIA CHAVE DE IA?",
+    answer: "Liberdade e transparência. A chave fica no seu dispositivo e fala direto com o provedor — você controla seu gasto e nada de IA passa pelos nossos servidores. É o que mantém o app gratuito.",
+  },
+  {
+    question: "O QUE TORNA OS CORTES MELHORES QUE UM RECORTADOR GENÉRICO?",
+    answer: "O Medusa Clip é especializado em gameplay. Em vez de tratar tudo como vídeo de fala, ele lê áudio, movimento e os frames pra reconhecer o que importa num gameplay: clutch, fail, clímax, reação e a ação na tela — incluindo momentos de pura jogada, sem comentário.",
   },
   {
     question: "FUNCIONA COM QUALQUER JOGO?",
-    answer: "A análise principal é genérica para gameplay: áudio, movimento, fala e frames. Isso permite trabalhar com FPS, simuladores, survival, corrida e outros gêneros.",
-  },
-  {
-    question: "QUANDO OS INSTALADORES SERÃO LIBERADOS?",
-    answer: "Os builds estão sendo preparados e testados por plataforma. A página mostrará o download assim que cada versão estiver assinada e pronta.",
+    answer: "Sim. A especialização é em gameplay, não em um título só — funciona com FPS, battle royale, survival, corrida, MOBA e mais, detectando ação, facecam e os melhores momentos.",
   },
 ];
 
@@ -81,7 +81,7 @@ export default function Home() {
           <div className="nav-menu">
             <a href="#recursos">RECURSOS</a>
             <a href="#download">DOWNLOAD</a>
-            <a href="#preco">PREÇO</a>
+            <a href="#liberdade">GRÁTIS</a>
           </div>
 
           <Link href="/login" className="nav-login">
@@ -93,27 +93,29 @@ export default function Home() {
       <main>
         <section className="hero shell-width">
           <div className="hero-copy">
-            <div className="eyebrow">PROCESSAMENTO 100% LOCAL</div>
+            <div className="eyebrow">ESPECIALISTA EM GAMEPLAY · 100% LOCAL</div>
             <h1>
-              SEU GAMEPLAY.
+              FEITO SÓ
               <br />
-              SEU PC.
+              PRA GAMEPLAY.
               <br />
               <span>SEUS MELHORES CLIPS.</span>
             </h1>
             <p className="hero-text">
-              Transforme vídeos longos em clips verticais com IA, legenda karaokê e
-              enquadramento automático — sem enviar seu gameplay para uma nuvem.
+              Recortadores genéricos tratam gameplay como vídeo qualquer. O Medusa Clip é
+              especializado em gameplay: acha o clutch, o fail e o clímax que os outros
+              erram. Gratuito, com a SUA chave de IA e rodando no SEU PC — seu gameplay
+              nunca sobe pra nuvem.
             </p>
             <div className="hero-actions">
               <a className="button button-primary" href="#download">
-                VER DOWNLOADS
+                BAIXAR GRÁTIS
               </a>
               <a className="button button-secondary" href="#como-funciona">
                 COMO FUNCIONA
               </a>
             </div>
-            <p className="hero-note">MACOS · WINDOWS · LINUX · SUA CHAVE OPENROUTER</p>
+            <p className="hero-note">GRÁTIS · MACOS · WINDOWS · LINUX · SUA CHAVE DE IA</p>
           </div>
 
           <figure className="app-preview">
@@ -137,20 +139,21 @@ export default function Home() {
 
         <div className="proof-strip" aria-label="Diferenciais principais">
           <div className="shell-width proof-strip-inner">
+            <span>ESPECIALISTA EM GAMEPLAY</span>
+            <span>100% GRÁTIS</span>
+            <span>SUA CHAVE DE IA</span>
             <span>SEM UPLOAD</span>
-            <span>FFMPEG INCLUSO</span>
-            <span>IA MULTIMODAL</span>
-            <span>CLIPS 9:16</span>
           </div>
         </div>
 
         <section className="section shell-width" id="recursos">
-          <SectionTag>POR QUE RODAR LOCAL</SectionTag>
+          <SectionTag>POR QUE MEDUSA CLIP</SectionTag>
           <div className="section-heading">
-            <h2>MAIS RÁPIDO PARA VOCÊ.<br />MAIS PRIVADO POR PADRÃO.</h2>
+            <h2>FEITO PRA GAMEPLAY.<br />DO SEU JEITO, NO SEU PC.</h2>
             <p>
-              Sem fila de VPS e sem upload de arquivos gigantes. Você começa mais
-              rápido e mantém o controle sobre o material bruto.
+              Ferramentas genéricas tratam gameplay como vídeo qualquer e perdem o
+              melhor momento. O Medusa Clip é especializado — e te deixa no controle:
+              de graça, com a sua chave de IA, sem nada subindo pra nuvem.
             </p>
           </div>
           <div className="benefit-grid">
@@ -212,30 +215,32 @@ export default function Home() {
             ))}
           </div>
           <p className="download-note">
-            OS INSTALADORES SERÃO LIBERADOS AQUI APÓS ASSINATURA E TESTES EM CADA PLATAFORMA.
+            CADA INSTALADOR JÁ TRAZ O APP, O MOTOR DE CORTES, FFMPEG E FFPROBE EMBUTIDOS — E É GRÁTIS. SEM PYTHON, SEM DEPENDÊNCIAS.
           </p>
         </section>
 
-        <section className="section shell-width pricing-section" id="preco">
+        <section className="section shell-width pricing-section" id="liberdade">
           <div className="pricing-copy">
-            <SectionTag>PREÇO</SectionTag>
-            <h2>GRÁTIS.<br />SEM PEGADINHA.</h2>
+            <SectionTag>GRÁTIS E NO SEU CONTROLE</SectionTag>
+            <h2>GRÁTIS.<br />PRA SEMPRE.</h2>
             <p>
-              O Medusa Clip é gratuito. Você só paga os modelos de IA direto na sua
-              própria chave da OpenRouter — sem mensalidade, sem créditos, sem margem nossa.
+              O Medusa Clip é gratuito. A IA roda na SUA chave da OpenRouter — você paga
+              só o custo real dos modelos, direto ao provedor. Sem intermediário e sem
+              trava: seus clips, suas chaves, sua liberdade.
             </p>
           </div>
           <article className="price-card">
             <span className="price-label">MEDUSA CLIP</span>
-            <div className="price">GRÁTIS <span>/ SEMPRE</span></div>
+            <div className="price">GRÁTIS <span>/ PRA SEMPRE</span></div>
             <ul>
-              <li>Processamento local de gameplay</li>
-              <li>Análise viral multimodal</li>
+              <li>Especializado em cortes de gameplay</li>
+              <li>Roda na sua própria chave de IA</li>
+              <li>Processamento 100% local e privado</li>
               <li>Legenda karaokê e reframe automático</li>
-              <li>Atualizações para desktop</li>
+              <li>Atualizações automáticas no desktop</li>
             </ul>
             <Link className="button button-primary" href="/login">
-              CRIAR CONTA
+              CRIAR CONTA GRÁTIS
             </Link>
           </article>
         </section>

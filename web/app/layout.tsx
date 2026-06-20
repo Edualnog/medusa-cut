@@ -17,9 +17,9 @@ const body = VT323({
 });
 
 export const metadata: Metadata = {
-  title: "Medusa Clip — cortes de gameplay no seu PC",
+  title: "Medusa Clip — cortes especializados em gameplay, grátis e no seu PC",
   description:
-    "Transforme gameplays em clips verticais 9:16 com IA, legenda e enquadramento automático, processando tudo localmente.",
+    "O recortador especializado em gameplay: acha clutch, fail e clímax que ferramentas genéricas erram. Clips verticais 9:16 com legenda karaokê e enquadramento automático — grátis, com a sua própria chave de IA, processando tudo no seu PC.",
 };
 
 export default function RootLayout({
