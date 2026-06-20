@@ -1,13 +1,17 @@
 name: release
 
-# Builda os instaladores nativos por plataforma e publica no repo PÚBLICO de releases
+# Builda os instaladores nativos por plataforma e publica UMA release no repo PÚBLICO
 # (Edualnog/medusa-clip-releases) — o código-fonte deste repo continua PRIVADO.
-# Dispara ao empurrar uma tag de versão (ex.: git tag v0.1.1 && git push --tags).
-# NÃO há cross-compile: cada artefato é buildado no seu próprio SO/arquitetura.
+# Dispara ao empurrar uma tag de versão (ex.: git tag v0.1.7 && git push --tags).
 #
-# Pré-requisito: criar um PAT com escopo `repo` (acesso a medusa-clip-releases) e
-# salvar como secret RELEASES_TOKEN deste repo (Settings → Secrets → Actions).
-# O GITHUB_TOKEN padrão NÃO serve: ele só publica no próprio repo (privado).
+# Desenho à prova de corrida: os jobs `build` NÃO publicam — cada um sobe seus
+# arquivos como artifact. O job `release` (depois de TODOS) baixa tudo e cria a
+# release de uma vez só. Assim nunca acontece de um runner publicar parcial enquanto
+# outro ainda está subindo (bug que deixava o release sem o Windows).
+#
+# NÃO há cross-compile: cada artefato é buildado no seu próprio SO/arquitetura.
+# Pré-requisito: secret RELEASES_TOKEN = PAT fine-grained com Contents:write em
+# medusa-clip-releases (o GITHUB_TOKEN padrão não cruza repos).
 on:
   push:
     tags:
@@ -28,7 +32,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11" # stack ML (ctranslate2/onnxruntime) tem wheels p/ 3.11
+          python-version: "3.11" # stack ML (ctranslate2/faster-whisper) tem wheels p/ 3.11
 
       - uses: actions/setup-node@v4
         with:
@@ -38,12 +42,44 @@ jobs:
         working-directory: desktop
         run: npm install
 
-      - name: Build + publica instalador
+      - name: Build do instalador (sem publicar)
         working-directory: desktop
         shell: bash
         env:
           PYTHON: python # setup-python expõe 3.11 como `python`
-          PUBLISH: always
-          # PAT com acesso ao repo público de releases (cross-repo publish).
-          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+          PUBLISH: never # NÃO publica aqui; o job `release` faz isso de uma vez
         run: bash scripts/build_app.sh
+
+      - name: Sobe os artefatos (instalador + feed do updater)
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.os }}
+          path: |
+            desktop/dist/*.dmg
+            desktop/dist/*.exe
+            desktop/dist/*.AppImage
+            desktop/dist/*.blockmap
+            desktop/dist/latest*.yml
+          if-no-files-found: error
+          retention-days: 2
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixa todos os artefatos num lugar só
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publica a release única (todos os assets de uma vez)
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --repo Edualnog/medusa-clip-releases \
+            --title "Medusa Clip ${GITHUB_REF_NAME}" \
+            --notes "Instaladores do Medusa Clip ${GITHUB_REF_NAME} (macOS Apple Silicon, Windows, Linux). App gratuito." \
+            --latest \
+            dist/*
