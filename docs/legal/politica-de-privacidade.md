@@ -12,7 +12,8 @@ O Medusa Clip é **local-first**: seus vídeos e clipes ficam e são processados
 computador. **Nós não recebemos seus vídeos.** Não coletamos telemetria nem analytics.
 
 ## 2. Dados que ficam no seu dispositivo
-- Sua chave da OpenRouter (**armazenada cifrada** pelo cofre do sistema operacional);
+- Sua chave do provedor de IA — OpenRouter, OpenAI ou Anthropic (**armazenada cifrada**
+  pelo cofre do sistema operacional);
 - Tokens da sua sessão de login (**cifrados**);
 - Os clipes gerados, na pasta que você escolher;
 - Estatísticas de custo/uso de IA e suas preferências do app.
@@ -22,9 +23,10 @@ computador. **Nós não recebemos seus vídeos.** Não coletamos telemetria nem 
   conta.
 - **Aceites legais (Supabase):** registramos a versão dos Termos e desta Política que
   você aceitou, com data e hora, vinculados à sua conta — como prova de consentimento.
-- **Análise por IA (OpenRouter):** para gerar os cortes, o Aplicativo envia à OpenRouter
-  — usando a *sua* chave — a transcrição do áudio, instruções (prompts) e **quadros
-  (imagens) do seu vídeo**. Esse tratamento fica sujeito às políticas da OpenRouter e dos
+- **Análise por IA (provedor que você escolher):** para gerar os cortes, o Aplicativo
+  envia ao provedor de IA selecionado — OpenRouter, OpenAI ou Anthropic — usando a *sua*
+  chave — a transcrição do áudio, instruções (prompts) e **quadros (imagens) do seu
+  vídeo**. Esse tratamento fica sujeito às políticas do provedor escolhido e dos
   provedores de modelo.
 - **Prévia de link (YouTube/Google):** ao colar um link, a URL é consultada no serviço
   oEmbed do YouTube para exibir título e miniatura.
@@ -34,11 +36,12 @@ computador. **Nós não recebemos seus vídeos.** Não coletamos telemetria nem 
 ## 4. Finalidades e bases legais
 Tratamos dados para autenticar sua conta (execução de contrato), gerar os cortes
 solicitados (execução de contrato e seu consentimento ao usar o recurso) e cumprir
-obrigações legais. O envio à OpenRouter ocorre por sua ação ao gerar clipes.
+obrigações legais. O envio ao provedor de IA ocorre por sua ação ao gerar clipes.
 
 ## 5. Compartilhamento (operadores)
 Usamos provedores que atuam como operadores: **Supabase** (conta/autenticação) e, por
-iniciativa sua, **OpenRouter** e provedores de modelos de IA (análise). A prévia usa
+iniciativa sua, **OpenRouter**, **OpenAI** ou **Anthropic** e provedores de modelos de IA
+(análise). A prévia usa
 serviço do **Google/YouTube**. Não vendemos seus dados.
 
 ## 6. Transferência internacional

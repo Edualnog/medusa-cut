@@ -1,7 +1,8 @@
 """Entry-point do APP DESKTOP (roda local no PC do usuario).
 
-Diferente da CLI pessoal: aceita arquivo LOCAL ou link, recebe a chave da OpenRouter
-por --key (ou env LLM_API_KEY) e emite o progresso em **JSON por linha no stdout** —
+Diferente da CLI pessoal: aceita arquivo LOCAL ou link, recebe a chave do provedor de IA
+por --key (ou env LLM_API_KEY; provedor via LLM_PROVIDER) e emite o progresso em
+**JSON por linha no stdout** —
 a casca (Electron/Tauri) so le e mostra a barra. Saida final: {"type":"done",...}
 ou {"type":"error",...}.
 """
@@ -51,7 +52,7 @@ def run(argv: list[str] | None = None) -> int:
     p.add_argument("--layout", default="facecam_top_gameplay_bottom")
     p.add_argument("--facecam", default="auto", help="auto|tl|tr|bl|br")
     p.add_argument("--no-captions", action="store_true")
-    p.add_argument("--key", default=None, help="chave da OpenRouter (ou env LLM_API_KEY)")
+    p.add_argument("--key", default=None, help="chave do provedor de IA (ou env LLM_API_KEY); provedor via LLM_PROVIDER")
     a = p.parse_args(argv)
 
     if a.key:
@@ -91,7 +92,7 @@ def run(argv: list[str] | None = None) -> int:
     if clips and all(not (c.hook or "").strip() for c in clips):
         _emit({
             "type": "warning",
-            "message": "A IA não gerou ganchos/score — confira sua chave da OpenRouter (validade/créditos). Os cortes saíram, mas sem título.",
+            "message": "A IA não gerou ganchos/score — confira sua chave do provedor de IA (validade/créditos). Os cortes saíram, mas sem título.",
         })
 
     _emit({

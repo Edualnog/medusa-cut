@@ -54,6 +54,13 @@ function decryptSecret(box) {
   }
 }
 
+// Provedores de IA suportados (BYO key). A chave de cada um fica cifrada no disco,
+// separada por provedor, pra o usuario alternar sem reconectar.
+const PROVIDERS = ["openrouter", "openai", "anthropic"];
+function normProvider(p) {
+  return PROVIDERS.includes(p) ? p : "openrouter";
+}
+
 // Migra config antigo (chave/sessao em texto puro) pro formato cifrado. Idempotente.
 function migrateConfig() {
   const c = loadConfig();
@@ -62,6 +69,16 @@ function migrateConfig() {
   if (typeof c.key === "string") {
     if (c.key) c.keyEnc = encryptSecret(c.key);
     delete c.key;
+    changed = true;
+  }
+  // Chave unica antiga (so OpenRouter) -> mapa por provedor.
+  if (c.keyEnc && !c.keysEnc) {
+    c.keysEnc = { openrouter: c.keyEnc };
+    delete c.keyEnc;
+    changed = true;
+  }
+  if (!c.provider) {
+    c.provider = "openrouter";
     changed = true;
   }
   // sessao antiga: { access_token, refresh_token, expires_at, email } em claro
@@ -477,11 +494,33 @@ ipcMain.handle("auth-get-session", async () => {
   return null;
 });
 
+// --- Provedor de IA ativo (OpenRouter / OpenAI / Anthropic) ---
+ipcMain.handle("get-provider", () => normProvider(loadConfig().provider));
+
+// Quais provedores já têm chave salva (só presença, SEM descriptografar — assim não
+// disparamos o cofre do SO/Keychain só pra montar os badges do seletor).
+ipcMain.handle("get-connected-providers", () => {
+  const keys = loadConfig().keysEnc || {};
+  return PROVIDERS.filter((p) => {
+    const box = keys[p];
+    return Boolean(box && box.d);
+  });
+});
+ipcMain.handle("set-provider", (_e, p) => {
+  const c = loadConfig();
+  c.provider = normProvider(p);
+  saveConfig(c);
+  return c.provider;
+});
+
 // Devolve { key, status }: "empty" (nenhuma salva), "locked" (há chave salva mas o
 // cofre do SO não liberou — ex.: usuário clicou "Negar" no Keychain) ou "ok".
 // O "locked" deixa a UI avisar "reconecte a chave" em vez de só vir vazio sem explicar.
-ipcMain.handle("get-key", () => {
-  const box = loadConfig().keyEnc;
+// `provider` opcional: padrao = provedor ativo no config.
+ipcMain.handle("get-key", (_e, provider) => {
+  const c = loadConfig();
+  const prov = normProvider(provider || c.provider);
+  const box = (c.keysEnc || {})[prov];
   if (!box) return { key: "", status: "empty" };
   if (box.v === "enc") {
     try {
@@ -493,9 +532,11 @@ ipcMain.handle("get-key", () => {
   }
   return box.d ? { key: box.d, status: "ok" } : { key: "", status: "empty" };
 });
-ipcMain.handle("set-key", (_e, k) => {
+ipcMain.handle("set-key", (_e, provider, k) => {
   const c = loadConfig();
-  c.keyEnc = k ? encryptSecret(k) : null;
+  const prov = normProvider(provider || c.provider);
+  c.keysEnc = c.keysEnc || {};
+  c.keysEnc[prov] = k ? encryptSecret(k) : null;
   saveConfig(c);
   return true;
 });
@@ -570,7 +611,7 @@ async function syncAcceptance() {
 }
 
 // --- Onboarding de primeiro acesso (aceites + pasta) ---
-const LEGAL_VERSION = "2026-06-19";
+const LEGAL_VERSION = "2026-06-20";
 ipcMain.handle("get-onboarding", () => {
   const c = loadConfig();
   const ob = c.onboarding;
@@ -652,10 +693,17 @@ ipcMain.handle("get-link-preview", async (_e, rawUrl) => {
   }
 });
 
-// Valida a chave na OpenRouter (e traz info de credito). NAO gera custo.
-ipcMain.handle("validate-key", async (_e, key) => {
+// Valida a chave no provedor escolhido. NAO gera custo (endpoints de metadados).
+ipcMain.handle("validate-key", async (_e, provider, key) => {
+  const prov = normProvider(provider);
   key = (key || "").trim();
   if (key.length < 8) return { valid: false, error: "Cole a sua chave." };
+  if (prov === "openrouter") return validateOpenRouter(key);
+  if (prov === "openai") return validateOpenAI(key);
+  return validateAnthropic(key);
+});
+
+async function validateOpenRouter(key) {
   try {
     const r = await fetch("https://openrouter.ai/api/v1/auth/key", {
       headers: { Authorization: "Bearer " + key },
@@ -673,10 +721,39 @@ ipcMain.handle("validate-key", async (_e, key) => {
     }
     if (r.status === 401) return { valid: false, error: "Chave inválida ou expirada." };
     return { valid: false, error: "OpenRouter respondeu " + r.status + "." };
-  } catch (e) {
+  } catch {
     return { valid: false, error: "Sem internet / OpenRouter fora do ar." };
   }
-});
+}
+
+// OpenAI: lista de modelos autentica a chave sem consumir tokens.
+async function validateOpenAI(key) {
+  try {
+    const r = await fetch("https://api.openai.com/v1/models", {
+      headers: { Authorization: "Bearer " + key },
+    });
+    if (r.status === 200) return { valid: true };
+    if (r.status === 401) return { valid: false, error: "Chave inválida ou expirada." };
+    if (r.status === 429) return { valid: false, error: "Sem crédito ou limite atingido na OpenAI." };
+    return { valid: false, error: "OpenAI respondeu " + r.status + "." };
+  } catch {
+    return { valid: false, error: "Sem internet / OpenAI fora do ar." };
+  }
+}
+
+// Anthropic: GET /v1/models autentica sem consumir tokens (x-api-key + version).
+async function validateAnthropic(key) {
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/models", {
+      headers: { "x-api-key": key, "anthropic-version": "2023-06-01" },
+    });
+    if (r.status === 200) return { valid: true };
+    if (r.status === 401) return { valid: false, error: "Chave inválida ou expirada." };
+    return { valid: false, error: "Anthropic respondeu " + r.status + "." };
+  } catch {
+    return { valid: false, error: "Sem internet / Anthropic fora do ar." };
+  }
+}
 
 ipcMain.handle("get-stats", () => {
   const c = loadConfig();
@@ -764,10 +841,11 @@ ipcMain.on("generate", (_e, opts) => {
   ];
   if (!opts.captions) args.push("--no-captions");
 
-  // A chave da OpenRouter vai por VARIÁVEL DE AMBIENTE (LLM_API_KEY), nunca por argv:
-  // argumentos de processo são visíveis a outros processos/usuários locais (ps -ef).
-  // O motor já lê LLM_API_KEY do ambiente, então o --key fica só pra uso manual do binário.
+  // A chave vai por VARIÁVEL DE AMBIENTE (LLM_API_KEY), nunca por argv: argumentos
+  // de processo são visíveis a outros processos/usuários locais (ps -ef). O motor lê
+  // LLM_PROVIDER + LLM_API_KEY do ambiente; o --key fica só pra uso manual do binário.
   const env = engineEnv();
+  env.LLM_PROVIDER = normProvider(opts.provider);
   if (opts.key) env.LLM_API_KEY = opts.key;
 
   try {

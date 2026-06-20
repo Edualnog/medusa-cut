@@ -12,7 +12,8 @@ dependencies = [
     "opencv-python==4.11.0.86",  # reframe (saliency) + facecam YuNet. scenedetect ja puxa
                                  # opencv-python sem pin; fixamos a versao (1 pacote so, reproduzivel).
     "numpy==2.4.6",
-    "openai==2.42.0",         # ganchos via LLM (M3; troque conforme provedor)
+    "openai==2.42.0",         # ganchos via LLM: OpenRouter + OpenAI (API compat. OpenAI)
+    "anthropic>=0.40,<2",     # ganchos via LLM: Claude (SDK nativo; API != OpenAI)
     "pillow==12.2.0",         # legenda karaoke (desenho); ffmpeg local nao tem libass
     "supabase==2.31.0",       # worker: fila de jobs (SaaS)
     "cryptography==49.0.0",   # worker: decifra a chave de API do usuario (AES-GCM)

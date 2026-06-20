@@ -25,16 +25,17 @@ window.LEGAL = {
     <p>O login usa autenticação por e-mail e senha. Você é responsável por manter suas
     credenciais em segurança e por toda atividade na sua conta.</p>
 
-    <h3>4. Chave da OpenRouter (modelo "traga sua chave")</h3>
-    <p>A análise por IA usa <strong>a sua própria chave da OpenRouter</strong>. O custo
-    dos modelos é cobrado diretamente pela OpenRouter na sua conta — o Medusa Clip não
-    intermedeia nem adiciona margem sobre esse consumo. Você é responsável pela guarda e
-    pelo uso da sua chave e pelos custos gerados.</p>
+    <h3>4. Chave do provedor de IA (modelo "traga sua chave")</h3>
+    <p>A análise por IA usa <strong>a sua própria chave</strong> do provedor que você
+    escolher — <strong>OpenRouter</strong>, <strong>OpenAI</strong> ou
+    <strong>Anthropic</strong>. O custo dos modelos é cobrado diretamente pelo provedor
+    na sua conta — o Medusa Clip não intermedeia nem adiciona margem sobre esse consumo.
+    Você é responsável pela guarda e pelo uso da sua chave e pelos custos gerados.</p>
 
     <h3>5. Preço</h3>
     <p>O Aplicativo é <strong>gratuito</strong>. Não há assinatura, mensalidade nem
-    créditos. Você arca apenas com o custo dos modelos de IA, cobrado diretamente pela
-    OpenRouter na sua chave (cláusula 4).</p>
+    créditos. Você arca apenas com o custo dos modelos de IA, cobrado diretamente pelo
+    provedor de IA na sua chave (cláusula 4).</p>
 
     <h3>6. Responsabilidade pelo conteúdo e direitos autorais</h3>
     <p>Você é o único responsável pelos vídeos que processa. Ao usar o Aplicativo, você
@@ -94,8 +95,8 @@ window.LEGAL = {
 
     <h3>2. Dados que ficam no seu dispositivo</h3>
     <ul>
-      <li>Sua chave da OpenRouter (<strong>armazenada cifrada</strong> pelo cofre do
-      sistema operacional);</li>
+      <li>Sua chave do provedor de IA — OpenRouter, OpenAI ou Anthropic
+      (<strong>armazenada cifrada</strong> pelo cofre do sistema operacional);</li>
       <li>Tokens da sua sessão de login (<strong>cifrados</strong>);</li>
       <li>Os clipes gerados, na pasta que você escolher;</li>
       <li>Estatísticas de custo/uso de IA e suas preferências do app.</li>
@@ -108,10 +109,11 @@ window.LEGAL = {
       <li><strong>Aceites legais (Supabase):</strong> registramos a versão dos Termos e
       desta Política que você aceitou, com data e hora, vinculados à sua conta — como
       prova de consentimento.</li>
-      <li><strong>Análise por IA (OpenRouter):</strong> para gerar os cortes, o
-      Aplicativo envia à OpenRouter — usando a <em>sua</em> chave — a transcrição do
-      áudio, instruções (prompts) e <strong>quadros (imagens) do seu vídeo</strong>. Esse
-      tratamento fica sujeito às políticas da OpenRouter e dos provedores de modelo.</li>
+      <li><strong>Análise por IA (provedor que você escolher):</strong> para gerar os
+      cortes, o Aplicativo envia ao provedor de IA selecionado — OpenRouter, OpenAI ou
+      Anthropic — usando a <em>sua</em> chave — a transcrição do áudio, instruções
+      (prompts) e <strong>quadros (imagens) do seu vídeo</strong>. Esse tratamento fica
+      sujeito às políticas do provedor escolhido e dos provedores de modelo.</li>
       <li><strong>Prévia de link (YouTube/Google):</strong> ao colar um link, a URL é
       consultada no serviço oEmbed do YouTube para exibir título e miniatura.</li>
       <li><strong>Download por link:</strong> ao baixar um vídeo público, o Aplicativo se
@@ -121,12 +123,13 @@ window.LEGAL = {
     <h3>4. Finalidades e bases legais</h3>
     <p>Tratamos dados para autenticar sua conta (execução de contrato), gerar os cortes
     solicitados (execução de contrato e seu consentimento ao usar o recurso) e cumprir
-    obrigações legais. O envio à OpenRouter ocorre por sua
+    obrigações legais. O envio ao provedor de IA ocorre por sua
     ação ao gerar clipes.</p>
 
     <h3>5. Compartilhamento (operadores)</h3>
     <p>Usamos provedores que atuam como operadores: <strong>Supabase</strong> (conta/
-    autenticação) e, por iniciativa sua, <strong>OpenRouter</strong> e provedores de
+    autenticação) e, por iniciativa sua, <strong>OpenRouter</strong>,
+    <strong>OpenAI</strong> ou <strong>Anthropic</strong> e provedores de
     modelos de IA (análise). A consulta de prévia usa serviço do <strong>Google/
     YouTube</strong>. Não vendemos seus dados.</p>
 

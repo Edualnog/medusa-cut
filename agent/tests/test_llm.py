@@ -8,11 +8,14 @@ from pytest import approx
 from medusacut.hooks.base import _clamp, _refined
 from medusacut.llm import (
     Usage,
+    _anthropic_image_block,
+    _usage_from_tokens,
     extract_usage,
     image_data_uri,
     is_reasoning_model,
     load_dotenv,
     parse_json,
+    provider,
 )
 
 
@@ -100,6 +103,51 @@ def test_image_data_uri(tmp_path):
     uri = image_data_uri(str(p))
     assert uri.startswith("data:image/jpeg;base64,")
     assert base64.b64decode(uri.split(",", 1)[1]) == b"\xff\xd8\xff\xe0jpeg-bytes"
+
+
+def test_provider_normalizes(monkeypatch):
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    assert provider() == "openrouter"  # padrao
+    monkeypatch.setenv("LLM_PROVIDER", "OpenAI")  # case-insensitive
+    assert provider() == "openai"
+    monkeypatch.setenv("LLM_PROVIDER", "anthropic")
+    assert provider() == "anthropic"
+    monkeypatch.setenv("LLM_PROVIDER", "inexistente")
+    assert provider() == "openrouter"  # fallback
+
+
+def test_usage_from_tokens_computes_cost_from_price_table():
+    # OpenAI/Anthropic nao devolvem custo -> calculamos pela tabela.
+    # gpt-4o = (2.5, 10.0) USD/1M: 1M in + 0.5M out = 2.5 + 5.0 = 7.5
+    u = _usage_from_tokens("gpt-4o", 1_000_000, 500_000, None)
+    assert u.cost_usd == approx(7.5)
+    # claude-opus-4-8 = (5.0, 25.0): 1M in + 0.2M out = 5.0 + 5.0 = 10.0
+    u2 = _usage_from_tokens("claude-opus-4-8", 1_000_000, 200_000, None)
+    assert u2.cost_usd == approx(10.0)
+
+
+def test_usage_from_tokens_keeps_provider_cost_when_given():
+    # OpenRouter ja manda o custo -> nao recalculamos.
+    u = _usage_from_tokens("openai/gpt-4o", 100, 50, 0.123)
+    assert u.cost_usd == approx(0.123)
+
+
+def test_usage_from_tokens_unknown_model_no_cost():
+    u = _usage_from_tokens("modelo-desconhecido", 100, 50, None)
+    assert u.cost_usd is None
+    assert u.total_tokens == 150
+
+
+def test_anthropic_image_block(tmp_path):
+    import base64
+
+    p = tmp_path / "f.jpg"
+    p.write_bytes(b"\xff\xd8\xff\xe0jpeg")
+    block = _anthropic_image_block(str(p))
+    assert block["type"] == "image"
+    assert block["source"]["type"] == "base64"
+    assert block["source"]["media_type"] == "image/jpeg"
+    assert base64.b64decode(block["source"]["data"]) == b"\xff\xd8\xff\xe0jpeg"
 
 
 def test_clamp_and_refined():

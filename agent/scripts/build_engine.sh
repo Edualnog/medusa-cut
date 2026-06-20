@@ -47,7 +47,7 @@ PY
 "$PYBIN" -m PyInstaller --noconfirm --onedir --name medusacut-engine \
   --collect-all faster_whisper --collect-all ctranslate2 --collect-all av \
   --collect-all cv2 --collect-all yt_dlp --collect-all tokenizers \
-  --collect-all huggingface_hub --collect-submodules medusacut \
+  --collect-all huggingface_hub --collect-all anthropic --collect-submodules medusacut \
   --exclude-module onnxruntime \
   --exclude-module boto3 --exclude-module botocore \
   "$ENTRY"

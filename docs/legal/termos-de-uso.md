@@ -19,14 +19,15 @@ Você declara ter **18 anos ou mais** e capacidade civil para aceitar estes Term
 O login usa autenticação por e-mail e senha. Você é responsável por manter suas
 credenciais em segurança e por toda atividade na sua conta.
 
-## 4. Chave da OpenRouter (modelo "traga sua chave")
-A análise por IA usa **a sua própria chave da OpenRouter**. O custo dos modelos é cobrado
-diretamente pela OpenRouter na sua conta — o Medusa Clip não intermedeia nem adiciona
-margem. Você é responsável pela guarda e pelo uso da sua chave e pelos custos gerados.
+## 4. Chave do provedor de IA (modelo "traga sua chave")
+A análise por IA usa **a sua própria chave** do provedor que você escolher — **OpenRouter**,
+**OpenAI** ou **Anthropic**. O custo dos modelos é cobrado diretamente pelo provedor na sua
+conta — o Medusa Clip não intermedeia nem adiciona margem. Você é responsável pela guarda e
+pelo uso da sua chave e pelos custos gerados.
 
 ## 5. Preço
 O Aplicativo é **gratuito**. Não há assinatura, mensalidade nem créditos. Você arca
-apenas com o custo dos modelos de IA, cobrado diretamente pela OpenRouter na sua chave
+apenas com o custo dos modelos de IA, cobrado diretamente pelo provedor de IA na sua chave
 (cláusula 4).
 
 ## 6. Responsabilidade pelo conteúdo e direitos autorais

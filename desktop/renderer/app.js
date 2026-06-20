@@ -43,6 +43,7 @@ function setView(view) {
   if (view === "biblioteca") loadLibrary();
   if (view === "apis") {
     loadStats();
+    refreshProviderBadges();
     if ($("key").value.trim()) checkKey();
   }
   if (view === "conta") loadAccount();
@@ -228,19 +229,68 @@ function updateSummary() {
   $("gen").disabled = !sourceReady() || isProcessing;
 }
 
-window.api.getKey().then((res) => {
-  res = res || {};
+// Metadados de cada provedor de IA: nome amigável, placeholder da chave e o rótulo
+// base da opção no seletor (o ✓ de "conectada" é adicionado dinamicamente).
+const PROVIDER_META = {
+  openrouter: { label: "OpenRouter", placeholder: "sk-or-v1-...", option: "OPENROUTER · MULTI-MODELO" },
+  openai: { label: "OpenAI", placeholder: "sk-...", option: "OPENAI · GPT" },
+  anthropic: { label: "Anthropic", placeholder: "sk-ant-...", option: "ANTHROPIC · CLAUDE" },
+};
+let currentProvider = "openrouter";
+
+function providerLabel() {
+  return (PROVIDER_META[currentProvider] || PROVIDER_META.openrouter).label;
+}
+
+// Marca no seletor quais provedores já têm chave salva (✓ CONECTADA).
+async function refreshProviderBadges() {
+  let connected = [];
+  try {
+    connected = (await window.api.getConnectedProviders()) || [];
+  } catch {
+    connected = [];
+  }
+  for (const opt of $("provider").options) {
+    const base = (PROVIDER_META[opt.value] || {}).option || opt.value.toUpperCase();
+    opt.textContent = connected.includes(opt.value) ? `✓ ${base} · CONECTADA` : base;
+  }
+}
+
+// Carrega a chave salva do provedor ativo no input + ajusta textos/placeholder.
+async function loadKeyForProvider() {
+  const meta = PROVIDER_META[currentProvider] || PROVIDER_META.openrouter;
+  $("key").placeholder = meta.placeholder;
+  setKeyStatus("NENHUMA CHAVE VERIFICADA");
+  const res = (await window.api.getKey(currentProvider)) || {};
   if (res.status === "ok" && res.key) {
     $("key").value = res.key;
-    $("keyHelper").textContent = "Chave OpenRouter salva neste computador.";
+    $("keyHelper").textContent = `Chave ${meta.label} salva neste computador.`;
     $("keyHelper").classList.add("ready");
   } else if (res.status === "locked") {
     // Há chave salva, mas o cofre do sistema (Keychain) não liberou — provável "Negar".
+    $("key").value = "";
     $("keyHelper").textContent =
-      "Não foi possível abrir o cofre do sistema (Keychain). Reconecte sua chave da OpenRouter.";
+      "Não foi possível abrir o cofre do sistema (Keychain). Reconecte sua chave.";
     $("keyHelper").classList.remove("ready");
-    setKeyStatus("RECONECTE SUA CHAVE DA OPENROUTER", "invalid");
+    setKeyStatus(`RECONECTE SUA CHAVE ${meta.label.toUpperCase()}`, "invalid");
+  } else {
+    $("key").value = "";
+    $("keyHelper").textContent = "Conecte sua chave de IA na aba Chaves API.";
+    $("keyHelper").classList.remove("ready");
   }
+}
+
+window.api.getProvider().then((p) => {
+  currentProvider = p || "openrouter";
+  $("provider").value = currentProvider;
+  loadKeyForProvider();
+  refreshProviderBadges();
+});
+
+$("provider").addEventListener("change", async () => {
+  currentProvider = $("provider").value;
+  await window.api.setProvider(currentProvider);
+  await loadKeyForProvider();
 });
 
 $("toggleKey").addEventListener("click", () => {
@@ -261,18 +311,19 @@ async function checkKey() {
     return false;
   }
 
-  setKeyStatus("VERIFICANDO NA OPENROUTER…", "loading");
-  const result = await window.api.validateKey(key);
+  setKeyStatus(`VERIFICANDO NA ${providerLabel().toUpperCase()}…`, "loading");
+  const result = await window.api.validateKey(currentProvider, key);
   if (!result.valid) {
     setKeyStatus(result.error || "CHAVE INVÁLIDA", "invalid");
     return false;
   }
 
+  // Info de crédito só existe na OpenRouter; OpenAI/Anthropic só confirmam validade.
   let extra = "";
   if (result.limitRemaining != null) extra = ` · RESTA $${Number(result.limitRemaining).toFixed(2)}`;
   else if (result.usage != null) extra = ` · USADO $${Number(result.usage).toFixed(4)}`;
   setKeyStatus(`CHAVE VÁLIDA${result.freeTier ? " · FREE TIER" : ""}${extra}`, "valid");
-  $("keyHelper").textContent = "Chave OpenRouter verificada e pronta.";
+  $("keyHelper").textContent = `Chave ${providerLabel()} verificada e pronta.`;
   $("keyHelper").classList.add("ready");
   return true;
 }
@@ -282,7 +333,10 @@ $("saveKey").addEventListener("click", async () => {
   $("saveKey").disabled = true;
   $("saveKey").textContent = "VERIFICANDO…";
   const valid = await checkKey();
-  if (valid) await window.api.setKey(key);
+  if (valid) {
+    await window.api.setKey(currentProvider, key);
+    refreshProviderBadges();
+  }
   $("saveKey").disabled = false;
   $("saveKey").textContent = "SALVAR E VERIFICAR";
 });
@@ -304,10 +358,11 @@ $("gen").addEventListener("click", async () => {
 
   const [minLen, maxLen] = $("dur").value.split(",").map(Number);
   const source = mode === "file" ? filePath : $("linkInput").value.trim();
-  await window.api.setKey(key);
+  await window.api.setKey(currentProvider, key);
   startUI();
   window.api.generate({
     source,
+    provider: currentProvider,
     key,
     clips: Number($("clips").value),
     minLen,
@@ -742,7 +797,7 @@ function resetToLogin() {
 
 $("wipeData").addEventListener("click", async () => {
   const ok = window.confirm(
-    "Apagar a chave da OpenRouter, a sessão e as preferências deste dispositivo?\n\nOs clips já gerados NÃO serão apagados. Você precisará entrar e configurar novamente."
+    "Apagar sua chave de IA, a sessão e as preferências deste dispositivo?\n\nOs clips já gerados NÃO serão apagados. Você precisará entrar e configurar novamente."
   );
   if (!ok) return;
   await window.api.wipeLocalData();

@@ -10,7 +10,7 @@ Contexto para o Claude Code. Leia antes de codar.
 ## O que e
 
 **App desktop para criadores de games**: o usuario instala o Medusa Clip, entra na
-conta, conecta a **propria** chave da OpenRouter, escolhe um video local (ou cola um
+conta, conecta a **propria** chave de IA (OpenRouter, OpenAI ou Anthropic), escolhe um video local (ou cola um
 link publico) e recebe **cortes verticais 9:16** nivel Opus Clip (ganchos, legenda
 karaoke, enquadramento) — tudo processado **na propria maquina**. App **gratuito**
 (sem assinatura), **sem creditos** — o custo de IA (LLM) e do usuario, pela chave dele.
@@ -30,7 +30,7 @@ DESKTOP (Electron @ PC do usuario)        SUPABASE (so conta)
   main.js    spawn do motor (binario)       (sem billing — app gratis)
   engine/    medusacut-engine + ffmpeg      (NENHUM video sobe pra ca)
              + ffprobe (embutidos)
-  config.json (userData): chave OpenRouter local
+  config.json (userData): provider + chave de IA local (por provedor)
   ~/Downloads/Medusa Clip/: biblioteca de clipes
 
 WEB (Next.js @ Vercel)
@@ -47,10 +47,12 @@ WEB (Next.js @ Vercel)
 
 ## Regras inegociaveis (seguranca + modelo)
 
-- **BYO key**: cada usuario usa a PROPRIA chave da OpenRouter. **NUNCA** publicar a
-  chave do dono nem rodar IA "as custas da casa". A chave fica salva **no dispositivo
-  do usuario** (`config.json` em userData) e vai direto pra OpenRouter — nunca passa
-  por servidor nosso.
+- **BYO key**: cada usuario usa a PROPRIA chave de IA — **OpenRouter**, **OpenAI** ou
+  **Anthropic** (escolhe o provedor no app). **NUNCA** publicar a chave do dono nem rodar
+  IA "as custas da casa". A chave fica salva **no dispositivo do usuario** (`config.json`
+  em userData, cifrada, uma por provedor) e vai direto pro provedor — nunca passa por
+  servidor nosso. No motor: `LLM_PROVIDER` + `LLM_API_KEY`; OpenRouter/OpenAI via SDK
+  da OpenAI (base_url), Anthropic via SDK nativo `anthropic` (API != OpenAI).
 - **Local-first**: video bruto e clipes **nunca** saem do PC do usuario. Nada de
   upload de gameplay pra Supabase/nuvem.
 - **App gratuito**: sem assinatura, sem creditos. Custo de IA e do usuario (BYO key).
@@ -144,7 +146,10 @@ dono passo a passo** no deploy (ver `docs/SETUP.md`).
 - [x] Onboarding de 1o acesso: aceites (Termos, Privacidade, responsabilidade de
       conteudo, 18+) + escolha da pasta dos clips. Textos legais em
       `desktop/renderer/legal.js` (espelho em `docs/legal/`). `LEGAL_VERSION` no `main.js`.
-- [x] Seguranca: chave OpenRouter e tokens de sessao **cifrados** no disco via
+- [x] Multi-provedor de IA (BYO key): OpenRouter, OpenAI e Anthropic. Seletor de provedor
+      na aba Chaves API; chave salva por provedor; validacao por provedor (sem custo);
+      motor (`llm.py`) dispatcha por `LLM_PROVIDER` (OpenAI-compat vs SDK nativo Anthropic).
+- [x] Seguranca: chave de IA (por provedor) e tokens de sessao **cifrados** no disco via
       `safeStorage` (migra config antigo em texto puro). Fallback texto puro no
       Linux sem keyring (flag `secretsPlaintext`).
 - [ ] **Seguranca pendente**: assinatura/notarizacao de codigo (mac `identity:null`,

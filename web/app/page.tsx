@@ -23,7 +23,7 @@ const BENEFITS = [
 
 const STEPS = [
   { number: "1", title: "INSTALE", text: "Baixe a versão certa para o seu sistema e abra o Medusa Clip." },
-  { number: "2", title: "CONECTE", text: "Entre na sua conta e conecte sua própria chave da OpenRouter." },
+  { number: "2", title: "CONECTE", text: "Entre na sua conta e conecte sua chave de IA — OpenRouter, OpenAI ou Anthropic." },
   { number: "3", title: "ESCOLHA", text: "Selecione um vídeo local ou cole um link público de gameplay." },
   { number: "4", title: "PUBLIQUE", text: "Receba clips 9:16 com título, legenda karaokê e reframe automático." },
 ];
@@ -35,7 +35,11 @@ const FAQ = [
   },
   {
     question: "PRECISO DE INTERNET?",
-    answer: "Para entrar na conta, usar a OpenRouter e baixar vídeos por link, sim. Arquivos locais continuam sendo analisados e renderizados no seu PC.",
+    answer: "Para entrar na conta, falar com o provedor de IA e baixar vídeos por link, sim. Arquivos locais continuam sendo analisados e renderizados no seu PC.",
+  },
+  {
+    question: "QUAIS PROVEDORES DE IA POSSO USAR?",
+    answer: "OpenRouter, OpenAI ou Anthropic (Claude). Você escolhe o provedor no app e conecta a sua chave — se já tem créditos na OpenAI ou na Anthropic, é só usar. Dá pra trocar de provedor quando quiser.",
   },
   {
     question: "POR QUE USAR MINHA PRÓPRIA CHAVE DE IA?",
@@ -43,7 +47,7 @@ const FAQ = [
   },
   {
     question: "QUANTO CUSTA POR CORTE?",
-    answer: "Centavos. Num teste com os modelos padrão (GPT-4.1), um vídeo de ~10 minutos gerou 4 cortes por poucos centavos de dólar no total — cerca de 1 centavo por corte. O valor varia com o modelo que você escolhe e com o tamanho do vídeo, e é cobrado direto pela OpenRouter na sua chave. O app não cobra nada.",
+    answer: "Centavos. Num teste com os modelos padrão, um vídeo de ~10 minutos gerou 4 cortes por poucos centavos de dólar no total — cerca de 1 centavo por corte. O valor varia com o provedor e o modelo que você escolhe e com o tamanho do vídeo, e é cobrado direto pelo provedor (OpenRouter, OpenAI ou Anthropic) na sua chave. O app não cobra nada.",
   },
   {
     question: "O QUE TORNA OS CORTES MELHORES QUE UM RECORTADOR GENÉRICO?",
@@ -198,9 +202,10 @@ export default function Home() {
           <div className="section-heading">
             <h2>GRÁTIS DE VERDADE.<br />SEM TRAVA.</h2>
             <p>
-              O Medusa Clip é gratuito. A IA roda na SUA chave da OpenRouter — você paga
-              só o custo real dos modelos, direto ao provedor, e o resto é seu: seus
-              clips ficam no seu PC, suas chaves no seu controle, sua liberdade intacta.
+              O Medusa Clip é gratuito. A IA roda na SUA chave — OpenRouter, OpenAI ou
+              Anthropic — você paga só o custo real dos modelos, direto ao provedor, e o
+              resto é seu: seus clips ficam no seu PC, suas chaves no seu controle, sua
+              liberdade intacta.
             </p>
           </div>
           <div className="hero-actions">
@@ -218,10 +223,10 @@ export default function Home() {
             <SectionTag>CUSTO TRANSPARENTE</SectionTag>
             <h2>CENTAVOS POR CORTE.<br />SEM SURPRESA.</h2>
             <p>
-              O app é grátis. O único custo é a IA — e é da SUA chave da OpenRouter,
-              cobrada direto pelo provedor, em centavos por corte. Sem assinatura, sem
-              créditos, sem intermediário. Você escolhe o modelo: mais barato custa ainda
-              menos.
+              O app é grátis. O único custo é a IA — e é da SUA chave (OpenRouter, OpenAI
+              ou Anthropic), cobrada direto pelo provedor, em centavos por corte. Sem
+              assinatura, sem créditos, sem intermediário. Você escolhe o provedor e o
+              modelo: mais barato custa ainda menos.
             </p>
           </div>
           <div className="price-card">
@@ -230,8 +235,8 @@ export default function Home() {
               ~US$ 0,01 <span>/ CORTE</span>
             </div>
             <ul>
-              <li>EXEMPLO: VÍDEO DE ~10 MIN → 4 CORTES POR POUCOS CENTAVOS (MODELOS PADRÃO GPT-4.1)</li>
-              <li>VOCÊ ESCOLHE O MODELO NA OPENROUTER — OPÇÕES MAIS BARATAS CUSTAM MENOS</li>
+              <li>EXEMPLO: VÍDEO DE ~10 MIN → 4 CORTES POR POUCOS CENTAVOS (MODELOS PADRÃO)</li>
+              <li>OPENROUTER, OPENAI OU ANTHROPIC — VOCÊ ESCOLHE; OPÇÕES MAIS BARATAS CUSTAM MENOS</li>
               <li>SEM ASSINATURA E SEM CRÉDITOS: PAGA DIRETO AO PROVEDOR</li>
               <li>O APP É 100% GRÁTIS — O CUSTO DA IA É SEU E TRANSPARENTE</li>
             </ul>

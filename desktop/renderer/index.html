@@ -231,7 +231,7 @@
               <button class="generate-button" id="gen" type="button" disabled>
                 GERAR CLIPS
               </button>
-              <p class="key-helper" id="keyHelper">Conecte sua chave OpenRouter na aba Chaves API.</p>
+              <p class="key-helper" id="keyHelper">Conecte sua chave de IA na aba Chaves API.</p>
             </aside>
           </div>
 
@@ -274,8 +274,9 @@
               <h2>SUA CHAVE.<br /><em>SEU CUSTO.</em></h2>
             </div>
             <p>
-              A chave fica salva neste dispositivo e é enviada diretamente à
-              OpenRouter para autenticar as chamadas de IA.
+              Escolha seu provedor de IA — <strong>OpenRouter</strong>,
+              <strong>OpenAI</strong> ou <strong>Anthropic</strong> — e conecte a SUA
+              chave. Ela fica salva neste dispositivo e fala direto com o provedor.
             </p>
           </div>
 
@@ -284,10 +285,19 @@
               <div class="panel-head">
                 <div>
                   <span class="panel-index">01</span>
-                  <h3>OPENROUTER</h3>
+                  <h3>PROVEDOR DE IA</h3>
                 </div>
                 <span>CHAVE PESSOAL</span>
               </div>
+
+              <label class="field">
+                <span>PROVEDOR</span>
+                <select id="provider">
+                  <option value="openrouter">OPENROUTER · MULTI-MODELO</option>
+                  <option value="openai">OPENAI · GPT</option>
+                  <option value="anthropic">ANTHROPIC · CLAUDE</option>
+                </select>
+              </label>
 
               <label class="field key-input-field">
                 <span>API KEY</span>
@@ -300,7 +310,7 @@
               <button class="primary-button full-button" id="saveKey" type="button">
                 SALVAR E VERIFICAR
               </button>
-              <p class="panel-note">A VERIFICAÇÃO NÃO GERA CUSTO NA OPENROUTER.</p>
+              <p class="panel-note" id="keyNote">A VERIFICAÇÃO NÃO GERA CUSTO.</p>
             </section>
 
             <section class="panel cost-panel">
@@ -322,8 +332,8 @@
                 </div>
               </div>
               <p class="cost-copy">
-                Você paga os modelos diretamente na sua conta OpenRouter. A Medusa
-                Clip não adiciona margem sobre esse consumo.
+                Você paga os modelos diretamente na sua conta do provedor escolhido.
+                A Medusa Clip não adiciona margem sobre esse consumo.
               </p>
             </section>
 
@@ -398,7 +408,7 @@
                 <span>LGPD</span>
               </div>
               <p class="cost-copy">
-                Remove deste computador a chave da OpenRouter, a sessão de login e suas
+                Remove deste computador sua chave de IA, a sessão de login e suas
                 preferências. <strong>Os clips já gerados não são apagados.</strong> Você
                 precisará entrar e configurar novamente.
               </p>
@@ -448,8 +458,8 @@
           localmente — <strong>os vídeos não sobem para nenhuma nuvem nossa</strong>.
         </p>
         <ul class="ob-list">
-          <li>Para gerar cortes, a IA usa <strong>sua chave da OpenRouter</strong>; o custo é cobrado direto por lá.</li>
-          <li>A análise envia transcrição e quadros do vídeo à OpenRouter. Detalhes na Política de Privacidade.</li>
+          <li>Para gerar cortes, a IA usa <strong>sua própria chave</strong> (OpenRouter, OpenAI ou Anthropic); o custo é cobrado direto pelo provedor.</li>
+          <li>A análise envia transcrição e quadros do vídeo ao provedor de IA que você escolher. Detalhes na Política de Privacidade.</li>
           <li>O login usa seu e-mail no Supabase. Sem telemetria.</li>
         </ul>
         <div class="ob-actions">
