@@ -63,8 +63,43 @@ no app.
 - rotação dos segredos cloud antigos (R2/service_role) e revisão jurídica dos textos
   legais;
 - worker de VPS e migrations Supabase do desenho antigo permanecem no repo como legado;
-- auto-detecção de facecam pode não ser acionada no fluxo padrão em alguns casos;
 - faltam testes end-to-end do app empacotado e do render real.
+
+## Motor de cortes — qualidade & velocidade (rodada 2026-06-20)
+
+Foco: deixar os cortes "nível Opus Clip" e o processo mais rápido (LLM onde mais
+importa, sem sacrificar qualidade). Validado no material real (gameplay GTA RP).
+
+### Feito
+- **Reframe ciente de cena** (`reframe/composition.py`, `scene_layout.py`): vídeo
+  editado troca de composição cena a cena. Cada cena é classificada (VLM primário,
+  fallback YuNet) em `gameplay+cam` / `reação fullscreen` / `gameplay puro` e
+  renderizada com o layout certo + concat. Antes: split facecam fixo com box GLOBAL
+  virava parede/borrão no topo na maior parte do tempo.
+- **Juiz multimodal consertado** (`pipeline.py`): era chamado com assinatura errada →
+  `TypeError` engolido → o juiz (coração da seleção) NUNCA rodava; caía na triagem
+  barata. Voltou a re-ranquear/refinar/dar gancho com arco.
+- **Seleção por roteiro** (`hooks/propose.py`): transcreve o vídeo 1× e o LLM lê o
+  transcript inteiro e PROPÕE janelas (arco narrativo) que a energia perde; funde com
+  as de energia (`_merge_pool`). `WHISPER_MODEL=base` no `local.py` (transcrever tudo
+  com `small` seria lento demais no PC).
+- **Pular intro/patrocínio**: proposer e juiz começam no conteúdo real (não em
+  vinheta/anúncio/divulgação).
+- **Facecam headroom** (`compose._squarify_cam_box`): box não corta mais queixo/topo.
+- **Performance ~32% (neutra em qualidade)**: gblur em bg reduzido, scene-detect com
+  downscale+frame_skip, VLM por cena em paralelo, **facecam em 1 passada** de ffmpeg.
+  Resultado: vídeo de 21min/3 cortes ~19min → ~8,5min. ~94 testes no motor.
+
+### Próximos passos
+1. Facecam letterboxed (barras borradas nas laterais) — avaliar preencher melhor ou
+   ajustar proporção band facecam vs gameplay.
+2. Duração por tipo de momento (clutch rápido vs RP longo) — hoje trilho único 60–180s.
+3. Velocidade extra SÓ se aceitar trade de qualidade: HW-encode (videotoolbox no Mac) e
+   render de clipes em paralelo; 30fps (~14%, não recomendado).
+4. `fusion.MAX_LEN 300→180` (só CLI; desktop já passa 180).
+5. Validar no app Electron ponta a ponta em hardware típico.
+6. Tunar limiares de seleção (`TRIAGE_TEXT_W`/`SIGNAL_W`, count do proposer, calibração
+   de virality) com mais vídeos.
 
 ## Etapa A — Estabilização do processamento local
 
