@@ -47,11 +47,18 @@ def render_scene_aware(
     bounds = _scene_bounds(candidate.start, candidate.end, cuts, min_scene=MIN_SCENE)
     bounds = _cap_scenes(bounds, MAX_SCENES)
 
-    # classifica cada cena e junta vizinhas do mesmo modo
-    classified = []
-    for (a, b) in bounds:
-        comp = C.classify_segment(media.path, a, b, use_vlm=use_vlm, cache_dir=cache_dir)
-        classified.append((a, b, comp))
+    # classifica as cenas EM PARALELO (VLM e rede; cenas sao independentes) e junta
+    # vizinhas do mesmo modo. Cada cena escreve keyframes num subdir proprio (evita
+    # colisao de nomes entre threads).
+    from concurrent.futures import ThreadPoolExecutor
+
+    def _classify(item):
+        i, (a, b) = item
+        sub = os.path.join(cache_dir, f"cls{i:02d}")
+        return (a, b, C.classify_segment(media.path, a, b, use_vlm=use_vlm, cache_dir=sub))
+
+    with ThreadPoolExecutor(max_workers=min(6, max(1, len(bounds)))) as ex:
+        classified = list(ex.map(_classify, enumerate(bounds)))
     runs = _merge_runs(classified)
 
     # render por run

@@ -22,6 +22,20 @@ TARGET_W = 1080
 TARGET_H = 1920
 FACECAM_H = 640  # faixa de cima (rosto); resto e gameplay
 BLUR_SIGMA = 24
+# O fundo borrado nao precisa de full-res: borrar em 1/5 (216x384) e reescalar custa
+# ~25x menos que gblur em 1080x1920 — visual ~identico. (Era 41% do tempo total.)
+_BLUR_W, _BLUR_H = TARGET_W // 5, TARGET_H // 5
+_BLUR_SIGMA_SMALL = max(2, round(BLUR_SIGMA / 5))
+
+
+def _blurred_bg(src: str, out: str) -> str:
+    """Filtro: preenche 9:16, borra num bg REDUZIDO e reescala (barato). `src`/`out`
+    sao labels do filtergraph (ex.: 'bg' -> 'bgb')."""
+    return (
+        f"[{src}]scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,"
+        f"crop={TARGET_W}:{TARGET_H},scale={_BLUR_W}:{_BLUR_H},"
+        f"gblur=sigma={_BLUR_SIGMA_SMALL},scale={TARGET_W}:{TARGET_H}[{out}]"
+    )
 
 
 def render_facecam_layout(
@@ -65,8 +79,7 @@ def render_facecam_layout(
     cy = int(rect[1] * media.height)
     filtergraph = (
         "[0:v]split=2[bg][cam];"
-        f"[bg]scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,"
-        f"crop={TARGET_W}:{TARGET_H},gblur=sigma={BLUR_SIGMA}[bgb];"
+        f"{_blurred_bg('bg', 'bgb')};"
         f"[cam]crop={cw}:{ch}:{cx}:{cy},"
         f"scale={TARGET_W}:{facecam_h}:force_original_aspect_ratio=decrease[camS];"
         f"[bgb][camS]overlay=x=(W-w)/2:y=({facecam_h}-h)/2[mid];"
@@ -122,8 +135,7 @@ def render_blur_fit(media: Media, candidate: Candidate, *, out_path: str) -> str
     """Gameplay inteiro (sem crop) encaixado sobre fundo desfocado."""
     filtergraph = (
         "[0:v]split=2[bg][fg];"
-        f"[bg]scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,"
-        f"crop={TARGET_W}:{TARGET_H},gblur=sigma={BLUR_SIGMA}[bgb];"
+        f"{_blurred_bg('bg', 'bgb')};"
         f"[fg]scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=decrease[fgs];"
         "[bgb][fgs]overlay=x=(W-w)/2:y=(H-h)/2[outv]"
     )
