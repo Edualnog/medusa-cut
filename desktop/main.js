@@ -458,7 +458,22 @@ ipcMain.handle("auth-get-session", async () => {
   return null;
 });
 
-ipcMain.handle("get-key", () => decryptSecret(loadConfig().keyEnc));
+// Devolve { key, status }: "empty" (nenhuma salva), "locked" (há chave salva mas o
+// cofre do SO não liberou — ex.: usuário clicou "Negar" no Keychain) ou "ok".
+// O "locked" deixa a UI avisar "reconecte a chave" em vez de só vir vazio sem explicar.
+ipcMain.handle("get-key", () => {
+  const box = loadConfig().keyEnc;
+  if (!box) return { key: "", status: "empty" };
+  if (box.v === "enc") {
+    try {
+      const key = safeStorage.decryptString(Buffer.from(box.d, "base64"));
+      return key ? { key, status: "ok" } : { key: "", status: "locked" };
+    } catch {
+      return { key: "", status: "locked" };
+    }
+  }
+  return box.d ? { key: box.d, status: "ok" } : { key: "", status: "empty" };
+});
 ipcMain.handle("set-key", (_e, k) => {
   const c = loadConfig();
   c.keyEnc = k ? encryptSecret(k) : null;

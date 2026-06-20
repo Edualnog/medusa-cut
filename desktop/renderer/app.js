@@ -228,11 +228,19 @@ function updateSummary() {
   $("gen").disabled = !sourceReady() || isProcessing;
 }
 
-window.api.getKey().then((key) => {
-  if (!key) return;
-  $("key").value = key;
-  $("keyHelper").textContent = "Chave OpenRouter salva neste computador.";
-  $("keyHelper").classList.add("ready");
+window.api.getKey().then((res) => {
+  res = res || {};
+  if (res.status === "ok" && res.key) {
+    $("key").value = res.key;
+    $("keyHelper").textContent = "Chave OpenRouter salva neste computador.";
+    $("keyHelper").classList.add("ready");
+  } else if (res.status === "locked") {
+    // Há chave salva, mas o cofre do sistema (Keychain) não liberou — provável "Negar".
+    $("keyHelper").textContent =
+      "Não foi possível abrir o cofre do sistema (Keychain). Reconecte sua chave da OpenRouter.";
+    $("keyHelper").classList.remove("ready");
+    setKeyStatus("RECONECTE SUA CHAVE DA OPENROUTER", "invalid");
+  }
 });
 
 $("toggleKey").addEventListener("click", () => {
