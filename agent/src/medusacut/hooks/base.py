@@ -81,6 +81,9 @@ def _judge_user(
         "Escolha o MOMENTO COMPLETO pra virar um corte: comece onde o lance comeca a se "
         "montar (setup) e termine no payoff/reacao. NAO corte no meio de uma acao; alinhe a "
         "uma quebra de cena quando fizer sentido. Os tempos devem ficar DENTRO da janela.\n"
+        "NAO comece em intro/vinheta, leitura de PATROCINIO/ANUNCIO, divulgacao de app/produto/"
+        "cupom ou pedido de inscricao — se a janela abrir com isso, mova best_start_s pra DEPOIS, "
+        "no comeco do conteudo real.\n"
         f"{dur_rule}\n"
         "Responda um JSON com as chaves:\n"
         '  "hook": titulo/gancho curto e punchy (max ~60 caracteres),\n'

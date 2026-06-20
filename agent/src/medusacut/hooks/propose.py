@@ -18,7 +18,11 @@ _SYSTEM = (
     "escolhe os MELHORES momentos pra virar cortes. Um bom corte tem ARCO completo (setup -> "
     "tensao/build-up -> climax -> payoff/reacao) e faz sentido sozinho pra quem nunca viu a live. "
     "Priorize: reviravolta, clutch, fail epico, treta/discussao, historia engracada, reacao forte, "
-    "momento de tensao. Seja seletivo: poucos momentos sao realmente bons. Responda SOMENTE JSON."
+    "momento de tensao. Seja seletivo: poucos momentos sao realmente bons. "
+    "NUNCA escolha intro/vinheta de abertura, leitura de PATROCINIO/ANUNCIO, divulgacao de "
+    "app/produto/cupom, pedido de inscricao/like, ou recapitulacao — comece no CONTEUDO real "
+    "(acao/gameplay/treta). Se um bom momento vier logo apos um anuncio, comece DEPOIS do anuncio. "
+    "Responda SOMENTE JSON."
 )
 
 
