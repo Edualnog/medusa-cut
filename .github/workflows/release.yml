@@ -73,6 +73,20 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Verifica se o token de release tem acesso ao repo alvo
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: |
+          # Verifica se o token consegue acessar a API do repositório alvo.
+          # Isso falhará com código de erro legível se o secret não existir ou
+          # não tiver permissões suficientes (403).
+          if ! gh api repos/Edualnog/medusa-clip-releases --silent > /dev/null 2>&1; then
+            echo "::error::RELEASES_TOKEN cannot access Edualnog/medusa-clip-releases. Ensure it's a PAT with access to that repo and Releases/Contents write permissions, and that you've added it as a repository secret named RELEASES_TOKEN."
+            gh auth status || true
+            exit 1
+          fi
+          echo "Token can access repo."
+
       - name: Publica a release única (todos os assets de uma vez)
         env:
           GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
