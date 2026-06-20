@@ -82,24 +82,22 @@ def test_judge_window_never_shrinks_below_anchor():
     assert lo <= 0.0 and hi >= 200.0
 
 
-def test_render_workers_env_override(monkeypatch):
+def test_render_workers_opt_in_env(monkeypatch):
     monkeypatch.setenv("MEDUSA_RENDER_WORKERS", "3")
     assert _render_workers(5) == 3
     assert _render_workers(2) == 2  # nunca mais que o nº de cortes
 
 
-def test_render_workers_default_by_cpu(monkeypatch):
+def test_render_workers_default_is_serial(monkeypatch):
+    # paralelo e OPT-IN: sem a env -> serial, independente de nº de nucleos
     monkeypatch.delenv("MEDUSA_RENDER_WORKERS", raising=False)
     monkeypatch.setattr(os, "cpu_count", lambda: 8)
-    assert _render_workers(5) == 2          # >=4 nucleos -> 2 paralelo
-    monkeypatch.setattr(os, "cpu_count", lambda: 2)
-    assert _render_workers(5) == 1          # <4 nucleos -> serial
+    assert _render_workers(5) == 1
 
 
 def test_render_workers_ignores_garbage_env(monkeypatch):
     monkeypatch.setenv("MEDUSA_RENDER_WORKERS", "abc")
-    monkeypatch.setattr(os, "cpu_count", lambda: 8)
-    assert _render_workers(5) == 2
+    assert _render_workers(5) == 1
 
 
 def test_blend_rescues_silent_high_action_clip():

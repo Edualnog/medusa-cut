@@ -292,8 +292,9 @@ def render_candidates(
             moment_type=hook.moment_type if hook else "",
         )
 
-    # Render dos cortes EM PARALELO: cada ffmpeg ja usa varias threads, entao alguns
-    # cortes concorrentes ganham tempo sem trade de qualidade. Ordem preservada na saida.
+    # Render dos cortes: SERIAL por default (o reframe ja satura a CPU; concorrer so
+    # piora — ver _render_workers). Paralelo e opt-in via MEDUSA_RENDER_WORKERS.
+    # Ordem da saida preservada independente da ordem de conclusao.
     clips: list[Clip] = []
     if total:
         from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -490,19 +491,18 @@ def _merge_pool(proposals: list[Candidate], energy: list[Candidate]) -> list[Can
 
 
 def _render_workers(n: int) -> int:
-    """Quantos cortes renderizar em paralelo (limitado por `n`).
+    """Quantos cortes renderizar em paralelo (limitado por `n`). DEFAULT = serial.
 
-    ffmpeg ja usa varias threads, entao ~2 cortes concorrentes ganham tempo sem
-    oversubscrever; mais que isso satura CPU/I/O e pode ate piorar. Em maquina com <4
-    nucleos, fica serial. Override pelo usuario via `MEDUSA_RENDER_WORKERS`.
+    Medido: o reframe (optical flow + ffmpeg) JA satura a CPU por corte, entao rodar
+    cortes concorrentes so oversubscreve e fica MAIS LENTO (8 nucleos: 4 cortes em 2x
+    levaram 673s vs 566s serial). Por isso o paralelo e OPT-IN: so ativa se o usuario
+    setar `MEDUSA_RENDER_WORKERS` (util em layout leve / hardware onde 1 corte nao
+    satura). Sem a env, fica serial — sem regressao no caminho comum (facecam reframe).
     """
     import os as _os
 
     env = (_os.environ.get("MEDUSA_RENDER_WORKERS") or "").strip()
-    if env.isdigit() and int(env) > 0:
-        want = int(env)
-    else:
-        want = 2 if (_os.cpu_count() or 1) >= 4 else 1
+    want = int(env) if env.isdigit() and int(env) > 0 else 1
     return max(1, min(want, n))
 
 
