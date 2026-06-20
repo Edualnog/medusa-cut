@@ -28,6 +28,38 @@ _BLUR_W, _BLUR_H = TARGET_W // 5, TARGET_H // 5
 _BLUR_SIGMA_SMALL = max(2, round(BLUR_SIGMA / 5))
 
 
+def _squarify_cam_box(
+    rect: tuple[float, float, float, float],
+    media_w: int,
+    media_h: int,
+    *,
+    max_aspect: float = 1.2,
+) -> tuple[float, float, float, float]:
+    """Da headroom vertical a uma caixa de facecam ACHATADA (larga/curta em PIXELS).
+
+    Webcam (circular/quadrada) costuma vir como caixa curta porque coords normalizadas
+    distorcem no frame 16:9 -> o crop corta queixo/topo da cabeca. Se a largura em px
+    passa de `max_aspect`x a altura, aumenta a ALTURA em torno do centro (clampada)."""
+    x0, y0, x1, y1 = rect
+    pw = (x1 - x0) * media_w
+    ph = (y1 - y0) * media_h
+    if ph <= 0 or pw / ph <= max_aspect:
+        return rect
+    target_h = min(1.0, (pw / max_aspect) / media_h)  # nova altura normalizada
+    cy = (y0 + y1) / 2.0
+    ny0 = cy - target_h / 2.0
+    ny1 = cy + target_h / 2.0
+    # preserva a altura DESLOCANDO (nao so clampando) qdo bate numa borda — senao a
+    # cam, que fica colada no topo, perde o queixo.
+    if ny0 < 0.0:
+        ny1 -= ny0
+        ny0 = 0.0
+    if ny1 > 1.0:
+        ny0 -= ny1 - 1.0
+        ny1 = 1.0
+    return (x0, round(max(0.0, ny0), 4), x1, round(min(1.0, ny1), 4))
+
+
 def _blurred_bg(src: str, out: str) -> str:
     """Filtro: preenche 9:16, borra num bg REDUZIDO e reescala (barato). `src`/`out`
     sao labels do filtergraph (ex.: 'bg' -> 'bgb')."""
@@ -57,6 +89,8 @@ def render_facecam_layout(
     rect = facecam_box or facecam_rect(facecam_corner)
     if rect is None:
         raise ValueError(f"facecam_corner/box invalido p/ este layout: {facecam_corner!r}")
+    # headroom: evita cortar queixo/topo da cabeca quando a box vem achatada.
+    rect = _squarify_cam_box(rect, int(media.width), int(media.height))
 
     os.makedirs(cache_dir, exist_ok=True)
     game_h = TARGET_H - facecam_h

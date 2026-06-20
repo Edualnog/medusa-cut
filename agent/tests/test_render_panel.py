@@ -37,3 +37,18 @@ def test_dynamic_panel_uses_named_crop_and_writes_sendcmd(tmp_path):
         "1.000 crop@g x 400.0;",
         "2.000 crop@g x 250.0;",
     ]
+
+
+def test_squarify_expands_flat_cam_box():
+    from medusacut.reframe.compose import _squarify_cam_box
+    # box achatada em px (403x248 no 1920x1080, aspect ~1.6) -> ganha altura
+    rect = _squarify_cam_box((0.01, 0.02, 0.22, 0.25), 1920, 1080, max_aspect=1.2)
+    assert rect[0] == 0.01 and rect[2] == 0.22       # largura intacta
+    assert rect[3] - rect[1] > 0.25 - 0.02           # mais alta que antes
+
+
+def test_squarify_leaves_squarish_box():
+    from medusacut.reframe.compose import _squarify_cam_box
+    # box ja ~quadrada em px (300x300) -> inalterada
+    rect = (0.0, 0.0, 300/1920, 300/1080)
+    assert _squarify_cam_box(rect, 1920, 1080, max_aspect=1.2) == rect
