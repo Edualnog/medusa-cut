@@ -38,10 +38,18 @@ from medusacut.local import run
 sys.exit(run())
 PY
 
+# Pacotes EXCLUÍDOS de propósito (peso morto — o app não usa):
+#  - onnxruntime (~69MB): só seria usado pelo VAD Silero; transcrevemos SEM vad_filter.
+#  - boto3/botocore (~25MB): só o worker da VPS (abandonada) usava, p/ R2.
+# ATENÇÃO: `av` (PyAV) NÃO pode sair — o faster-whisper usa PyAV pra DECODIFICAR o
+# áudio na transcrição (testado: sem ele, "No module named 'av'" e cortes sem legenda).
+# Sempre revisar este enxugamento ao mexer em transcribe/scene/reframe.
 "$PYBIN" -m PyInstaller --noconfirm --onedir --name medusacut-engine \
-  --collect-all faster_whisper --collect-all ctranslate2 --collect-all onnxruntime \
-  --collect-all cv2 --collect-all av --collect-all yt_dlp --collect-all tokenizers \
+  --collect-all faster_whisper --collect-all ctranslate2 --collect-all av \
+  --collect-all cv2 --collect-all yt_dlp --collect-all tokenizers \
   --collect-all huggingface_hub --collect-submodules medusacut \
+  --exclude-module onnxruntime \
+  --exclude-module boto3 --exclude-module botocore \
   "$ENTRY"
 
 echo "OK -> dist/medusacut-engine/"

@@ -1,6 +1,6 @@
 {
   "name": "medusaclip-desktop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Medusa Clip — cortes virais de gameplay, rodando no seu PC",
   "main": "main.js",
   "author": "Medusa Clip",
@@ -16,6 +16,7 @@
   "build": {
     "appId": "com.medusaclip.app",
     "productName": "Medusa Clip",
+    "afterPack": "scripts/afterPack.js",
     "publish": [
       {
         "provider": "github",

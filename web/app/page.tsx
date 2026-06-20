@@ -216,6 +216,8 @@ export default function Home() {
           </div>
           <p className="download-note">
             CADA INSTALADOR JÁ TRAZ O APP, O MOTOR DE CORTES, FFMPEG E FFPROBE EMBUTIDOS — E É GRÁTIS. SEM PYTHON, SEM DEPENDÊNCIAS.
+            <br />
+            PRIMEIRA ABERTURA: NO MACOS, CLIQUE COM O BOTÃO DIREITO NO APP → ABRIR. NO WINDOWS, EM &quot;MAIS INFORMAÇÕES&quot; → EXECUTAR ASSIM MESMO.
           </p>
         </section>
 
