@@ -39,15 +39,18 @@
       "target": "dmg",
       "category": "public.app-category.video",
       "identity": null,
+      "icon": "build/icon.icns",
       "artifactName": "MedusaClip-mac-${arch}.${ext}"
     },
     "win": {
       "target": "nsis",
+      "icon": "build/icon.ico",
       "artifactName": "MedusaClip-win-${arch}.${ext}"
     },
     "linux": {
       "target": "AppImage",
       "category": "AudioVideo",
+      "icon": "build/icon.png",
       "artifactName": "MedusaClip-linux-${arch}.${ext}"
     }
   },
