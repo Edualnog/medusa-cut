@@ -12,9 +12,17 @@
     "electron": "^33.4.11",
     "electron-builder": "^25.1.8"
   },
+  "//publish": "Releases vao pro repo PUBLICO medusa-clip-releases (so binarios); o fonte fica privado. electron-updater le este bloco pra achar o feed. Ver docs/SETUP.md.",
   "build": {
     "appId": "com.medusaclip.app",
     "productName": "Medusa Clip",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Edualnog",
+        "repo": "medusa-clip-releases"
+      }
+    ],
     "files": [
       "main.js",
       "preload.js",
@@ -29,18 +37,22 @@
     "mac": {
       "target": "dmg",
       "category": "public.app-category.video",
-      "identity": null
+      "identity": null,
+      "artifactName": "MedusaClip-mac-${arch}.${ext}"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "MedusaClip-win-${arch}.${ext}"
     },
     "linux": {
       "target": "AppImage",
-      "category": "AudioVideo"
+      "category": "AudioVideo",
+      "artifactName": "MedusaClip-linux-${arch}.${ext}"
     }
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
-    "@ffprobe-installer/ffprobe": "^2.1.2"
+    "@ffprobe-installer/ffprobe": "^2.1.2",
+    "electron-updater": "^6.8.9"
   }
 }

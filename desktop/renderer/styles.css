@@ -160,6 +160,33 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .view { width: min(1180px, 100%); margin: 0 auto; }
 .hidden { display: none !important; }
 
+/* Banner de atualizacao (auto-update) */
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 44px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--accent);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.update-banner button {
+  flex: none;
+  padding: 8px 14px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #060608;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: 0.04em;
+}
+.update-banner button:hover { filter: brightness(1.1); }
+
 .page-intro {
   display: grid;
   grid-template-columns: 1fr minmax(280px, 440px);

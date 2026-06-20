@@ -15,8 +15,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."   # agent/
 
+# Interpretador fixavel (CI/local). Default python3.11: a stack ML (ctranslate2,
+# onnxruntime, faster-whisper) nem sempre tem wheels pras versoes mais novas.
+PYTHON="${PYTHON:-python3.11}"
+command -v "$PYTHON" >/dev/null || PYTHON=python3
 VENV="${VENV:-.buildvenv}"
-python3 -m venv "$VENV"
+"$PYTHON" -m venv "$VENV"
 "$VENV/bin/pip" install --upgrade pip >/dev/null
 "$VENV/bin/pip" install . pyinstaller
 

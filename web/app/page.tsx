@@ -27,11 +27,19 @@ const STEPS = [
   { number: "4", title: "PUBLIQUE", text: "Receba clips 9:16 com título, legenda karaokê e reframe automático." },
 ];
 
+// Repo PÚBLICO que hospeda só os instaladores (o código-fonte é privado). Os links
+// apontam pra release `latest`, e os nomes de asset são fixos (artifactName no
+// electron-builder do desktop).
+const RELEASE_REPO = "Edualnog/medusa-clip-releases";
+const releaseUrl = (asset: string) =>
+  `https://github.com/${RELEASE_REPO}/releases/latest/download/${asset}`;
+const RELEASES_READY = !RELEASE_REPO.includes("PLACEHOLDER");
+
 const DOWNLOADS = [
-  { platform: "macOS", variant: "APPLE SILICON", architecture: "ARM64", format: ".DMG" },
-  { platform: "macOS", variant: "INTEL", architecture: "X64", format: ".DMG" },
-  { platform: "Windows", variant: "WINDOWS 10/11", architecture: "X64", format: ".EXE" },
-  { platform: "Linux", variant: "LINUX DESKTOP", architecture: "X64", format: ".APPIMAGE" },
+  { platform: "macOS", variant: "APPLE SILICON", architecture: "ARM64", format: ".DMG", asset: "MedusaClip-mac-arm64.dmg" },
+  { platform: "macOS", variant: "INTEL", architecture: "X64", format: ".DMG", asset: "MedusaClip-mac-x64.dmg" },
+  { platform: "Windows", variant: "WINDOWS 10/11", architecture: "X64", format: ".EXE", asset: "MedusaClip-win-x64.exe" },
+  { platform: "Linux", variant: "LINUX DESKTOP", architecture: "X64", format: ".APPIMAGE", asset: "MedusaClip-linux-x64.AppImage" },
 ];
 
 const FAQ = [
@@ -192,9 +200,15 @@ export default function Home() {
                 </div>
                 <h3>{download.variant}</h3>
                 <p>ARQUITETURA {download.architecture}</p>
-                <button type="button" disabled>
-                  EM BREVE
-                </button>
+                {RELEASES_READY ? (
+                  <a className="download-btn" href={releaseUrl(download.asset)} rel="noopener">
+                    BAIXAR
+                  </a>
+                ) : (
+                  <button type="button" disabled>
+                    EM BREVE
+                  </button>
+                )}
               </article>
             ))}
           </div>

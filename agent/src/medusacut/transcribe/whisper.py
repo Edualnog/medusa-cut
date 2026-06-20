@@ -70,3 +70,27 @@ def transcribe_segment(
 
 def transcript_text(words: list[Word]) -> str:
     return " ".join(w.text for w in words).strip()
+
+
+def transcript_timestamped(words: list[Word], *, gap: float = 1.2) -> str:
+    """Transcricao com marca de TEMPO ABSOLUTO por linha, pro LLM escolher
+    fronteiras coerentes. Quebra linha quando ha pausa > `gap`s entre palavras.
+
+    Ex.: "[123.4s] de jeito nenhum a culpa e dele\n[131.0s] eu disse pra ele vir".
+    """
+    if not words:
+        return ""
+    lines: list[str] = []
+    line: list[str] = []
+    line_start = words[0].start
+    prev_end = words[0].start
+    for w in words:
+        if line and w.start - prev_end > gap:
+            lines.append(f"[{line_start:.1f}s] {' '.join(line)}")
+            line = []
+            line_start = w.start
+        line.append(w.text)
+        prev_end = w.end
+    if line:
+        lines.append(f"[{line_start:.1f}s] {' '.join(line)}")
+    return "\n".join(lines)

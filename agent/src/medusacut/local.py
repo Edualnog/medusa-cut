@@ -44,8 +44,10 @@ def run(argv: list[str] | None = None) -> int:
     p.add_argument("source", help="arquivo de video local OU link (Drive/YouTube/.mp4)")
     p.add_argument("--out", default="out", help="pasta de saida dos cortes")
     p.add_argument("--clips", type=int, default=3)
-    p.add_argument("--min-len", type=float, default=15.0)
-    p.add_argument("--max-len", type=float, default=90.0)
+    # Cortes de gameplay precisam de CONTEXTO (setup -> clímax -> payoff). O motor
+    # é desenhado pra 60-300s; defaults curtos faziam o corte colapsar "sem contexto".
+    p.add_argument("--min-len", type=float, default=60.0)
+    p.add_argument("--max-len", type=float, default=180.0)
     p.add_argument("--layout", default="facecam_top_gameplay_bottom")
     p.add_argument("--facecam", default="auto", help="auto|tl|tr|bl|br")
     p.add_argument("--no-captions", action="store_true")

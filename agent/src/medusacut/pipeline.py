@@ -254,6 +254,13 @@ def render_candidates(
 JUDGE_BUFFER = 2
 # Keyframes enviados ao juiz por corte.
 KEYFRAMES = 4
+# Peso da triagem de texto vs. evidencia de sinal (audio+movimento) ao montar a
+# shortlist pro juiz multimodal. O sinal NAO pode ser descartado aqui: o motion
+# track existe pra pegar clutch/explosao SILENCIOSOS, que rendem transcricao fraca
+# (e triagem de texto baixa) — sem esse peso, o juiz que VE os frames nunca chega a
+# ve-los. A triagem de texto ainda manda, mas o visual entra como desempate forte.
+TRIAGE_TEXT_W = 0.65
+SIGNAL_W = 0.35
 
 
 def _prepare_candidates(
@@ -300,8 +307,7 @@ def _prepare_candidates(
         except Exception as exc:
             print(f"[medusacut] triagem falhou no corte {i}: {exc}", file=sys.stderr)
         triaged.append((cand, words, text, ts))
-    triaged.sort(key=lambda t: t[3], reverse=True)
-    shortlist = triaged[: final_count + JUDGE_BUFFER]
+    shortlist = _blend_triage(triaged)[: final_count + JUDGE_BUFFER]
 
     # etapa 2: juiz forte multimodal (ve keyframes)
     from medusacut import frames
@@ -331,6 +337,37 @@ def _prepare_candidates(
 
     judged.sort(key=lambda t: t[1].virality_score if t[1] is not None else -1.0, reverse=True)
     return judged[:final_count], usage_total
+
+
+def _blend_triage(triaged: list) -> list:
+    """Ordena a triagem por uma MISTURA da nota de texto (LLM) com a evidencia de
+    sinal (`cand.score` = audio+movimento), ambas normalizadas 0..1 dentro do pool.
+
+    Sem isso, a shortlist pro juiz multimodal sairia so pela triagem de texto, e um
+    clutch/explosao silencioso (transcricao fraca -> nota baixa) seria descartado
+    antes do juiz VER os frames. Se uma das trilhas for plana (todas iguais ou
+    triagem toda falhada), ela nao desempata — cai na outra.
+
+    Entrada/saida: lista de (cand, words, text, triage_score).
+    """
+    if not triaged:
+        return []
+    t_norm = _minmax([t[3] for t in triaged])
+    s_norm = _minmax([t[0].score for t in triaged])
+    order = sorted(
+        range(len(triaged)),
+        key=lambda i: TRIAGE_TEXT_W * t_norm[i] + SIGNAL_W * s_norm[i],
+        reverse=True,
+    )
+    return [triaged[i] for i in order]
+
+
+def _minmax(xs: list[float]) -> list[float]:
+    """Normaliza pra 0..1 por min-max; trilha plana vira tudo 0 (nao desempata)."""
+    lo, hi = min(xs), max(xs)
+    if hi - lo < 1e-9:
+        return [0.0 for _ in xs]
+    return [(x - lo) / (hi - lo) for x in xs]
 
 
 def _floor_len(rs: float, re_: float, lo: float, hi: float, min_len: float) -> tuple[float, float]:

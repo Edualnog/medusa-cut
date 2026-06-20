@@ -87,7 +87,7 @@
 
       <div class="sidebar-foot">
         <span>MEDUSA CLIP</span>
-        <strong>V0.1.0</strong>
+        <strong id="appVersion">V0.1.0</strong>
       </div>
     </aside>
 
@@ -102,6 +102,11 @@
           <strong id="appStatus">PRONTO</strong>
         </div>
       </header>
+
+      <div id="updateBanner" class="update-banner hidden">
+        <span id="updateBannerText"></span>
+        <button id="updateBannerBtn" type="button"></button>
+      </div>
 
       <div class="content">
         <section id="view-inicio" class="view">
@@ -175,9 +180,9 @@
                 <label class="field">
                   <span>DURAÇÃO</span>
                   <select id="dur">
-                    <option value="15,90">Auto · 15–90s</option>
-                    <option value="10,40">Curtos · 10–40s</option>
-                    <option value="60,180">Longos · 60–180s</option>
+                    <option value="60,180">Padrão · 1–3min (com contexto)</option>
+                    <option value="120,300">Longos · 2–5min (arco completo)</option>
+                    <option value="30,90">Curtos · 30–90s</option>
                   </select>
                 </label>
                 <label class="field" id="facecamField">

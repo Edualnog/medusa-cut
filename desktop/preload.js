@@ -28,4 +28,13 @@ contextBridge.exposeInMainWorld("api", {
   onDone: (cb) => ipcRenderer.on("job-done", (_e, m) => cb(m)),
   onWarning: (cb) => ipcRenderer.on("job-warning", (_e, m) => cb(m)),
   onError: (cb) => ipcRenderer.on("job-error", (_e, m) => cb(m)),
+  // Versao + auto-update
+  getVersion: () => ipcRenderer.invoke("get-version"),
+  openDownloadPage: () => ipcRenderer.invoke("open-download-page"),
+  downloadUpdate: () => ipcRenderer.invoke("update-download"),
+  installUpdate: () => ipcRenderer.invoke("update-install"),
+  onUpdateAvailable: (cb) => ipcRenderer.on("update-available", (_e, m) => cb(m)),
+  onUpdateProgress: (cb) => ipcRenderer.on("update-progress", (_e, m) => cb(m)),
+  onUpdateReady: (cb) => ipcRenderer.on("update-ready", (_e, m) => cb(m)),
+  onUpdateSite: (cb) => ipcRenderer.on("update-site", (_e, m) => cb(m)),
 });

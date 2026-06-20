@@ -15,15 +15,17 @@ from __future__ import annotations
 
 from medusacut.types import Candidate, ScoreTrack
 
-# Limites/duracao do corte (segundos). Defaults dao VARIEDADE; a UI manda min/max
-# por geracao (preset). Antes 60/180 com piso 60 -> tudo saia exatamente 60s.
-MIN_LEN = 15.0
-MAX_LEN = 90.0
+# Limites/duracao do corte (segundos). Cortes de gameplay precisam de CONTEXTO
+# (setup -> climax -> payoff), entao a faixa e LONGA: 1 a 5 min. A janela aqui e so
+# uma ANCORA — o juiz LLM escolhe as fronteiras finais vendo o contexto largo.
+MIN_LEN = 60.0
+MAX_LEN = 300.0
 # Fracao do pico ate onde a janela cresce ("ainda tem acao aqui?"). Mais baixo =
-# janelas crescem mais (mais variedade de duracao; menos cortes colando no minimo).
-SUSTAIN_FRAC = 0.09
-# Tolera vales curtos abaixo do limiar sem encerrar a janela (segundos).
-GAP_TOL_SEC = 3.0
+# janelas crescem mais (ancoras maiores, menos coladas no minimo).
+SUSTAIN_FRAC = 0.07
+# Tolera vales abaixo do limiar sem encerrar a janela (segundos). Clipes longos de
+# gameplay tem pausas naturais — tolera mais antes de encerrar.
+GAP_TOL_SEC = 6.0
 # Folga antes/depois pra dar contexto e nao cortar seco.
 PAD_IN = 1.5
 PAD_OUT = 0.7

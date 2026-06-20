@@ -147,8 +147,10 @@ function storeSession(sess) {
 
 function enginePath() {
   if (process.env.ENGINE_BIN) return process.env.ENGINE_BIN;
-  if (app.isPackaged) return path.join(process.resourcesPath, "engine", "medusacut-engine");
-  return path.join(__dirname, "engine", "medusacut-engine"); // dev: engine/ montada
+  // No Windows o binario do PyInstaller é medusacut-engine.exe.
+  const bin = process.platform === "win32" ? "medusacut-engine.exe" : "medusacut-engine";
+  const base = app.isPackaged ? process.resourcesPath : __dirname; // dev: engine/ montada
+  return path.join(base, "engine", bin);
 }
 // ffmpeg/ffprobe vivem na mesma pasta do motor -> entram no PATH do subprocesso
 function engineEnv() {
@@ -249,6 +251,80 @@ function createWindow() {
   win.loadFile(path.join(__dirname, "renderer", "index.html"));
 }
 
+// --- Auto-update (electron-updater). Fluxo "avisar antes de baixar":
+//   update-available  -> renderer mostra "nova versao vX  [BAIXAR]"
+//   usuario aceita     -> update-download -> progresso -> update-ready
+//   renderer mostra "[REINICIAR PRA INSTALAR]" -> update-install -> quitAndInstall()
+// macOS NAO assinado nao consegue trocar o proprio binario (Squirrel.Mac exige
+// assinatura/notarizacao): nesse caso so checamos a ultima release e mandamos o
+// usuario baixar no site (evento update-site). Trocar pelo fluxo nativo ao assinar.
+const GITHUB_REPO = "Edualnog/medusa-clip-releases"; // repo PUBLICO so de binarios (fonte e privado)
+const DOWNLOAD_PAGE = process.env.MEDUSA_DOWNLOAD_PAGE || "https://medusaclip.com/#download";
+
+function sendToWin(channel, payload) {
+  if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
+}
+
+// Compara versoes "a.b.c" numericamente; true se `a` for maior que `b`.
+function isNewerVersion(a, b) {
+  const pa = String(a).split(".").map(Number);
+  const pb = String(b).split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d !== 0) return d > 0;
+  }
+  return false;
+}
+
+async function checkMacUpdate() {
+  // Sem assinatura, o swap nativo nao funciona no Mac -> so avisa + link pro site.
+  if (GITHUB_REPO.includes("PLACEHOLDER")) return;
+  try {
+    const r = await fetchWithTimeout(
+      `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
+      { headers: { Accept: "application/vnd.github+json" } }
+    );
+    if (!r.ok) return;
+    const data = await r.json();
+    const latest = String(data.tag_name || "").replace(/^v/, "");
+    if (latest && isNewerVersion(latest, app.getVersion())) {
+      sendToWin("update-site", { version: latest, url: DOWNLOAD_PAGE });
+    }
+  } catch {
+    /* update nunca derruba o app */
+  }
+}
+
+function setupUpdates() {
+  if (!app.isPackaged) return; // dev (npm start): nao checa update
+  if (process.platform === "darwin") {
+    checkMacUpdate();
+    return;
+  }
+  if (GITHUB_REPO.includes("PLACEHOLDER")) return; // repo ainda nao configurado
+
+  let autoUpdater;
+  try {
+    ({ autoUpdater } = require("electron-updater"));
+  } catch {
+    return; // dep ausente -> segue sem update
+  }
+  autoUpdater.autoDownload = false; // "avisar antes de baixar"
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on("update-available", (info) => sendToWin("update-available", { version: info.version }));
+  autoUpdater.on("download-progress", (p) => sendToWin("update-progress", { percent: Math.round(p.percent || 0) }));
+  autoUpdater.on("update-downloaded", (info) => sendToWin("update-ready", { version: info.version }));
+  autoUpdater.on("error", (err) => console.error("[update]", err && err.message));
+
+  ipcMain.handle("update-download", () =>
+    autoUpdater.downloadUpdate().catch((e) => console.error("[update]", e && e.message))
+  );
+  ipcMain.handle("update-install", () => autoUpdater.quitAndInstall());
+
+  autoUpdater.checkForUpdates().catch((e) => console.error("[update]", e && e.message));
+}
+
 app.whenReady().then(() => {
   migrateConfig(); // safeStorage so fica disponivel apos o ready
   // zclip://abs/<caminho-do-arquivo> -> serve o arquivo de video local
@@ -257,12 +333,15 @@ app.whenReady().then(() => {
     return net.fetch(pathToFileURL(p).toString());
   });
   createWindow();
+  setupUpdates(); // checa atualizacao ao abrir (so em build empacotado)
 });
 app.on("window-all-closed", () => app.quit());
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
+ipcMain.handle("get-version", () => app.getVersion());
+ipcMain.handle("open-download-page", () => shell.openExternal(DOWNLOAD_PAGE));
 ipcMain.handle("pick-file", async () => {
   const r = await dialog.showOpenDialog(win, {
     properties: ["openFile"],

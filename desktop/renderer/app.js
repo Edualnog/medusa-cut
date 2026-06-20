@@ -15,9 +15,9 @@ const LAYOUT_LABELS = {
 };
 
 const DURATION_LABELS = {
-  "15,90": "AUTO · 15–90S",
-  "10,40": "CURTOS · 10–40S",
-  "60,180": "LONGOS · 60–180S",
+  "60,180": "PADRÃO · 1–3MIN",
+  "120,300": "LONGOS · 2–5MIN",
+  "30,90": "CURTOS · 30–90S",
 };
 
 let mode = "file";
@@ -759,3 +759,37 @@ $("deleteAccount").addEventListener("click", async () => {
     $("deleteAccountNote").classList.add("error");
   }
 });
+
+// --- Versão real (nunca hardcoded) + banner de auto-update.
+window.api.getVersion().then((v) => {
+  if (v) $("appVersion").textContent = "V" + v;
+}).catch(() => {});
+
+function showUpdateBanner(text, btnLabel, onClick) {
+  const btn = $("updateBannerBtn");
+  $("updateBannerText").textContent = text;
+  if (btnLabel) {
+    btn.textContent = btnLabel;
+    btn.onclick = onClick;
+    btn.classList.remove("hidden");
+  } else {
+    btn.classList.add("hidden");
+  }
+  $("updateBanner").classList.remove("hidden");
+}
+
+// Win/Linux: avisa -> baixa -> reinicia (fluxo "avisar antes de baixar").
+window.api.onUpdateAvailable((m) => {
+  showUpdateBanner(`NOVA VERSÃO V${m.version} DISPONÍVEL`, "BAIXAR", () => {
+    showUpdateBanner("BAIXANDO ATUALIZAÇÃO… 0%", null);
+    window.api.downloadUpdate();
+  });
+});
+window.api.onUpdateProgress((m) => showUpdateBanner(`BAIXANDO ATUALIZAÇÃO… ${m.percent}%`, null));
+window.api.onUpdateReady((m) =>
+  showUpdateBanner(`V${m.version} PRONTA — REINICIE PRA INSTALAR`, "REINICIAR", () => window.api.installUpdate())
+);
+// macOS sem assinatura: não troca o binário no app -> manda baixar no site.
+window.api.onUpdateSite((m) =>
+  showUpdateBanner(`NOVA VERSÃO V${m.version} DISPONÍVEL`, "BAIXAR NO SITE", () => window.api.openDownloadPage())
+);

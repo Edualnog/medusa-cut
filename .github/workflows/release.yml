@@ -1,0 +1,50 @@
+name: release
+
+# Builda os instaladores nativos por plataforma e publica no repo PÚBLICO de releases
+# (Edualnog/medusa-clip-releases) — o código-fonte deste repo continua PRIVADO.
+# Dispara ao empurrar uma tag de versão (ex.: git tag v0.1.1 && git push --tags).
+# NÃO há cross-compile: cada artefato é buildado no seu próprio SO/arquitetura.
+#
+# Pré-requisito: criar um PAT com escopo `repo` (acesso a medusa-clip-releases) e
+# salvar como secret RELEASES_TOKEN deste repo (Settings → Secrets → Actions).
+# O GITHUB_TOKEN padrão NÃO serve: ele só publica no próprio repo (privado).
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14      # Apple Silicon -> arm64
+          - os: macos-13      # Intel -> x64
+          - os: windows-latest # x64
+          - os: ubuntu-latest  # x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11" # stack ML (ctranslate2/onnxruntime) tem wheels p/ 3.11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instala deps do desktop
+        working-directory: desktop
+        run: npm install
+
+      - name: Build + publica instalador
+        working-directory: desktop
+        shell: bash
+        env:
+          PYTHON: python # setup-python expõe 3.11 como `python`
+          PUBLISH: always
+          # PAT com acesso ao repo público de releases (cross-repo publish).
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: bash scripts/build_app.sh

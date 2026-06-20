@@ -484,6 +484,24 @@ a {
   cursor: not-allowed;
 }
 
+/* Link de download (release pronta) — mesmo formato do botão, mas ativo. */
+.download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin-top: auto;
+  border: 2px solid var(--accent, #ffd11a);
+  background: var(--accent, #ffd11a);
+  color: #060608;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.download-btn:hover { filter: brightness(1.1); }
+
 .download-note {
   margin: 24px 0 0;
   color: var(--dim);
