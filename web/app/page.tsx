@@ -37,9 +37,8 @@ const RELEASES_READY = !RELEASE_REPO.includes("PLACEHOLDER");
 
 const DOWNLOADS = [
   { platform: "macOS", variant: "APPLE SILICON", architecture: "ARM64", format: ".DMG", asset: "MedusaClip-mac-arm64.dmg" },
-  { platform: "macOS", variant: "INTEL", architecture: "X64", format: ".DMG", asset: "MedusaClip-mac-x64.dmg" },
   { platform: "Windows", variant: "WINDOWS 10/11", architecture: "X64", format: ".EXE", asset: "MedusaClip-win-x64.exe" },
-  { platform: "Linux", variant: "LINUX DESKTOP", architecture: "X64", format: ".APPIMAGE", asset: "MedusaClip-linux-x64.AppImage" },
+  { platform: "Linux", variant: "LINUX DESKTOP", architecture: "X64", format: ".APPIMAGE", asset: "MedusaClip-linux-x86_64.AppImage" },
 ];
 
 const FAQ = [

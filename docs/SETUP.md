@@ -118,8 +118,9 @@ vai pro Storage.
 ### 2. Publicar uma versão
 - Subir `desktop/package.json` `version` (ex.: `0.1.1`) — é a **fonte da verdade** do updater.
 - `git tag v0.1.1 && git push --tags` → o workflow `.github/workflows/release.yml` builda
-  Mac (arm64+x64), Windows e Linux **nativamente** e publica os instaladores + os feeds
-  (`latest*.yml`) na Release de `medusa-clip-releases`.
+  **macOS Apple Silicon (arm64)**, **Windows (x64)** e **Linux (x86_64)** nativamente e
+  publica os instaladores + os feeds (`latest*.yml`) na Release de `medusa-clip-releases`.
+  (macOS Intel foi descontinuado a pedido do dono — só Apple Silicon.)
 
 ### 3. Como o usuário atualiza
 - **Windows/Linux**: ao abrir, o app checa a Release; se houver versão maior, mostra
