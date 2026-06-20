@@ -514,6 +514,34 @@ a {
   letter-spacing: 0.8px;
 }
 
+/* Comando de terminal por card de download (alternativa ao botao BAIXAR). */
+.download-cmd {
+  margin: 16px 0;
+  text-align: left;
+}
+
+.download-cmd > span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--dim);
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  letter-spacing: 0.8px;
+}
+
+.download-cmd code {
+  display: block;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  background: #0a0a0d;
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.35;
+  letter-spacing: 0.3px;
+  word-break: break-all;
+}
+
 .pricing-section {
   display: grid;
   grid-template-columns: 0.9fr 1.1fr;

@@ -41,6 +41,21 @@ const DOWNLOADS = [
   { platform: "Linux", variant: "LINUX DESKTOP", architecture: "X64", format: ".APPIMAGE", asset: "MedusaClip-linux-x86_64.AppImage" },
 ];
 
+// Comando de 1 linha pra baixar pelo terminal de cada SO (alternativa ao botão).
+function downloadCommand(platform: string, asset: string) {
+  const url = releaseUrl(asset);
+  switch (platform) {
+    case "macOS":
+      return `curl -L -o MedusaClip.dmg ${url} && open MedusaClip.dmg`;
+    case "Windows": // PowerShell
+      return `iwr ${url} -OutFile MedusaClip.exe; .\\MedusaClip.exe`;
+    case "Linux":
+      return `curl -L ${url} -o MedusaClip.AppImage && chmod +x MedusaClip.AppImage && ./MedusaClip.AppImage`;
+    default:
+      return "";
+  }
+}
+
 const FAQ = [
   {
     question: "MEUS VÍDEOS SÃO ENVIADOS PARA ALGUM SERVIDOR?",
@@ -53,6 +68,10 @@ const FAQ = [
   {
     question: "POR QUE USAR MINHA PRÓPRIA CHAVE DE IA?",
     answer: "Liberdade e transparência. A chave fica no seu dispositivo e fala direto com o provedor — você controla seu gasto e nada de IA passa pelos nossos servidores. É o que mantém o app gratuito.",
+  },
+  {
+    question: "QUANTO CUSTA POR CORTE?",
+    answer: "Centavos. Num teste com os modelos padrão (GPT-4.1), um vídeo de ~10 minutos gerou 4 cortes por poucos centavos de dólar no total — cerca de 1 centavo por corte. O valor varia com o modelo que você escolhe e com o tamanho do vídeo, e é cobrado direto pela OpenRouter na sua chave. O app não cobra nada.",
   },
   {
     question: "O QUE TORNA OS CORTES MELHORES QUE UM RECORTADOR GENÉRICO?",
@@ -81,6 +100,7 @@ export default function Home() {
           <div className="nav-menu">
             <a href="#recursos">RECURSOS</a>
             <a href="#download">DOWNLOAD</a>
+            <a href="#custo">CUSTO</a>
             <a href="#liberdade">GRÁTIS</a>
           </div>
 
@@ -203,9 +223,15 @@ export default function Home() {
                 <h3>{download.variant}</h3>
                 <p>ARQUITETURA {download.architecture}</p>
                 {RELEASES_READY ? (
-                  <a className="download-btn" href={releaseUrl(download.asset)} rel="noopener">
-                    BAIXAR
-                  </a>
+                  <>
+                    <div className="download-cmd">
+                      <span>OU NO TERMINAL</span>
+                      <code>{downloadCommand(download.platform, download.asset)}</code>
+                    </div>
+                    <a className="download-btn" href={releaseUrl(download.asset)} rel="noopener">
+                      BAIXAR
+                    </a>
+                  </>
                 ) : (
                   <button type="button" disabled>
                     EM BREVE
@@ -237,6 +263,34 @@ export default function Home() {
             </Link>
             <a className="button button-secondary" href="#download">
               BAIXAR AGORA
+            </a>
+          </div>
+        </section>
+
+        <section className="section shell-width pricing-section" id="custo">
+          <div className="pricing-copy">
+            <SectionTag>CUSTO TRANSPARENTE</SectionTag>
+            <h2>CENTAVOS POR CORTE.<br />SEM SURPRESA.</h2>
+            <p>
+              O app é grátis. O único custo é a IA — e é da SUA chave da OpenRouter,
+              cobrada direto pelo provedor, em centavos por corte. Sem assinatura, sem
+              créditos, sem intermediário. Você escolhe o modelo: mais barato custa ainda
+              menos.
+            </p>
+          </div>
+          <div className="price-card">
+            <span className="price-label">CUSTO REAL · SUA CHAVE</span>
+            <div className="price">
+              ~US$ 0,01 <span>/ CORTE</span>
+            </div>
+            <ul>
+              <li>EXEMPLO: VÍDEO DE ~10 MIN → 4 CORTES POR POUCOS CENTAVOS (MODELOS PADRÃO GPT-4.1)</li>
+              <li>VOCÊ ESCOLHE O MODELO NA OPENROUTER — OPÇÕES MAIS BARATAS CUSTAM MENOS</li>
+              <li>SEM ASSINATURA E SEM CRÉDITOS: PAGA DIRETO AO PROVEDOR</li>
+              <li>O APP É 100% GRÁTIS — O CUSTO DA IA É SEU E TRANSPARENTE</li>
+            </ul>
+            <a className="button button-primary" href="#download">
+              BAIXAR GRÁTIS
             </a>
           </div>
         </section>

@@ -7,6 +7,34 @@ O processamento pesado acontece no computador do usuário. O motor combina sinai
 de áudio e movimento, transcrição, análise multimodal, enquadramento automático e
 legendas karaokê para encontrar e renderizar os melhores momentos.
 
+## Download
+
+Grátis. Cada instalador já traz o app, o motor de cortes, `ffmpeg` e `ffprobe`
+embutidos — sem instalar Python nem dependências. Os links abaixo apontam sempre
+para a **versão mais recente**; baixe pelo botão ou cole o comando no terminal.
+
+**macOS (Apple Silicon / ARM64)** — [baixar `.dmg`](https://github.com/Edualnog/medusa-cut/releases/latest/download/MedusaClip-mac-arm64.dmg)
+
+```bash
+curl -L -o MedusaClip.dmg https://github.com/Edualnog/medusa-cut/releases/latest/download/MedusaClip-mac-arm64.dmg && open MedusaClip.dmg
+```
+
+**Windows 10/11 (x64)** — [baixar `.exe`](https://github.com/Edualnog/medusa-cut/releases/latest/download/MedusaClip-win-x64.exe)
+
+```powershell
+iwr https://github.com/Edualnog/medusa-cut/releases/latest/download/MedusaClip-win-x64.exe -OutFile MedusaClip.exe; .\MedusaClip.exe
+```
+
+**Linux (x64)** — [baixar `.AppImage`](https://github.com/Edualnog/medusa-cut/releases/latest/download/MedusaClip-linux-x86_64.AppImage)
+
+```bash
+curl -L https://github.com/Edualnog/medusa-cut/releases/latest/download/MedusaClip-linux-x86_64.AppImage -o MedusaClip.AppImage && chmod +x MedusaClip.AppImage && ./MedusaClip.AppImage
+```
+
+Todas as versões: [Releases](https://github.com/Edualnog/medusa-cut/releases). Os builds
+ainda **não são assinados** — na primeira abertura, no macOS clique com o botão direito
+no app → **Abrir**; no Windows, em **Mais informações → Executar assim mesmo**.
+
 ## Licença e direitos (source-available)
 
 Este repositório é **source-available**, não open source. O código fica público
@@ -66,7 +94,7 @@ vídeo local ou link público
 ```text
 agent/      motor Python, pipeline de vídeo, worker legado e testes
 desktop/    aplicativo Electron e empacotamento multiplataforma
-web/        landing Next.js e autenticação Supabase; downloads vêm na próxima etapa
+web/        landing Next.js, autenticação Supabase e downloads por plataforma
 supabase/   schemas e policies; inclui tabelas legadas do protótipo cloud
 docs/       documentação de arquitetura e setup
 ```
@@ -78,11 +106,11 @@ docs/       documentação de arquitetura e setup
 - transcrição com `faster-whisper`;
 - análise viral multimodal via OpenRouter;
 - reframe dinâmico, detecção de facecam e legenda karaokê;
-- aplicativo Electron funcional e build `.dmg` sem assinatura;
-- painel e APIs de processamento cloud removidos da aplicação web;
-- landing ainda precisa da comunicação local-first e dos downloads por plataforma;
-- autenticação Supabase já existe na web; login desktop, licenciamento e builds
-  automatizados ainda estão pendentes.
+- aplicativo Electron funcional, com login Supabase e onboarding de aceites;
+- builds automatizados (GitHub Actions) para macOS `arm64`, Windows `x64` e Linux
+  `x64`, publicados como release a cada tag `v*`, com auto-update;
+- landing local-first com downloads por plataforma e auto-update ativos;
+- pendente: assinatura/notarização dos builds (ainda sem assinatura).
 
 ## Desenvolvimento
 
@@ -133,6 +161,12 @@ npm run dev
 - o usuário paga diretamente à OpenRouter pelo consumo dos modelos;
 - o Supabase armazenará somente dados de conta, autenticação e acesso ao produto;
 - nenhum vídeo precisa ser enviado para a infraestrutura do Medusa Clip.
+
+**Custo na prática:** o gasto de IA é de **centavos por corte**. Num teste com os
+modelos padrão (triagem `gpt-4o-mini`, juiz `gpt-4.1`), um vídeo de ~10 min gerou
+4 cortes por **poucos centavos de dólar no total** — cerca de 1 centavo por corte.
+O valor varia com o modelo escolhido (modelos mais baratos custam menos) e com o
+tamanho do vídeo, e é cobrado direto pela OpenRouter na chave do usuário.
 
 ## Roadmap
 
