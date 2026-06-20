@@ -78,6 +78,33 @@ def generate_clips(
     _report(progress, 0.45, "Extraindo audio…")
     wav_path = preprocess.extract_audio(media, cache_dir)
 
+    lo = min_len if min_len is not None else fusion.MIN_LEN
+    hi = max_len if max_len is not None else fusion.MAX_LEN
+
+    # 3. transcricao UNICA do video + propostas do LLM por ROTEIRO. A energia perde
+    # momento forte que nao e alto (historia engracada, reviravolta de RP, fail
+    # silencioso); o LLM lendo o transcript acha. As propostas entram no pool junto.
+    words_all = None
+    proposals: list[Candidate] = []
+    if score_virality or captions:
+        import sys as _sys
+
+        from medusacut.transcribe import whisper
+
+        _report(progress, 0.48, "Transcrevendo o video…")
+        try:
+            words_all = whisper.transcribe_segment(wav_path, 0.0, media.duration)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[medusacut] transcricao geral falhou ({exc})", file=_sys.stderr)
+    if score_virality and words_all:
+        from medusacut.hooks.propose import propose_candidates
+
+        _report(progress, 0.52, "Lendo o roteiro (IA)…")
+        ts_all = whisper.transcript_timestamped(words_all)
+        proposals, _pu = propose_candidates(
+            ts_all, game_context, media.duration, count=max_clips * 2, min_len=lo, max_len=hi
+        )
+
     # 4-5. sinais (audio + movimento visual) -> fusao -> candidatos
     _report(progress, 0.55, "Medindo energia…")
     audio_track = audio_energy.analyze(wav_path)
@@ -96,12 +123,12 @@ def generate_clips(
     _report(progress, 0.65, "Selecionando os melhores momentos…")
     # Sobre-seleciona quando vai pontuar: a analise viral escolhe os melhores.
     pool = max_clips * OVERSELECT_FACTOR if score_virality else max_clips
-    lo = min_len if min_len is not None else fusion.MIN_LEN
-    hi = max_len if max_len is not None else fusion.MAX_LEN
     candidates = fusion.select_candidates(
         tracks, max_clips=pool, duration=media.duration, weights=weights,
         min_len=lo, max_len=hi,
     )
+    # funde as propostas do LLM (roteiro) com as de energia no pool
+    candidates = _merge_pool(proposals, candidates)
 
     # 6-9. analise viral (2 etapas) + reframe + render + manifest (0.65 -> 1.00)
     return render_candidates(
@@ -122,6 +149,7 @@ def generate_clips(
         final_count=max_clips,
         min_len=lo,
         max_len=hi,
+        words_all=words_all,
         progress=_band(progress, 0.65, 1.0),
     )
 
@@ -145,6 +173,7 @@ def render_candidates(
     final_count: int | None = None,
     min_len: float | None = None,
     max_len: float | None = None,
+    words_all: list | None = None,
     progress: Progress | None = None,
 ) -> list[Clip]:
     """Score de viralizacao + reframe + render + LEGENDA + manifest.
@@ -230,7 +259,7 @@ def render_candidates(
             media, candidates, audio_path, game_context,
             score_virality=score_virality, final_count=keep, cache_dir=cache_dir,
             min_len=min_len, max_len=max_len, video_dur=media.duration, cuts=cuts,
-            progress=_band(progress, 0.0, 0.5),
+            words_all=words_all, progress=_band(progress, 0.0, 0.5),
         )
         render_progress = _band(progress, 0.5, 1.0)
     else:
@@ -283,7 +312,7 @@ SIGNAL_W = 0.35
 
 def _prepare_candidates(
     media, candidates, audio_path, game_context, *, score_virality, final_count, cache_dir,
-    min_len=None, max_len=None, video_dur=None, cuts=None, progress=None
+    min_len=None, max_len=None, video_dur=None, cuts=None, words_all=None, progress=None
 ):
     """Transcreve + (se pedido) pontua viralizacao em DUAS etapas e ranqueia.
 
@@ -300,12 +329,16 @@ def _prepare_candidates(
     records = []  # (cand, words, text)
     n = len(candidates)
     for i, cand in enumerate(candidates, start=1):
-        _report(progress, 0.4 * (i - 1) / n if n else 0.0, f"Transcrevendo {i}/{n}…")
-        try:
-            words = whisper.transcribe_segment(audio_path, cand.start, cand.end)
-        except Exception as exc:
-            print(f"[medusacut] corte {i} sem transcricao: {exc}", file=sys.stderr)
-            words = []
+        if words_all is not None:
+            # ja temos a transcricao do video inteiro -> fatia (sem re-transcrever)
+            words = [w for w in words_all if w.end > cand.start and w.start < cand.end]
+        else:
+            _report(progress, 0.4 * (i - 1) / n if n else 0.0, f"Transcrevendo {i}/{n}…")
+            try:
+                words = whisper.transcribe_segment(audio_path, cand.start, cand.end)
+            except Exception as exc:
+                print(f"[medusacut] corte {i} sem transcricao: {exc}", file=sys.stderr)
+                words = []
         records.append((cand, words, whisper.transcript_text(words)))
 
     if not score_virality:
@@ -391,6 +424,26 @@ def _minmax(xs: list[float]) -> list[float]:
     if hi - lo < 1e-9:
         return [0.0 for _ in xs]
     return [(x - lo) / (hi - lo) for x in xs]
+
+
+def _merge_pool(proposals: list[Candidate], energy: list[Candidate]) -> list[Candidate]:
+    """Funde propostas do LLM (roteiro) + candidatos de energia num pool unico.
+
+    Propostas recebem score = MEDIANA da energia (nao as penaliza no blend da
+    shortlist, que mistura nota de texto e sinal). Candidato de energia que se
+    sobrepoe a uma proposta e descartado — a proposta, mais intencional, prevalece.
+    """
+    if not proposals:
+        return energy
+    if energy:
+        scores = sorted(c.score for c in energy)
+        med = scores[len(scores) // 2]
+        proposals = [Candidate(p.start, p.end, med) for p in proposals]
+    pool = list(proposals)
+    for c in energy:
+        if not any(c.start < p.end and p.start < c.end for p in pool):
+            pool.append(c)
+    return pool
 
 
 def _floor_len(rs: float, re_: float, lo: float, hi: float, min_len: float) -> tuple[float, float]:

@@ -56,6 +56,10 @@ def run(argv: list[str] | None = None) -> int:
 
     if a.key:
         os.environ["LLM_API_KEY"] = a.key
+    # O motor transcreve o VIDEO INTEIRO (pra o LLM propor cortes pelo roteiro).
+    # 'base' e ~3-4x mais rapido que 'small' em CPU e a qualidade basta (o juiz tambem
+    # ve frames). Override via env WHISPER_MODEL.
+    os.environ.setdefault("WHISPER_MODEL", "base")
 
     from medusacut.pipeline import generate_clips
 
