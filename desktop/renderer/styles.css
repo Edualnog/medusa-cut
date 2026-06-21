@@ -126,6 +126,18 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   letter-spacing: .7px;
 }
 .sidebar-foot strong { color: var(--muted); }
+.version-link {
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-family: var(--pixel);
+  font-size: 6px;
+  letter-spacing: .7px;
+  transition: color .15s ease;
+}
+.version-link:hover { color: var(--accent); }
 .foot-right { display: flex; align-items: center; gap: 8px; }
 .gh-link {
   display: inline-flex;
@@ -803,6 +815,65 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   cursor: pointer;
 }
 .docs-links button:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- Suporte & comunidade ---- */
+.support-panel { grid-column: 1 / -1; }
+.support-links {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 4px 22px 22px;
+}
+.support-link {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color .15s ease;
+}
+.support-link:hover { border-color: var(--accent); }
+.support-link-label {
+  font-family: var(--pixel);
+  font-size: 7px;
+  letter-spacing: .8px;
+  color: var(--accent);
+}
+.support-link-value { color: var(--muted); font-size: 14px; word-break: break-word; }
+@media (max-width: 720px) { .support-links { grid-template-columns: 1fr; } }
+
+/* ---- Convidar amigos ---- */
+.invite-panel { grid-column: 1 / -1; }
+.invite-message {
+  margin: 0 22px;
+  padding: 12px 14px;
+  border: 1px dashed var(--line-strong);
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.45;
+}
+.invite-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 22px 6px;
+}
+.invite-actions .primary-button,
+.invite-actions .secondary-button {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.wn-date {
+  font-family: var(--pixel);
+  font-size: 7px;
+  letter-spacing: .6px;
+  color: var(--dim);
+  margin: -4px 0 8px;
+}
 
 /* ---- Modal legal ---- */
 .legal-modal {

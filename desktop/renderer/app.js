@@ -602,6 +602,7 @@ function revealApp() {
   $("onboarding").classList.add("hidden");
   $("appShell").classList.remove("hidden");
   loadLibraryPath();
+  maybeShowWhatsNew();
 }
 
 function showGate() {
@@ -730,6 +731,7 @@ $("legalModal").addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (!$("legalModal").classList.contains("hidden")) closeLegal();
+  if (!$("whatsNewModal").classList.contains("hidden")) closeWhatsNew();
   if (!$("clipModal").classList.contains("hidden")) closeClipModal();
 });
 // qualquer botao com data-legal abre o documento (onboarding + view de config)
@@ -871,13 +873,109 @@ $("deleteAccount").addEventListener("click", async () => {
   }
 });
 
+// ---- Notas de atualização (novidades) ----
+function renderWhatsNew() {
+  const log = window.CHANGELOG || [];
+  if (!log.length) return "<p>Sem notas disponíveis.</p>";
+  return log
+    .map((rel) => {
+      const items = (rel.items || []).map((i) => `<li>${i}</li>`).join("");
+      const head = rel.title ? `<h3>V${rel.version} — ${rel.title}</h3>` : `<h3>V${rel.version}</h3>`;
+      const date = rel.date ? `<p class="wn-date">${rel.date}</p>` : "";
+      return `${head}${date}<ul>${items}</ul>`;
+    })
+    .join("");
+}
+function openWhatsNew() {
+  $("whatsNewBody").innerHTML = renderWhatsNew();
+  $("whatsNewBody").scrollTop = 0;
+  $("whatsNewModal").classList.remove("hidden");
+}
+function closeWhatsNew() {
+  $("whatsNewModal").classList.add("hidden");
+}
+$("whatsNewClose").addEventListener("click", closeWhatsNew);
+$("whatsNewModal").addEventListener("click", (e) => {
+  if (e.target === $("whatsNewModal")) closeWhatsNew();
+});
+$("openWhatsNew").addEventListener("click", openWhatsNew);
+
+// 1o boot após atualizar: abre as novidades automaticamente — mas só depois que a
+// shell principal aparece (não por cima do login/onboarding). Chamado em revealApp().
+let currentVersion = null;
+function maybeShowWhatsNew() {
+  if (!currentVersion) return;
+  try {
+    if (localStorage.getItem("mc_seen_version") === currentVersion) return;
+    localStorage.setItem("mc_seen_version", currentVersion);
+    openWhatsNew();
+  } catch {}
+}
+
 // --- Versão real (nunca hardcoded) + banner de auto-update.
 window.api.getVersion().then((v) => {
-  if (v) $("appVersion").textContent = "V" + v;
+  if (!v) return;
+  currentVersion = v;
+  $("appVersion").textContent = "V" + v;
+  // Se a shell já estiver visível (sessão restaurada antes da versão chegar), tenta agora.
+  if (!$("appShell").classList.contains("hidden")) maybeShowWhatsNew();
 }).catch(() => {});
+
+// Clique na versão no rodapé -> abre as novidades.
+$("appVersion").addEventListener("click", openWhatsNew);
 
 // Ícone do GitHub no rodapé -> abre as releases no navegador do sistema.
 $("ghLink").addEventListener("click", () => window.api.openGithub());
+
+// Links de suporte/comunidade (e-mail, Discord, GitHub) abrem no navegador/app do sistema.
+document.querySelectorAll("[data-ext]").forEach((btn) => {
+  btn.addEventListener("click", () => window.api.openExternal(btn.dataset.ext));
+});
+
+// ---- Convidar amigos (compartilhamento orgânico, sem rastreio) ----
+const INVITE_SITE = "https://medusaclip.com";
+const INVITE_TEXT =
+  "Tô usando o Medusa Clip pra cortar gameplay no meu PC, de graça. Baixa: " + INVITE_SITE;
+if ($("inviteMessage")) $("inviteMessage").textContent = "“" + INVITE_TEXT + "”";
+
+function inviteFeedback(text) {
+  const note = $("inviteNote");
+  if (!note) return;
+  note.textContent = text;
+  clearTimeout(inviteFeedback._t);
+  inviteFeedback._t = setTimeout(() => {
+    note.textContent = "";
+  }, 4000);
+}
+
+$("inviteCopyLink").addEventListener("click", async () => {
+  await window.api.copyText(INVITE_SITE);
+  inviteFeedback("LINK COPIADO ✓");
+});
+
+document.querySelectorAll("[data-invite]").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const msg = encodeURIComponent(INVITE_TEXT);
+    switch (btn.dataset.invite) {
+      case "whatsapp":
+        window.api.openExternal("https://wa.me/?text=" + msg);
+        break;
+      case "x":
+        window.api.openExternal("https://twitter.com/intent/tweet?text=" + msg);
+        break;
+      case "email":
+        window.api.openExternal(
+          "mailto:?subject=" + encodeURIComponent("Conhece o Medusa Clip?") + "&body=" + msg
+        );
+        break;
+      case "discord":
+        // Discord não tem URL de compartilhamento: copia a mensagem pra colar no servidor/DM.
+        await window.api.copyText(INVITE_TEXT);
+        inviteFeedback("MENSAGEM COPIADA — COLE NO SEU DISCORD ✓");
+        break;
+    }
+  });
+});
 
 function showUpdateBanner(text, btnLabel, onClick) {
   const btn = $("updateBannerBtn");

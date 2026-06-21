@@ -35,6 +35,8 @@ contextBridge.exposeInMainWorld("api", {
   getVersion: () => ipcRenderer.invoke("get-version"),
   openDownloadPage: () => ipcRenderer.invoke("open-download-page"),
   openGithub: () => ipcRenderer.invoke("open-github"),
+  openExternal: (url) => ipcRenderer.invoke("open-external", url),
+  copyText: (text) => ipcRenderer.invoke("copy-text", text),
   downloadUpdate: () => ipcRenderer.invoke("update-download"),
   installUpdate: () => ipcRenderer.invoke("update-install"),
   downloadMacUpdate: () => ipcRenderer.invoke("download-mac-update"),

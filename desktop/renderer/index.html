@@ -88,7 +88,7 @@
       <div class="sidebar-foot">
         <span>MEDUSA CLIP</span>
         <span class="foot-right">
-          <strong id="appVersion">V0.1.0</strong>
+          <button id="appVersion" class="version-link" type="button" title="Ver novidades desta versão" aria-label="Ver novidades">V0.1.0</button>
           <button id="ghLink" class="gh-link" type="button" title="Ver no GitHub" aria-label="Ver no GitHub">
             <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
@@ -413,10 +413,33 @@
               <button class="secondary-button full-button" id="signOut" type="button">SAIR DA CONTA</button>
             </section>
 
-            <section class="panel danger-panel">
+            <section class="panel invite-panel">
               <div class="panel-head">
                 <div>
                   <span class="panel-index">02</span>
+                  <h3>CONVIDAR AMIGOS</h3>
+                </div>
+                <span>DIVULGUE</span>
+              </div>
+              <p class="cost-copy">
+                Curtiu o Medusa Clip? Manda pros amigos que jogam. É grátis e roda no PC
+                deles — quanto mais gente usando, melhor o app fica.
+              </p>
+              <p class="invite-message" id="inviteMessage"></p>
+              <div class="invite-actions">
+                <button type="button" class="primary-button" id="inviteCopyLink">COPIAR LINK</button>
+                <button type="button" class="secondary-button" data-invite="discord">DISCORD</button>
+                <button type="button" class="secondary-button" data-invite="whatsapp">WHATSAPP</button>
+                <button type="button" class="secondary-button" data-invite="x">X</button>
+                <button type="button" class="secondary-button" data-invite="email">E-MAIL</button>
+              </div>
+              <p class="panel-note" id="inviteNote"></p>
+            </section>
+
+            <section class="panel danger-panel">
+              <div class="panel-head">
+                <div>
+                  <span class="panel-index">03</span>
                   <h3>DADOS LOCAIS</h3>
                 </div>
                 <span>LGPD</span>
@@ -440,6 +463,38 @@
                 EXCLUIR MINHA CONTA
               </button>
               <p class="panel-note" id="deleteAccountNote"></p>
+            </section>
+
+            <section class="panel support-panel">
+              <div class="panel-head">
+                <div>
+                  <span class="panel-index">04</span>
+                  <h3>SUPORTE & COMUNIDADE</h3>
+                </div>
+                <span>FALE COM A GENTE</span>
+              </div>
+              <p class="cost-copy">
+                Dúvida, bug ou ideia? Chama no Discord ou manda um e-mail. O Medusa Clip
+                está em <strong>beta</strong> — seu feedback molda o app.
+              </p>
+              <div class="support-links">
+                <button type="button" class="support-link" data-ext="mailto:suporte@medusaclip.com">
+                  <span class="support-link-label">SUPORTE</span>
+                  <span class="support-link-value">suporte@medusaclip.com</span>
+                </button>
+                <button type="button" class="support-link" data-ext="https://discord.gg/dB79XXBz">
+                  <span class="support-link-label">DISCORD</span>
+                  <span class="support-link-value">COMUNIDADE DO MEDUSA CLIP</span>
+                </button>
+                <button type="button" class="support-link" data-ext="https://github.com/Edualnog/medusa-cut">
+                  <span class="support-link-label">GITHUB</span>
+                  <span class="support-link-value">CÓDIGO E RELEASES</span>
+                </button>
+                <button type="button" class="support-link" id="openWhatsNew">
+                  <span class="support-link-label">NOVIDADES</span>
+                  <span class="support-link-value">O QUE MUDOU NESTA VERSÃO</span>
+                </button>
+              </div>
             </section>
           </div>
         </section>
@@ -551,6 +606,16 @@
     </div>
   </div>
 
+  <div class="legal-modal hidden" id="whatsNewModal" role="dialog" aria-modal="true" aria-labelledby="whatsNewTitle">
+    <div class="legal-modal-card">
+      <div class="legal-modal-head">
+        <strong id="whatsNewTitle">NOVIDADES</strong>
+        <button class="legal-close" id="whatsNewClose" type="button" aria-label="Fechar">FECHAR</button>
+      </div>
+      <div class="legal-modal-body" id="whatsNewBody"></div>
+    </div>
+  </div>
+
   <div class="clip-modal hidden" id="clipModal" role="dialog" aria-modal="true" aria-labelledby="clipModalTitle">
     <div class="clip-modal-card">
       <div class="clip-modal-head">
@@ -562,6 +627,7 @@
   </div>
 
   <script src="legal.js"></script>
+  <script src="changelog.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

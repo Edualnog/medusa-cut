@@ -13,11 +13,15 @@ node_modules/
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
-# arquivos de video/audio nunca entram no git
+# arquivos de video/audio nunca entram no git (gameplay/clipes do usuario)
 *.mp4
 *.mkv
 *.webm
 *.wav
 *.m4a
+# EXCECAO: assets otimizados da landing (hero + demos) precisam ir pro repo
+# pra Vercel servir. Sao leves e versionados de proposito.
+!web/public/*.mp4
+!web/public/*.webm
 .DS_Store
 .claude/settings.local.json

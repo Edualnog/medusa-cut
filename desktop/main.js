@@ -1,7 +1,7 @@
 // Processo principal do Electron: janela, chave, dispara o BINARIO do motor
 // (medusacut-engine), repassa o progresso (JSON), e serve a biblioteca local.
 
-const { app, BrowserWindow, ipcMain, dialog, shell, protocol, net, safeStorage } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, shell, protocol, net, safeStorage, clipboard } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
@@ -457,6 +457,16 @@ app.on("activate", () => {
 ipcMain.handle("get-version", () => app.getVersion());
 ipcMain.handle("open-download-page", () => shell.openExternal(DOWNLOAD_PAGE));
 ipcMain.handle("open-github", () => shell.openExternal(`https://github.com/${GITHUB_REPO}/releases`));
+// Abre links de suporte/comunidade no navegador (https) ou cliente de e-mail (mailto).
+// Restrito a https/mailto pra nao abrir esquemas arbitrarios vindos do renderer.
+ipcMain.handle("open-external", (_e, url) => {
+  if (typeof url !== "string") return;
+  if (/^https:\/\//i.test(url) || /^mailto:/i.test(url)) shell.openExternal(url);
+});
+// Copia texto pro clipboard (usado pelo "convidar amigos").
+ipcMain.handle("copy-text", (_e, text) => {
+  if (typeof text === "string") clipboard.writeText(text);
+});
 ipcMain.handle("pick-file", async () => {
   const r = await dialog.showOpenDialog(win, {
     properties: ["openFile"],
