@@ -3,6 +3,16 @@
 // O app abre estas notas automaticamente no 1o boot apos atualizar (ver app.js).
 window.CHANGELOG = [
   {
+    version: "0.1.20",
+    date: "2026-06-21",
+    title: "Notas de atualizacao, suporte e convidar amigos",
+    items: [
+      "Notas de atualizacao: abrem no 1o boot apos atualizar e tambem clicando na versao no rodape.",
+      "Suporte & comunidade na aba Conta: e-mail de suporte, Discord e GitHub.",
+      "Convidar amigos: compartilhe o app em 1 clique (copiar link, Discord, WhatsApp, X, e-mail).",
+    ],
+  },
+  {
     version: "0.1.19",
     date: "2026-06-21",
     title: "Hook queimado, score viral e player interno",
@@ -11,8 +21,6 @@ window.CHANGELOG = [
       "Score de viralizacao colorido por faixa em cada card da biblioteca.",
       "Player do clipe DENTRO do app (modal) + preview no hover do card.",
       "Biblioteca com ordenacao (mais recentes, mais antigos, maior score).",
-      "Notas de atualizacao: clique na versao no rodape pra rever o que mudou.",
-      "Suporte e comunidade: e-mail de suporte, Discord e GitHub na aba Conta.",
     ],
   },
   {
