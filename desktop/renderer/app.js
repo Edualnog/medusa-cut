@@ -10,8 +10,7 @@ const VIEW_META = {
 
 const LAYOUT_LABELS = {
   facecam_top_gameplay_bottom: "FACECAM + GAMEPLAY",
-  dynamic_gameplay: "SEGUE A AÇÃO",
-  gameplay_blur: "FUNDO DESFOCADO",
+  gameplay_blur: "FOCO NA AÇÃO",
 };
 
 const DURATION_LABELS = {
@@ -377,7 +376,7 @@ function startUI() {
   lastWarning = "";
   isProcessing = true;
   $("appStatus").textContent = "PROCESSANDO";
-  $("prog").classList.add("show");
+  $("prog").classList.add("show", "processing");
   $("prog").classList.remove("error");
   $("pstate").textContent = "PROCESSANDO";
   $("result").replaceChildren();
@@ -387,6 +386,7 @@ function startUI() {
 
 function finishProcessing(status = "PRONTO") {
   isProcessing = false;
+  $("prog").classList.remove("processing"); // para a animacao de "carregando"
   $("appStatus").textContent = status;
   updateSummary();
 }
@@ -498,7 +498,8 @@ function clipCard(clip, index) {
         <div class="clip-hook">${escapeHtml(title)}</div>
         ${description ? `<p class="clip-description">${escapeHtml(description)}</p>` : ""}
         <div class="clip-actions">
-          <button type="button" data-action="open" data-index="${index}">ABRIR</button>
+          <button type="button" data-action="play" data-index="${index}">▶ ABRIR</button>
+          <button type="button" data-action="folder" data-index="${index}">PASTA</button>
           <button type="button" data-action="copy" data-index="${index}" ${description ? "" : "disabled"}>COPIAR TEXTO</button>
         </div>
       </div>
@@ -511,13 +512,37 @@ $("lib").addEventListener("click", async (event) => {
   const clip = libraryClips[Number(button.dataset.index)];
   if (!clip) return;
 
-  if (button.dataset.action === "open") {
+  if (button.dataset.action === "play") {
+    openClipModal(clip);
+  } else if (button.dataset.action === "folder") {
     await window.api.openFolder(clip.path);
   } else if (button.dataset.action === "copy" && clip.description) {
     await navigator.clipboard.writeText(clip.description);
     button.textContent = "COPIADO";
     setTimeout(() => { button.textContent = "COPIAR TEXTO"; }, 1400);
   }
+});
+
+// --- Player do clipe DENTRO do app (modal) ---
+function openClipModal(clip) {
+  const player = $("clipPlayer");
+  $("clipModalTitle").textContent = ((clip.hook || "").trim() || clip.file).toUpperCase();
+  player.src = clip.url;          // zclip:// (permitido pela CSP media-src)
+  player.muted = false;          // no player com som; o preview do card segue mudo
+  $("clipModal").classList.remove("hidden");
+  try { player.currentTime = 0; } catch { /* ainda carregando */ }
+  player.play().catch(() => {});
+}
+function closeClipModal() {
+  const player = $("clipPlayer");
+  player.pause();
+  player.removeAttribute("src");
+  player.load();                 // solta o arquivo
+  $("clipModal").classList.add("hidden");
+}
+$("clipModalClose").addEventListener("click", closeClipModal);
+$("clipModal").addEventListener("click", (e) => {
+  if (e.target === $("clipModal")) closeClipModal(); // clicar fora fecha
 });
 
 function escapeHtml(value) {
@@ -682,7 +707,9 @@ $("legalModal").addEventListener("click", (e) => {
   if (e.target === $("legalModal")) closeLegal();
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !$("legalModal").classList.contains("hidden")) closeLegal();
+  if (e.key !== "Escape") return;
+  if (!$("legalModal").classList.contains("hidden")) closeLegal();
+  if (!$("clipModal").classList.contains("hidden")) closeClipModal();
 });
 // qualquer botao com data-legal abre o documento (onboarding + view de config)
 document.querySelectorAll("[data-legal]").forEach((btn) => {

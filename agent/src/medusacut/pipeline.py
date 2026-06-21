@@ -195,66 +195,29 @@ def render_candidates(
     cache_dir = os.path.join(out_dir, ".cache")
     layout_name = _resolve_layout(layout, facecam_corner, facecam_auto)
 
-    # Reframe CIENTE DE CENA (default no caminho AUTO): escolhe o layout por trecho,
-    # em vez de um fixo + box GLOBAL (que virava parede/borrao no topo em video editado).
-    import os as _os
-
-    use_vlm = bool(_os.environ.get("LLM_API_KEY"))
-    scene_aware = (
-        layout_name in ("facecam_top_gameplay_bottom", "dynamic_gameplay")
-        and facecam_auto
-        and facecam_box is None
-    )
-
-    # Cortes de cena (uma vez): o enquadramento dinamico salta neles em vez de varrer.
-    cuts = None
-    if layout_name in ("dynamic_gameplay", "facecam_top_gameplay_bottom"):
-        from medusacut.signals import scene
-
-        cuts = scene.detect_cuts(media.path)
-
-    # Auto-deteccao GLOBAL do facecam: so no caminho NAO-scene-aware (manual/legado). No
-    # scene-aware, a composicao e classificada POR CENA (composition.classify_segment).
-    facecam_info = {"mode": "scene_aware", "vlm": use_vlm} if scene_aware else None
-    if (
-        not scene_aware
-        and layout_name == "facecam_top_gameplay_bottom"
-        and facecam_auto
-        and facecam_box is None
-    ):
+    # SO 2 layouts (decisao de produto): (A) facecam no terco superior + gameplay, ou
+    # (B) gameplay tela cheia com blur. AUTO: procura o facecam SO nos cantos superiores
+    # (95% dos casos) — achou -> A; nao achou -> B. Sem scene-aware, sem VLM, sem
+    # optical-flow: mais simples e mais rapido.
+    cuts = None  # sem deteccao de cena (poupa um decode do video inteiro)
+    facecam_info = None
+    if layout_name == "facecam_top_gameplay_bottom" and facecam_auto and facecam_box is None:
         import sys
 
         from medusacut.reframe import facecam as facecam_mod
 
-        _report(progress, 0.0, "Detectando facecam (rosto)…")
+        _report(progress, 0.0, "Detectando facecam (cantos superiores)…")
         detected = facecam_mod.detect_facecam(media.path)
         if detected:
             facecam_box = detected
             facecam_info = {"auto": True, "method": "yunet", "box": list(detected)}
         else:
-            # Sem rosto estavel -> fallback VLM (pega VTuber/avatar/handcam que o
-            # detector de rosto ignora). 1 chamada por job, so quando o rosto falha.
-            from medusacut.frames import extract_keyframes
-            from medusacut.reframe.facecam_vlm import detect_facecam_vlm
-
-            _report(progress, 0.0, "Detectando facecam (visao)…")
-            kf = extract_keyframes(
-                media.path, 0.0, media.duration, n=3,
-                out_dir=os.path.join(out_dir, "_facecam"),
+            layout_name = "gameplay_blur"  # sem facecam -> foca 100% na acao (tela cheia)
+            facecam_info = {"auto": True, "method": "none", "fallback": "gameplay_blur"}
+            print(
+                "[medusacut] facecam nao detectado nos cantos; usando gameplay_blur (tela cheia)",
+                file=sys.stderr,
             )
-            vlm_box = detect_facecam_vlm(kf) if kf else None
-            if vlm_box:
-                facecam_box = vlm_box
-                facecam_info = {"auto": True, "method": "vlm", "box": list(vlm_box)}
-            else:
-                # Sem rosto (nem YuNet nem VLM) -> nao force faixa de facecam vazia.
-                # Cai pra tela cheia com fundo desfocado (decisao de produto).
-                layout_name = "gameplay_blur"
-                facecam_info = {"auto": True, "method": "none", "fallback": "gameplay_blur"}
-                print(
-                    "[medusacut] facecam nao detectado (rosto nem VLM); usando gameplay_blur (tela cheia)",
-                    file=sys.stderr,
-                )
 
     keep = final_count or len(candidates)
     # 3+6. transcrever (p/ legenda e/ou score) + analise viral 2 etapas -> re-rank.
@@ -279,8 +242,7 @@ def render_candidates(
         file_name = f"clip_{idx:02d}.mp4"
         out_path = os.path.join(out_dir, file_name)
         _render_layout(media, cand, layout_name, facecam_corner, out_path, cache_dir,
-                       facecam_box=facecam_box, facecam_h=facecam_h, cuts=cuts,
-                       scene_aware=scene_aware, use_vlm=use_vlm)
+                       facecam_box=facecam_box)
         if captions and words:
             _burn_captions(out_path, words, cand, cache_dir, caption_y)
         return Clip(
@@ -292,17 +254,15 @@ def render_candidates(
             moment_type=hook.moment_type if hook else "",
         )
 
-    # Render dos cortes. Adaptativo (ver _render_workers): no caminho de FILTRO
-    # (gameplay_blur/gameplay_only — single-thread no ffmpeg) roda em PARALELO e ganha
-    # ~40% usando os nucleos ociosos; no caminho de optical-flow (facecam/scene_aware,
-    # que ja satura a CPU) fica SERIAL pra nao oversubscrever. Override: MEDUSA_RENDER_WORKERS.
+    # Render dos cortes em PARALELO. Os 2 layouts agora sao so filtergraph do ffmpeg
+    # (sem optical-flow), que e single-thread no graph -> rodar cortes concorrentes usa
+    # os nucleos ociosos e ganha ~40%. Override: MEDUSA_RENDER_WORKERS.
     # Ordem da saida preservada independente da ordem de conclusao.
     clips: list[Clip] = []
     if total:
         from concurrent.futures import ThreadPoolExecutor, as_completed
 
-        cpu_bound = scene_aware or layout_name == "facecam_top_gameplay_bottom"
-        workers = _render_workers(total, cpu_bound=cpu_bound)
+        workers = _render_workers(total, cpu_bound=False)
         _report(render_progress, 0.0, f"Renderizando {total} corte(s) ({workers}x)…")
         results: dict[int, Clip] = {}
         with ThreadPoolExecutor(max_workers=workers) as ex:
@@ -640,14 +600,13 @@ def _burn_captions(out_path, words, cand, cache_dir, caption_y=0.80):
 
 
 def _resolve_layout(layout: str, facecam_corner: str | None, facecam_auto: bool = False) -> str:
-    """Normaliza o nome do layout. O split (facecam em cima) vale com canto manual
-    OU com auto-deteccao; sem nenhum dos dois cai pro dinamico. (Se a auto-deteccao
-    nao achar rosto, o pipeline depois troca pra gameplay_blur — tela cheia.)"""
-    if layout == "facecam_top_gameplay_bottom":
-        return layout if (facecam_corner or facecam_auto) else "dynamic_gameplay"
-    if layout in ("gameplay_blur", "gameplay_only", "dynamic_gameplay"):
-        return layout
-    return "dynamic_gameplay"  # nome legado/desconhecido -> dinamico
+    """SO 2 layouts: (A) facecam no terco superior — quando ha canto manual ou
+    auto-deteccao; ou (B) gameplay tela cheia com blur. Se A for pedido mas a
+    auto-deteccao nao achar facecam, o pipeline depois troca pra B. Nomes legados
+    (gameplay_only/dynamic_gameplay) caem em B."""
+    if layout == "facecam_top_gameplay_bottom" and (facecam_corner or facecam_auto):
+        return "facecam_top_gameplay_bottom"
+    return "gameplay_blur"
 
 
 def _render_layout(
@@ -659,37 +618,18 @@ def _render_layout(
     cache_dir: str,
     *,
     facecam_box: tuple[float, float, float, float] | None = None,
-    facecam_h: int = 640,
-    cuts: list[float] | None = None,
-    scene_aware: bool = False,
-    use_vlm: bool = True,
 ) -> None:
-    """Despacha o render conforme o layout resolvido."""
-    from medusacut.reframe import compose, layouts
-    from medusacut.render import ffmpeg as render
-
-    if scene_aware:
-        # Layout decidido POR CENA (gameplay+cam / reacao fullscreen / gameplay puro).
-        from medusacut.reframe import scene_layout
-
-        scene_layout.render_scene_aware(
-            media, candidate, out_path=out_path, cache_dir=cache_dir, cuts=cuts,
-            facecam_corner=facecam_corner, facecam_h=facecam_h, use_vlm=use_vlm,
-        )
-        return
+    """Despacha o render: SO 2 layouts. (A) facecam no terco superior + gameplay, ou
+    (B) gameplay tela cheia com blur (foco 100% na acao)."""
+    from medusacut.reframe import compose
 
     if layout_name == "facecam_top_gameplay_bottom":
         compose.render_facecam_layout(
             media, candidate, facecam_corner=facecam_corner,
-            out_path=out_path, cache_dir=cache_dir, dynamic=True,
-            facecam_box=facecam_box, facecam_h=facecam_h, cuts=cuts,
+            out_path=out_path, cache_dir=cache_dir, facecam_box=facecam_box,
         )
-    elif layout_name == "gameplay_blur":
+    else:  # gameplay_blur (e qualquer outro caindo no padrao seguro)
         compose.render_blur_fit(media, candidate, out_path=out_path)
-    else:
-        dynamic = layout_name != "gameplay_only"
-        plan = layouts.build_plan(media, candidate, dynamic=dynamic, facecam_corner=facecam_corner, cuts=cuts)
-        render.render_clip(media, candidate, plan, out_path, cache_dir=cache_dir)
 
 
 def _report(progress: Progress | None, frac: float, label: str) -> None:

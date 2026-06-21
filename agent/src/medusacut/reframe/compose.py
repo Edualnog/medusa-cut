@@ -14,7 +14,6 @@ from __future__ import annotations
 import os
 import subprocess
 
-from medusacut.reframe import layouts
 from medusacut.reframe.saliency import facecam_rect
 from medusacut.types import Candidate, Media
 
@@ -100,77 +99,54 @@ def _blurred_bg(src: str, out: str) -> str:
     )
 
 
+# LAYOUT A (padrao quando ha facecam): faixa do facecam no TERCO SUPERIOR,
+# centralizada, com as laterais no fundo desfocado; gameplay preenchendo embaixo.
+PANEL_H = TARGET_H // 3  # 640 = terco superior (par)
+
+
 def render_facecam_layout(
     media: Media,
     candidate: Candidate,
     *,
-    facecam_corner: str,
+    facecam_corner: str | None = None,
     out_path: str,
-    cache_dir: str,
-    dynamic: bool = True,
+    cache_dir: str = ".",
     facecam_box: tuple[float, float, float, float] | None = None,
-    facecam_h: int = FACECAM_H,
-    cuts: list[float] | None = None,
+    **_ignored,
 ) -> str:
-    """Rosto em cima + gameplay dinamico embaixo + blur.
+    """Layout A: facecam FIT-centralizada no terco superior (laterais com blur) +
+    gameplay preenchendo o resto. Tudo sobre fundo desfocado (sem tarjas pretas).
+    Uma passada de ffmpeg, SEM optical-flow (rapido e consistente).
 
-    A caixa do facecam vem de `facecam_box` (x0,y0,x1,y1 normalizados) se dado,
-    senao do preset do `facecam_corner`. A altura do painel e ADAPTATIVA (casa com a
-    proporcao do cam p/ encher a largura sem barras); `facecam_h` so e usado como
-    fallback quando nao da pra medir a proporcao do cam. Ver `_facecam_panel`."""
+    `facecam_box` (x0,y0,x1,y1 normalizado) e a regiao do facecam na fonte; sem ela,
+    cai no preset do canto (`facecam_corner`)."""
     rect = facecam_box or facecam_rect(facecam_corner)
     if rect is None:
         raise ValueError(f"facecam_corner/box invalido p/ este layout: {facecam_corner!r}")
     # headroom: socorre box patologicamente achatada (evita cortar queixo/topo).
     rect = _squarify_cam_box(rect, int(media.width), int(media.height))
-
-    # caixa do cam em px + altura do painel ADAPTATIVA (casa c/ a proporcao do cam).
-    cw = int(rect[2] * media.width) - int(rect[0] * media.width)
-    ch = int(rect[3] * media.height) - int(rect[1] * media.height)
+    cw = max(2, int(rect[2] * media.width) - int(rect[0] * media.width))
+    ch = max(2, int(rect[3] * media.height) - int(rect[1] * media.height))
     cx = int(rect[0] * media.width)
     cy = int(rect[1] * media.height)
-    panel_h, fill = _facecam_panel(cw, ch, default_h=facecam_h)
 
-    os.makedirs(cache_dir, exist_ok=True)
+    panel_h = PANEL_H
     game_h = TARGET_H - panel_h
-    base = os.path.splitext(os.path.basename(out_path))[0]
+    os.makedirs(cache_dir, exist_ok=True)
 
-    # UMA passada: a fonte e decodificada 1x e split em 3 (fundo borrado, facecam,
-    # gameplay dinamico) — antes eram 2 passadas decodificando a fonte 60fps 2x +
-    # um encode intermediario do painel.
-    from medusacut.render.ffmpeg import dynamic_panel_segment
-
-    plan = layouts.build_plan(
-        media, candidate, dynamic=dynamic, facecam_corner=facecam_corner,
-        facecam_box=rect, target_w=TARGET_W, target_h=game_h, cuts=cuts,
-    )
-    panel = dynamic_panel_segment(
-        plan, src_label="gsrc", out_label="game",
-        sendcmd_path=os.path.join(cache_dir, f"{base}.panel.sendcmd"),
-    )
-
-    if fill:
-        # ENCHE o painel (cover): sem barras laterais; corta o minimo no eixo longo.
-        cam_filter = (
-            f"[cam]crop={cw}:{ch}:{cx}:{cy},"
-            f"scale={TARGET_W}:{panel_h}:force_original_aspect_ratio=increase,"
-            f"crop={TARGET_W}:{panel_h}[camS];"
-            f"[bgb][camS]overlay=x=0:y=0[mid];"
-        )
-    else:
-        # ENCAIXA (fit) centrado sobre o fundo borrado — cam alto/quadrado, p/ nao
-        # cortar o rosto; aceita barras no fundo desfocado.
-        cam_filter = (
-            f"[cam]crop={cw}:{ch}:{cx}:{cy},"
-            f"scale={TARGET_W}:{panel_h}:force_original_aspect_ratio=decrease[camS];"
-            f"[bgb][camS]overlay=x=(W-w)/2:y=({panel_h}-h)/2[mid];"
-        )
     filtergraph = (
-        "[0:v]split=3[bg][cam][gsrc];"
+        # split: fundo borrado (canvas inteiro), facecam, gameplay
+        "[0:v]split=3[bg][cam][game];"
         f"{_blurred_bg('bg', 'bgb')};"
-        f"{cam_filter}"
-        f"{panel};"
-        f"[mid][game]overlay=x=0:y={panel_h}[outv]"
+        # facecam: recorta a caixa e ENCAIXA (fit) no terco superior, centralizado
+        f"[cam]crop={cw}:{ch}:{cx}:{cy},"
+        f"scale={TARGET_W}:{panel_h}:force_original_aspect_ratio=decrease[camS];"
+        # gameplay: COBRE o painel de baixo (crop central) -> preenche sem barras
+        f"[game]scale={TARGET_W}:{game_h}:force_original_aspect_ratio=increase,"
+        f"crop={TARGET_W}:{game_h}[gameS];"
+        # compoe sobre o blur: cam centralizado no topo + game embaixo
+        f"[bgb][camS]overlay=x=(W-w)/2:y=({panel_h}-h)/2[mid];"
+        f"[mid][gameS]overlay=x=0:y={panel_h}[outv]"
     )
     dur = max(0.0, candidate.end - candidate.start)
     cmd = [

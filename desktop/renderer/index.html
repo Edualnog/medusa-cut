@@ -179,9 +179,8 @@
                 <label class="field field-wide">
                   <span>LAYOUT</span>
                   <select id="layout">
-                    <option value="facecam_top_gameplay_bottom">Facecam em cima + gameplay</option>
-                    <option value="dynamic_gameplay">Gameplay segue a ação</option>
-                    <option value="gameplay_blur">Tela cheia + fundo desfocado</option>
+                    <option value="facecam_top_gameplay_bottom">Facecam + gameplay (auto)</option>
+                    <option value="gameplay_blur">Foco na ação · tela cheia</option>
                   </select>
                 </label>
                 <label class="field">
@@ -195,11 +194,9 @@
                 <label class="field" id="facecamField">
                   <span>FACECAM</span>
                   <select id="facecam">
-                    <option value="auto">Detectar automaticamente</option>
+                    <option value="auto">Detectar nos cantos (auto)</option>
                     <option value="tr">Topo direita</option>
                     <option value="tl">Topo esquerda</option>
-                    <option value="br">Baixo direita</option>
-                    <option value="bl">Baixo esquerda</option>
                   </select>
                 </label>
                 <label class="field range-field">
@@ -541,6 +538,16 @@
         <button class="legal-close" id="legalClose" type="button" aria-label="Fechar">FECHAR</button>
       </div>
       <div class="legal-modal-body" id="legalModalBody"></div>
+    </div>
+  </div>
+
+  <div class="clip-modal hidden" id="clipModal" role="dialog" aria-modal="true" aria-labelledby="clipModalTitle">
+    <div class="clip-modal-card">
+      <div class="clip-modal-head">
+        <strong id="clipModalTitle">CLIP</strong>
+        <button id="clipModalClose" type="button" aria-label="Fechar">FECHAR ✕</button>
+      </div>
+      <video id="clipPlayer" controls playsinline preload="metadata"></video>
     </div>
   </div>
 

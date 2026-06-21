@@ -94,13 +94,23 @@ def detect_facecam(
             if not ok:
                 break
             for (x, y, fw, fh) in detector(frame):
-                hits.append(((x + fw / 2) / w_px, (y + fh / 2) / h_px, fw / w_px, fh / h_px))
+                cx = (x + fw / 2) / w_px
+                cy = (y + fh / 2) / h_px
+                if _in_top_corner(cx, cy):  # 95% dos facecams ficam num canto superior
+                    hits.append((cx, cy, fw / w_px, fh / h_px))
             taken += 1
             idx += 1
     finally:
         cap.release()
 
     return consolidate(hits, taken, min_hits_frac=min_hits_frac, pad=FACE_PAD)
+
+
+def _in_top_corner(cx: float, cy: float, *, max_y: float = 0.45, side_w: float = 0.42) -> bool:
+    """True se o centro do rosto cai num CANTO SUPERIOR (esq/dir). Filtra rostos de
+    NPC/personagem no meio da tela e foca onde o facecam quase sempre esta — melhora
+    a precisao e evita falso-positivo do gameplay."""
+    return cy <= max_y and (cx <= side_w or cx >= 1.0 - side_w)
 
 
 def _make_detector(cv2, w: int, h: int):
