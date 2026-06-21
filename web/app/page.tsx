@@ -5,18 +5,23 @@ import { MedusaLogo } from "./medusa-logo";
 const BENEFITS = [
   {
     number: "01",
-    title: "ESPECIALISTA EM GAMEPLAY",
-    text: "O motor foi feito do zero e afinado só pra gameplay: combina áudio, movimento e visão pra achar clutch, fail, clímax e reação — com a precisão que recortador genérico não tem.",
+    title: "SEM CADASTRO, 100% PRIVADO",
+    text: "Nada de login, e-mail ou senha: baixe, abra e use. Tudo processa no SEU PC e a biblioteca fica no seu disco — seu gameplay nunca sobe pra nuvem e não há conta nossa pra vazar.",
   },
   {
     number: "02",
-    title: "GRÁTIS, COM A SUA CHAVE",
-    text: "O app é 100% gratuito. A IA roda na SUA própria chave — você paga só o custo real dos modelos, direto ao provedor, sem intermediário e sem trava.",
+    title: "OPEN SOURCE (AGPL-3.0)",
+    text: "Código aberto de verdade: qualquer um pode ler, auditar e contribuir no GitHub. Sem caixa-preta — você confia porque pode VER que o app faz só o que promete.",
   },
   {
     number: "03",
-    title: "SEU GAMEPLAY, SUA LIBERDADE",
-    text: "Tudo processa no seu PC e a biblioteca fica no seu disco. Seu gameplay nunca sobe pra nuvem. Seus vídeos, suas chaves, seu controle.",
+    title: "GRÁTIS, COM A SUA CHAVE",
+    text: "O app é 100% gratuito, sem assinatura. A IA roda na SUA própria chave — você paga só o custo real dos modelos, direto ao provedor, sem intermediário e sem trava.",
+  },
+  {
+    number: "04",
+    title: "ESPECIALISTA EM GAMEPLAY",
+    text: "O motor foi feito do zero e afinado só pra gameplay: combina áudio, movimento e visão pra achar clutch, fail, clímax e reação — com a precisão que recortador genérico não tem.",
   },
 ];
 
@@ -35,6 +40,14 @@ const FAQ = [
   {
     question: "PRECISO CRIAR CONTA?",
     answer: "Não. O Medusa Clip é sem cadastro: baixe, abra e use. Nada de login, e-mail ou senha — só conecte a sua chave de IA.",
+  },
+  {
+    question: "O MEDUSA CLIP É OPEN SOURCE?",
+    answer: "Sim, de verdade — sob a licença AGPL-3.0. O código fica público no GitHub pra qualquer um ler, auditar, modificar e contribuir. Trabalhos derivados também precisam continuar abertos sob a mesma licença, mantendo o software livre.",
+  },
+  {
+    question: "COMO POSSO APOIAR O PROJETO?",
+    answer: "Por enquanto, a melhor ajuda é usar, compartilhar com quem joga e contribuir no GitHub (issues, ideias, código). Em breve teremos uma opção de doação pra quem quiser apoiar — sempre opcional, no espírito de projetos como o Blender. O app continua grátis pra todos.",
   },
   {
     question: "PRECISO DE INTERNET?",
@@ -82,7 +95,7 @@ export default function Home() {
             <a href="#exemplos">EXEMPLOS</a>
             <a href="#download">DOWNLOAD</a>
             <a href="#custo">CUSTO</a>
-            <a href="#liberdade">GRÁTIS</a>
+            <a href="#liberdade">OPEN SOURCE</a>
           </div>
 
           <a href="#download" className="nav-login">
@@ -94,7 +107,7 @@ export default function Home() {
       <main>
         <section className="hero shell-width">
           <div className="hero-copy">
-            <div className="eyebrow">BETA · ESPECIALISTA EM GAMEPLAY · 100% LOCAL · SEM CADASTRO</div>
+            <div className="eyebrow">BETA · OPEN SOURCE · SEM CADASTRO · 100% LOCAL</div>
             <h1>
               FEITO PRA
               <br />
@@ -105,8 +118,8 @@ export default function Home() {
             <p className="hero-text">
               Recortadores genéricos tratam gameplay como vídeo qualquer. O Medusa Clip é
               especializado em gameplay: acha o clutch, o fail e o clímax que os outros
-              erram. Gratuito, com a SUA chave de IA e rodando no SEU PC — seu gameplay
-              nunca sobe pra nuvem.
+              erram. <strong>Sem cadastro, open source e rodando no SEU PC</strong> — com a
+              sua chave de IA, seu gameplay nunca sobe pra nuvem.
             </p>
             <div className="hero-actions">
               <a className="button button-primary" href="#download">
@@ -116,7 +129,7 @@ export default function Home() {
                 COMO FUNCIONA
               </a>
             </div>
-            <p className="hero-note">GRÁTIS · SEM CADASTRO · MACOS · WINDOWS · LINUX · SUA CHAVE DE IA</p>
+            <p className="hero-note">GRÁTIS · OPEN SOURCE · SEM CADASTRO · MACOS · WINDOWS · LINUX</p>
           </div>
 
           <figure className="app-preview">
@@ -144,10 +157,10 @@ export default function Home() {
 
         <div className="proof-strip" aria-label="Diferenciais principais">
           <div className="shell-width proof-strip-inner">
-            <span>ESPECIALISTA EM GAMEPLAY</span>
-            <span>100% GRÁTIS</span>
             <span>SEM CADASTRO</span>
-            <span>SEM UPLOAD</span>
+            <span>OPEN SOURCE</span>
+            <span>100% LOCAL</span>
+            <span>GRÁTIS</span>
           </div>
         </div>
 
@@ -235,22 +248,29 @@ export default function Home() {
         </section>
 
         <section className="section section-bordered shell-width" id="liberdade">
-          <SectionTag>GRÁTIS E NO SEU CONTROLE</SectionTag>
+          <SectionTag>OPEN SOURCE E NO SEU CONTROLE</SectionTag>
           <div className="section-heading">
-            <h2>GRÁTIS DE VERDADE.<br />SEM TRAVA.</h2>
+            <h2>ABERTO DE VERDADE.<br />SEM CADASTRO, SEM TRAVA.</h2>
             <p>
-              O Medusa Clip é gratuito. A IA roda na SUA chave — OpenRouter, OpenAI ou
-              Anthropic — você paga só o custo real dos modelos, direto ao provedor, e o
-              resto é seu: seus clips ficam no seu PC, suas chaves no seu controle, sua
-              liberdade intacta.
+              O Medusa Clip é <strong>open source (AGPL-3.0)</strong> e gratuito — no
+              espírito de projetos como o Blender. O código é público no GitHub pra
+              qualquer um ler, auditar e contribuir. Sem conta, sem caixa-preta: seus
+              clips ficam no seu PC, sua chave de IA no seu controle, sua liberdade
+              intacta. No futuro, dá pra apoiar o projeto com uma doação — sempre
+              opcional, nunca um paywall.
             </p>
           </div>
           <div className="hero-actions">
             <a className="button button-primary" href="#download">
               BAIXAR GRÁTIS
             </a>
-            <a className="button button-secondary" href="#como-funciona">
-              COMO FUNCIONA
+            <a
+              className="button button-secondary"
+              href="https://github.com/Edualnog/medusa-cut"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              VER O CÓDIGO
             </a>
           </div>
         </section>
@@ -320,7 +340,7 @@ export default function Home() {
           </a>
         </div>
 
-        <p>© 2026 MEDUSA CLIP. TODOS OS DIREITOS RESERVADOS.</p>
+        <p>© 2026 MEDUSA CLIP · OPEN SOURCE (AGPL-3.0) · SEM CADASTRO</p>
 
         <div className="footer-social">
           <a

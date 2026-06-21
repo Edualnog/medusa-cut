@@ -152,6 +152,11 @@ sem Supabase.
 O dono conecta as contas (Vercel); o Claude escreve o codigo e **guia o dono passo a
 passo** no deploy (ver `docs/SETUP.md`).
 
+**Licenca**: **open source sob AGPL-3.0** (decidido 2026-06-21, modelo estilo Blender:
+gratis + aberto + doacoes futuras). Era source-available "all rights reserved" — mudou.
+`LICENSE` = texto AGPL-3.0 verbatim. Ao comunicar "open source"/"codigo aberto" na
+landing/docs, e verdade agora. Marcas/logos "Medusa Clip" NAO entram na licenca de codigo.
+
 ## Status / roadmap
 
 - [x] Motor de cortes completo (viral multimodal, legenda, reframe, custo).

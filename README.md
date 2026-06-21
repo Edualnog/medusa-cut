@@ -35,17 +35,17 @@ Todas as versões: [Releases](https://github.com/Edualnog/medusa-cut/releases). 
 ainda **não são assinados** — na primeira abertura, no macOS clique com o botão direito
 no app → **Abrir**; no Windows, em **Mais informações → Executar assim mesmo**.
 
-## Licença e direitos (source-available)
+## Licença (open source — AGPL-3.0)
 
-Este repositório é **source-available**, não open source. O código fica público
-por **transparência e auditoria de segurança** — coerente com a proposta
-local-first e de privacidade do app: qualquer pessoa pode ler e confirmar que o
-gameplay do usuário nunca sai da própria máquina.
+O Medusa Clip é **open source**, sob a **GNU Affero General Public License v3.0**
+(AGPL-3.0). Você pode usar, estudar, modificar e redistribuir o código — desde que
+trabalhos derivados (inclusive quando oferecidos como serviço pela rede) **também
+sejam liberados sob a AGPL-3.0**, mantendo o software livre. Veja [`LICENSE`](LICENSE)
+para os termos completos.
 
-Isso **não** concede licença de uso. Todos os direitos reservados: é proibido
-usar, copiar, modificar, redistribuir ou criar produtos derivados/concorrentes a
-partir deste código sem autorização escrita. Veja [`LICENSE`](LICENSE) para os
-termos completos. Use o app pelos instaladores oficiais em medusaclip.com.
+Copyright (c) 2026 Medusa Clip. Os componentes de terceiros embutidos nos builds
+oficiais (ex.: `ffmpeg`, bibliotecas Python) seguem suas próprias licenças. As marcas
+"Medusa Clip" e "medusaclip.com" e os logos não são cobertos pela licença de código.
 
 ## Direção do produto
 
@@ -177,4 +177,5 @@ provedor na chave do usuário.
 
 ## Licença
 
-Projeto proprietário. Todos os direitos reservados.
+Open source sob **AGPL-3.0** — ver a seção [Licença](#licença-open-source--agpl-30)
+acima e o arquivo [`LICENSE`](LICENSE).
