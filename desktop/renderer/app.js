@@ -450,6 +450,19 @@ window.api.onDone((message) => {
 
 async function loadLibrary() {
   libraryClips = await window.api.listClips();
+  renderLibrary();
+}
+
+function sortLibrary(clips, mode) {
+  const by = {
+    date_desc: (a, b) => (b.mtime || 0) - (a.mtime || 0),
+    date_asc: (a, b) => (a.mtime || 0) - (b.mtime || 0),
+    score_desc: (a, b) => (b.virality_score ?? -1) - (a.virality_score ?? -1),
+  };
+  clips.sort(by[mode] || by.date_desc);
+}
+
+function renderLibrary() {
   $("libCount").textContent = `${libraryClips.length} ${libraryClips.length === 1 ? "ARQUIVO" : "ARQUIVOS"}`;
 
   if (!libraryClips.length) {
@@ -464,18 +477,24 @@ async function loadLibrary() {
     return;
   }
 
+  // ordena IN-PLACE (os data-index dos cards apontam pra este array)
+  sortLibrary(libraryClips, $("libSort") ? $("libSort").value : "date_desc");
   $("lib").innerHTML = `<div class="clip-grid">${libraryClips.map(clipCard).join("")}</div>`;
   $("lib").querySelectorAll("video").forEach((video) => {
     const wrap = video.closest(".clip-wrap");
     wrap.addEventListener("mouseenter", () => {
-      if (video.paused && video.muted) video.play().catch(() => {});
+      try { video.currentTime = 0; } catch { /* ainda carregando */ }
+      video.play().catch(() => {});
     });
     wrap.addEventListener("mouseleave", () => {
-      if (!video.muted) return;
       video.pause();
-      try { video.currentTime = 0.4; } catch { /* arquivo ainda carregando */ }
+      try { video.currentTime = 0.1; } catch { /* ainda carregando */ }
     });
   });
+}
+
+if (document.getElementById("libSort")) {
+  $("libSort").addEventListener("change", renderLibrary);
 }
 
 function clipCard(clip, index) {

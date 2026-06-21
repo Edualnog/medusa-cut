@@ -48,12 +48,50 @@ def _use_mlx() -> bool:
     return importlib.util.find_spec("mlx_whisper") is not None
 
 
-def _get_model(model_size: str, compute_type: str):
-    key = (model_size, compute_type)
+_FASTER_DEVICE: tuple[str, str] | None = None
+
+
+def _faster_device() -> tuple[str, str]:
+    """(device, compute_type) do faster-whisper: usa **GPU NVIDIA (CUDA)** quando ha
+    GPU + libs (cuBLAS/cuDNN) — ~5-10x mais rapido; senao CPU (int8). Cacheado.
+    Override: MEDUSA_WHISPER_DEVICE=cuda|cpu."""
+    global _FASTER_DEVICE
+    if _FASTER_DEVICE is not None:
+        return _FASTER_DEVICE
+    forced = os.environ.get("MEDUSA_WHISPER_DEVICE", "").strip().lower()
+    if forced == "cpu":
+        _FASTER_DEVICE = ("cpu", "int8")
+        return _FASTER_DEVICE
+    want_cuda = forced == "cuda"
+    if not want_cuda:
+        try:
+            import ctranslate2  # noqa: PLC0415
+
+            want_cuda = ctranslate2.get_cuda_device_count() > 0
+        except Exception:
+            want_cuda = False
+    if want_cuda:
+        # valida de fato: cria um modelo minusculo na GPU. Se faltar cuDNN/cuBLAS ou
+        # o driver, cai pra CPU SEM quebrar (o usuario nao perde a geracao).
+        try:
+            from faster_whisper import WhisperModel  # noqa: PLC0415
+
+            WhisperModel("tiny", device="cuda", compute_type="float16")
+            print("[medusacut] transcricao na GPU NVIDIA (CUDA)", file=sys.stderr)
+            _FASTER_DEVICE = ("cuda", "float16")
+            return _FASTER_DEVICE
+        except Exception as exc:  # noqa: BLE001
+            print(f"[medusacut] CUDA indisponivel ({exc}); usando CPU", file=sys.stderr)
+    _FASTER_DEVICE = ("cpu", "int8")
+    return _FASTER_DEVICE
+
+
+def _get_model(model_size: str, device: str, compute_type: str):
+    key = (model_size, device, compute_type)
     if key not in _MODEL_CACHE:
         from faster_whisper import WhisperModel  # noqa: PLC0415
 
-        _MODEL_CACHE[key] = WhisperModel(model_size, device="cpu", compute_type=compute_type)
+        _MODEL_CACHE[key] = WhisperModel(model_size, device=device, compute_type=compute_type)
     return _MODEL_CACHE[key]
 
 
@@ -98,9 +136,11 @@ def transcribe_segment(
 
 
 def _transcribe_faster(wav: str, start: float, model_size: str, language, compute_type: str) -> list[Word]:
-    """Backend CPU (faster-whisper/ctranslate2). beam_size=1 (greedy) + sem condicionar
-    no texto anterior: mais rapido em CPU, sem perda relevante p/ fala de gameplay."""
-    model = _get_model(model_size, compute_type)
+    """Backend faster-whisper/ctranslate2: GPU NVIDIA (CUDA) se disponivel, senao CPU.
+    beam_size=1 (greedy) + sem condicionar no texto anterior: mais rapido, sem perda
+    relevante p/ fala de gameplay."""
+    device, ctype = _faster_device()  # ignora o compute_type passado: decide por device
+    model = _get_model(model_size, device, ctype)
     segments, _info = model.transcribe(
         wav, word_timestamps=True, language=language,
         beam_size=1, condition_on_previous_text=False,

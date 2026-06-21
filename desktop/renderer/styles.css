@@ -480,6 +480,17 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   letter-spacing: .7px;
 }
 .library-toolbar strong { color: var(--fg); }
+.library-toolbar-right { display: flex; align-items: center; gap: 16px; }
+.sort-field { display: flex; align-items: center; gap: 8px; color: var(--dim); }
+.sort-field select {
+  background: #0c0c10;
+  color: var(--fg);
+  border: 1px solid var(--line-strong);
+  padding: 5px 8px;
+  font-family: var(--body);
+  font-size: 15px;
+  cursor: pointer;
+}
 .empty-state {
   min-height: 320px;
   display: grid;

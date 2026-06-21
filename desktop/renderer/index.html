@@ -266,7 +266,17 @@
 
           <div class="library-toolbar">
             <span>CLIPS GERADOS</span>
-            <strong id="libCount">0 ARQUIVOS</strong>
+            <div class="library-toolbar-right">
+              <label class="sort-field">
+                <span>ORDENAR</span>
+                <select id="libSort">
+                  <option value="date_desc">Mais recentes</option>
+                  <option value="date_asc">Mais antigos</option>
+                  <option value="score_desc">Maior score</option>
+                </select>
+              </label>
+              <strong id="libCount">0 ARQUIVOS</strong>
+            </div>
           </div>
           <div id="lib"></div>
         </section>

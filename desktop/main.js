@@ -6,7 +6,18 @@ const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
 const readline = require("readline");
+const crypto = require("crypto");
 const { pathToFileURL } = require("url");
+
+// Clipes servidos por ID (zclip://clip/<id>), nao por caminho na URL: scheme
+// "standard" faz lowercase do host e quebrava caminhos absolutos (ex.: /Users).
+// O registry tambem e um allowlist (so toca o que listClips registrou).
+const clipRegistry = new Map();
+function registerClip(absPath) {
+  const id = crypto.createHash("sha1").update(absPath).digest("hex").slice(0, 16);
+  clipRegistry.set(id, absPath);
+  return id;
+}
 
 let win = null;
 let child = null;
@@ -419,13 +430,18 @@ function setupUpdates() {
 
 app.whenReady().then(() => {
   migrateConfig(); // safeStorage so fica disponivel apos o ready
-  // zclip://abs/<caminho-do-arquivo> -> serve o arquivo de video local
+  // zclip://clip/<id> -> serve o video local correspondente (id registrado em listClips).
   protocol.handle("zclip", (request) => {
-    const p = path.normalize(decodeURIComponent(request.url.replace(/^zclip:\/\//, "")));
-    // Defesa em profundidade: só serve arquivos DENTRO da pasta de clips do usuário,
-    // pra um eventual XSS no renderer não conseguir ler arquivo arbitrário do disco.
+    let id = "";
+    try {
+      id = new URL(request.url).pathname.replace(/^\/+/, "");
+    } catch {
+      id = "";
+    }
+    const p = clipRegistry.get(id);
+    // So serve ids registrados E dentro da pasta de clips (defesa em profundidade).
     const root = path.normalize(libraryRoot());
-    if (p !== root && !p.startsWith(root + path.sep)) {
+    if (!p || (p !== root && !p.startsWith(root + path.sep))) {
       return new Response("forbidden", { status: 403 });
     }
     return net.fetch(pathToFileURL(p).toString());
@@ -854,11 +870,19 @@ ipcMain.handle("list-clips", () => {
     files.sort();
     for (const f of files) {
       const meta = byFile[f] || {};
+      const full = path.join(dir, f);
+      let mtime = 0;
+      try {
+        mtime = fs.statSync(full).mtimeMs;
+      } catch {
+        /* arquivo sumiu entre o readdir e o stat */
+      }
       out.push({
         file: f,
-        url: "zclip://" + encodeURIComponent(path.join(dir, f)),
-        path: path.join(dir, f),
+        url: "zclip://clip/" + registerClip(full),
+        path: full,
         run: r.name,
+        mtime,
         hook: meta.hook || "",
         description: meta.description || "",
         virality_score: meta.virality_score ?? null,
