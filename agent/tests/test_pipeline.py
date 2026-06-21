@@ -12,6 +12,8 @@ from medusacut.pipeline import (
     _blend_triage,
     _fit_moment,
     _judge_window,
+    _llm_workers,
+    _parallel,
     _render_workers,
 )
 from medusacut.types import Candidate
@@ -22,6 +24,41 @@ _BIG = 10_000.0  # teto "sem limite" -> reproduz o comportamento de piso unico
 def _row(start, score, triage):
     """(cand, words, text, triage_score) — so cand.score e triage importam aqui."""
     return (Candidate(start=start, end=start + 60.0, score=score), [], "", triage)
+
+
+def test_llm_workers_default_and_override(monkeypatch):
+    monkeypatch.delenv("MEDUSA_LLM_WORKERS", raising=False)
+    assert _llm_workers() == 4
+    monkeypatch.setenv("MEDUSA_LLM_WORKERS", "8")
+    assert _llm_workers() == 8
+    monkeypatch.setenv("MEDUSA_LLM_WORKERS", "0")  # invalido -> default
+    assert _llm_workers() == 4
+    monkeypatch.setenv("MEDUSA_LLM_WORKERS", "abc")
+    assert _llm_workers() == 4
+
+
+def test_parallel_returns_all_items_both_modes():
+    items = list(range(8))
+    sq = lambda x: x * x  # noqa: E731
+    assert sorted(_parallel(items, sq, 4)) == [x * x for x in items]
+    assert sorted(_parallel(items, sq, 1)) == [x * x for x in items]  # caminho serial
+    assert list(_parallel([], sq, 4)) == []  # vazio
+    assert list(_parallel([5], sq, 4)) == [25]  # 1 item cai no serial
+
+
+def test_parallel_runs_concurrently():
+    import time
+
+    items = list(range(8))
+    def slow(x):
+        time.sleep(0.1)
+        return x
+
+    t = time.time()
+    out = sorted(_parallel(items, slow, 4))
+    dt = time.time() - t
+    assert out == items
+    assert dt < 0.6  # serial seria ~0.8s; com 4 workers fica bem abaixo
 
 
 def test_fit_moment_keeps_window_in_range():
@@ -84,20 +121,31 @@ def test_judge_window_never_shrinks_below_anchor():
 
 def test_render_workers_opt_in_env(monkeypatch):
     monkeypatch.setenv("MEDUSA_RENDER_WORKERS", "3")
-    assert _render_workers(5) == 3
+    assert _render_workers(5, cpu_bound=True) == 3  # env sobrescreve os dois regimes
+    assert _render_workers(5, cpu_bound=False) == 3
     assert _render_workers(2) == 2  # nunca mais que o nº de cortes
 
 
-def test_render_workers_default_is_serial(monkeypatch):
-    # paralelo e OPT-IN: sem a env -> serial, independente de nº de nucleos
+def test_render_workers_cpu_bound_is_serial(monkeypatch):
+    # optical-flow (facecam/scene_aware) satura a CPU -> serial, mesmo com muitos nucleos
     monkeypatch.delenv("MEDUSA_RENDER_WORKERS", raising=False)
     monkeypatch.setattr(os, "cpu_count", lambda: 8)
-    assert _render_workers(5) == 1
+    assert _render_workers(5, cpu_bound=True) == 1
+
+
+def test_render_workers_filter_path_parallel(monkeypatch):
+    # caminho de filtro (blur/only): paraleliza ate ~metade dos nucleos, teto 4 e nº cortes
+    monkeypatch.delenv("MEDUSA_RENDER_WORKERS", raising=False)
+    monkeypatch.setattr(os, "cpu_count", lambda: 8)
+    assert _render_workers(5, cpu_bound=False) == 4   # min(5, 4, 8//2=4)
+    assert _render_workers(2, cpu_bound=False) == 2   # limitado pelo nº de cortes
+    monkeypatch.setattr(os, "cpu_count", lambda: 4)
+    assert _render_workers(5, cpu_bound=False) == 2   # min(5, 4, 4//2=2)
 
 
 def test_render_workers_ignores_garbage_env(monkeypatch):
     monkeypatch.setenv("MEDUSA_RENDER_WORKERS", "abc")
-    assert _render_workers(5) == 1
+    assert _render_workers(5, cpu_bound=True) == 1
 
 
 def test_blend_rescues_silent_high_action_clip():

@@ -292,14 +292,17 @@ def render_candidates(
             moment_type=hook.moment_type if hook else "",
         )
 
-    # Render dos cortes: SERIAL por default (o reframe ja satura a CPU; concorrer so
-    # piora — ver _render_workers). Paralelo e opt-in via MEDUSA_RENDER_WORKERS.
+    # Render dos cortes. Adaptativo (ver _render_workers): no caminho de FILTRO
+    # (gameplay_blur/gameplay_only — single-thread no ffmpeg) roda em PARALELO e ganha
+    # ~40% usando os nucleos ociosos; no caminho de optical-flow (facecam/scene_aware,
+    # que ja satura a CPU) fica SERIAL pra nao oversubscrever. Override: MEDUSA_RENDER_WORKERS.
     # Ordem da saida preservada independente da ordem de conclusao.
     clips: list[Clip] = []
     if total:
         from concurrent.futures import ThreadPoolExecutor, as_completed
 
-        workers = _render_workers(total)
+        cpu_bound = scene_aware or layout_name == "facecam_top_gameplay_bottom"
+        workers = _render_workers(total, cpu_bound=cpu_bound)
         _report(render_progress, 0.0, f"Renderizando {total} corte(s) ({workers}x)…")
         results: dict[int, Clip] = {}
         with ThreadPoolExecutor(max_workers=workers) as ex:
@@ -367,17 +370,26 @@ def _prepare_candidates(
         return out, None
 
     usage_total = None
+    workers = _llm_workers()
 
-    # etapa 1: triagem barata (texto) -> shortlist
-    triaged = []  # (cand, words, text, triage_score)
-    for i, (cand, words, text) in enumerate(records, start=1):
-        _report(progress, 0.4 + 0.2 * (i - 1) / n if n else 0.6, f"Triando {i}/{n}…")
-        ts = 0.0
+    # etapa 1: triagem barata (texto) -> shortlist. PARALELO (chamadas de rede).
+    def _do_triage(rec):
+        cand, words, text = rec
         try:
             ts, u = hooks.triage_score(cand, text, game_context)
+            return (cand, words, text, ts, u, None)
+        except Exception as exc:  # noqa: BLE001
+            return (cand, words, text, 0.0, None, exc)
+
+    triaged = []  # (cand, words, text, triage_score)
+    done = 0
+    for cand, words, text, ts, u, exc in _parallel(records, _do_triage, workers):
+        done += 1
+        _report(progress, 0.4 + 0.2 * done / n if n else 0.6, f"Triando {done}/{n}…")
+        if exc is not None:
+            print(f"[medusacut] triagem falhou: {exc}", file=sys.stderr)
+        if u is not None:
             usage_total = u if usage_total is None else usage_total + u
-        except Exception as exc:
-            print(f"[medusacut] triagem falhou no corte {i}: {exc}", file=sys.stderr)
         triaged.append((cand, words, text, ts))
     shortlist = _blend_triage(triaged)[: final_count + JUDGE_BUFFER]
 
@@ -396,11 +408,13 @@ def _prepare_candidates(
     vid = video_dur if video_dur is not None else media.duration
     centers = sorted((c.start + c.end) / 2.0 for c in candidates)
 
-    judged = []  # (cand, HookResult|None, words)
-    m = len(shortlist)
-    for i, (cand, words, text, _ts) in enumerate(shortlist, start=1):
-        _report(progress, 0.6 + 0.4 * (i - 1) / m if m else 1.0, f"Julgando {i}/{m} (visao)…")
+    # etapa 2: juiz forte multimodal (ve keyframes). PARALELO: cada item faz
+    # extract_keyframes (ffmpeg) + chamada de visao na rede — independentes entre si.
+    def _do_judge(item):
+        cand, words, _text, _ts = item
         hook = None
+        usage = None
+        exc_out = None
         try:
             jw_lo, jw_hi = _judge_window(cand, centers, ceil, vid)
             kf_dir = os.path.join(cache_dir, f"kf_{int(cand.start * 1000)}")
@@ -418,21 +432,32 @@ def _prepare_candidates(
                 anchor_s=(cand.start + cand.end) / 2.0,
                 scene_cuts=win_cuts, min_len=min_len, max_len=max_len,
             )
-            if hook.usage is not None:
-                usage_total = hook.usage if usage_total is None else usage_total + hook.usage
+            usage = hook.usage
             if hook.refined_start is not None and hook.refined_end is not None:
                 tmin, tmax = moment_bounds(hook.moment_type, floor=floor, ceil=ceil)
                 rs, re_ = _fit_moment(
                     hook.refined_start, hook.refined_end, jw_lo, jw_hi, tmin, tmax
                 )
                 cand = Candidate(rs, re_, cand.score)
-        except Exception as exc:
-            print(f"[medusacut] juiz falhou no corte {i}: {exc}", file=sys.stderr)
+        except Exception as exc:  # noqa: BLE001
+            exc_out = exc
         # palavras da legenda: fatia a duracao FINAL (pode ter crescido/encolhido)
         final_words = [
             w for w in (words_all if words_all is not None else words)
             if w.end > cand.start and w.start < cand.end
         ]
+        return (cand, hook, final_words, usage, exc_out)
+
+    judged = []  # (cand, HookResult|None, words)
+    m = len(shortlist)
+    done = 0
+    for cand, hook, final_words, usage, exc in _parallel(shortlist, _do_judge, workers):
+        done += 1
+        _report(progress, 0.6 + 0.4 * done / m if m else 1.0, f"Julgando {done}/{m} (visao)…")
+        if exc is not None:
+            print(f"[medusacut] juiz falhou: {exc}", file=sys.stderr)
+        if usage is not None:
+            usage_total = usage if usage_total is None else usage_total + usage
         judged.append((cand, hook, final_words))
 
     judged.sort(key=lambda t: t[1].virality_score if t[1] is not None else -1.0, reverse=True)
@@ -490,20 +515,53 @@ def _merge_pool(proposals: list[Candidate], energy: list[Candidate]) -> list[Can
     return pool
 
 
-def _render_workers(n: int) -> int:
-    """Quantos cortes renderizar em paralelo (limitado por `n`). DEFAULT = serial.
+def _render_workers(n: int, *, cpu_bound: bool = True) -> int:
+    """Quantos cortes renderizar em paralelo (limitado por `n`), ADAPTATIVO.
 
-    Medido: o reframe (optical flow + ffmpeg) JA satura a CPU por corte, entao rodar
-    cortes concorrentes so oversubscreve e fica MAIS LENTO (8 nucleos: 4 cortes em 2x
-    levaram 673s vs 566s serial). Por isso o paralelo e OPT-IN: so ativa se o usuario
-    setar `MEDUSA_RENDER_WORKERS` (util em layout leve / hardware onde 1 corte nao
-    satura). Sem a env, fica serial — sem regressao no caminho comum (facecam reframe).
+    Dois regimes (medido em 8 nucleos):
+    - `cpu_bound=True` (optical-flow: facecam/scene_aware) — cada corte JA satura a CPU;
+      concorrer so oversubscreve e fica MAIS LENTO (4 cortes 2x: 673s vs 566s serial).
+      Fica SERIAL.
+    - `cpu_bound=False` (filtro: gameplay_blur/only — ffmpeg single-thread no graph) —
+      sobra nucleo ocioso; rodar em paralelo ganhou ~40% (3 cortes: 168s -> 102s). Liga
+      ate ~metade dos nucleos (teto 4).
+    `MEDUSA_RENDER_WORKERS` sobrescreve os dois regimes.
     """
     import os as _os
 
     env = (_os.environ.get("MEDUSA_RENDER_WORKERS") or "").strip()
-    want = int(env) if env.isdigit() and int(env) > 0 else 1
-    return max(1, min(want, n))
+    if env.isdigit() and int(env) > 0:
+        return max(1, min(int(env), n))
+    if cpu_bound:
+        return 1
+    cores = _os.cpu_count() or 4
+    return max(1, min(n, 4, max(2, cores // 2)))
+
+
+def _llm_workers() -> int:
+    """Concorrencia das chamadas de IA (triagem/juiz). Sao I/O de REDE: rodar varias
+    ao mesmo tempo derruba o tempo total sem saturar CPU. Default 4; override por
+    `MEDUSA_LLM_WORKERS` (suba se o provedor aguentar, baixe se bater rate limit)."""
+    import os as _os
+
+    env = (_os.environ.get("MEDUSA_LLM_WORKERS") or "").strip()
+    return int(env) if env.isdigit() and int(env) > 0 else 4
+
+
+def _parallel(items, fn, workers):
+    """Aplica `fn` a cada item; em paralelo (thread pool) quando workers>1. Faz yield
+    dos resultados em ordem de CONCLUSAO (pra reportar progresso conforme termina)."""
+    items = list(items)
+    if workers <= 1 or len(items) <= 1:
+        for it in items:
+            yield fn(it)
+        return
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    with ThreadPoolExecutor(max_workers=min(workers, len(items))) as ex:
+        futs = [ex.submit(fn, it) for it in items]
+        for f in as_completed(futs):
+            yield f.result()
 
 
 def _judge_window(
@@ -575,6 +633,10 @@ def _burn_captions(out_path, words, cand, cache_dir, caption_y=0.80):
         _os.replace(tmp, out_path)
     except Exception as exc:  # legenda nao deve derrubar o corte ja renderizado
         print(f"[medusacut] sem legenda em {_os.path.basename(out_path)}: {exc}", file=sys.stderr)
+        try:  # nao deixa o .cap.mp4 0-byte sujando a pasta
+            _os.remove(out_path + ".cap.mp4")
+        except OSError:
+            pass
 
 
 def _resolve_layout(layout: str, facecam_corner: str | None, facecam_auto: bool = False) -> str:

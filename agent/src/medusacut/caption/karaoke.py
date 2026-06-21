@@ -143,33 +143,68 @@ def _draw_lines(draw, lines: list[list[Word]], font, *, active_word: Word, y_fra
         y += line_h
 
 
+def _run(cmd: list[str]) -> None:
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(f"ffmpeg falhou ({cmd[-1]}):\n{proc.stderr.strip()[-600:]}")
+
+
+def _write_blank(path: str) -> None:
+    from PIL import Image  # noqa: PLC0415
+
+    if not os.path.exists(path):
+        Image.new("RGBA", (W, H), (0, 0, 0, 0)).save(path)
+
+
 def burn(clip_path: str, states: list[tuple[float, float, str]], out_path: str) -> str:
-    """Compoe as imagens de legenda sobre o clipe (overlay com enable temporal)."""
+    """Queima a legenda compondo UMA faixa transparente (alpha) e fazendo UM overlay.
+
+    A versao antiga passava 1 input `-i` por PALAVRA pro ffmpeg + uma cadeia de N
+    overlays — em corte longo (centenas de palavras) isso estourava o limite de
+    inputs/descritores do ffmpeg ("Resource temporarily unavailable") e o corte saia
+    SEM legenda. Aqui montamos uma faixa de legenda no tempo (concat das PNGs com
+    duracao, e PNG transparente nos silencios) e compomos com um unico overlay —
+    escala pra qualquer duracao, com 2 passadas baratas.
+    """
     if not states:
         raise ValueError("sem estados de legenda pra queimar")
 
-    cmd = ["ffmpeg", "-y", "-i", clip_path]
-    for _, _, png in states:
-        cmd += ["-i", png]
+    work = os.path.dirname(states[0][2]) or os.path.dirname(out_path) or "."
+    os.makedirs(work, exist_ok=True)
+    blank = os.path.join(work, "_blank.png")
+    _write_blank(blank)
 
-    chain = []
-    label = "0:v"
-    for i, (t0, t1, _png) in enumerate(states, start=1):
-        nxt = f"v{i}"
-        chain.append(
-            f"[{label}][{i}:v]overlay=0:0:enable='between(t,{t0:.3f},{t1:.3f})'[{nxt}]"
-        )
-        label = nxt
-    filtergraph = ";".join(chain)
+    # 1) lista do concat: PNG de cada palavra pela sua duracao; transparente nos gaps.
+    lines: list[str] = []
+    prev = 0.0
+    for t0, t1, png in states:
+        if t0 - prev > 1e-3:  # silencio antes desta palavra -> transparente
+            lines.append(f"file '{blank}'")
+            lines.append(f"duration {t0 - prev:.3f}")
+        lines.append(f"file '{png}'")
+        lines.append(f"duration {max(0.001, t1 - t0):.3f}")
+        prev = t1
+    lines.append(f"file '{blank}'")  # entrada final (concat ignora a duracao do ultimo)
+    list_path = os.path.join(work, "_caption_track.txt")
+    with open(list_path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
 
-    cmd += [
-        "-filter_complex", filtergraph,
-        "-map", f"[{label}]", "-map", "0:a?",
+    # 2) faixa de legenda transparente (qtrle preserva alpha; ffmpeg minimo tem).
+    track = os.path.join(work, "_caption_track.mov")
+    _run([
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-f", "concat", "-safe", "0", "-i", list_path,
+        "-vsync", "vfr", "-pix_fmt", "argb", "-c:v", "qtrle", track,
+    ])
+
+    # 3) UM overlay da faixa sobre o clipe.
+    _run([
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-i", clip_path, "-i", track,
+        "-filter_complex", "[0:v][1:v]overlay=0:0[outv]",
+        "-map", "[outv]", "-map", "0:a?",
         "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
         "-pix_fmt", "yuv420p", "-c:a", "copy",
         out_path,
-    ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
-    if proc.returncode != 0:
-        raise RuntimeError(f"ffmpeg falhou ao queimar legenda:\n{proc.stderr.strip()}")
+    ])
     return out_path

@@ -37,7 +37,9 @@ def transcribe_segment(
     compute_type: str = "int8",
 ) -> list[Word]:
     """Transcreve [start, end] do audio e devolve palavras com tempos ABSOLUTOS."""
-    model_size = model_size or os.environ.get("WHISPER_MODEL", "small")
+    # Default "base": ~4-5x mais rapido que "small" em CPU e a qualidade basta pro
+    # roteiro/legenda (decidido em testes). Quem quiser mais precisao: WHISPER_MODEL=small.
+    model_size = model_size or os.environ.get("WHISPER_MODEL", "base")
     language = language or os.environ.get("WHISPER_LANG") or None
 
     tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
@@ -56,7 +58,15 @@ def transcribe_segment(
             raise RuntimeError(f"ffmpeg falhou ao recortar audio: {proc.stderr.strip()}")
 
         model = _get_model(model_size, compute_type)
-        segments, _info = model.transcribe(tmp.name, word_timestamps=True, language=language)
+        # beam_size=1 (greedy) + sem condicionar no texto anterior: ~1.5x mais rapido
+        # em CPU, sem perda relevante p/ fala de gameplay (e evita loops de repeticao).
+        segments, _info = model.transcribe(
+            tmp.name,
+            word_timestamps=True,
+            language=language,
+            beam_size=1,
+            condition_on_previous_text=False,
+        )
 
         words: list[Word] = []
         for seg in segments:
