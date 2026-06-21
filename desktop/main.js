@@ -55,16 +55,6 @@ function encryptSecret(plain) {
   return { v: "plain", d: String(plain) };
 }
 
-function decryptSecret(box) {
-  if (!box) return "";
-  try {
-    if (box.v === "enc") return safeStorage.decryptString(Buffer.from(box.d, "base64"));
-    return box.d || "";
-  } catch {
-    return "";
-  }
-}
-
 // Provedores de IA suportados (BYO key). A chave de cada um fica cifrada no disco,
 // separada por provedor, pra o usuario alternar sem reconectar.
 const PROVIDERS = ["openrouter", "openai", "anthropic"];
@@ -92,15 +82,10 @@ function migrateConfig() {
     c.provider = "openrouter";
     changed = true;
   }
-  // sessao antiga: { access_token, refresh_token, expires_at, email } em claro
-  if (c.session && typeof c.session === "object" && c.session.access_token) {
-    c.sessionEnc = {
-      email: c.session.email || null,
-      expires_at: c.session.expires_at || null,
-      access: encryptSecret(c.session.access_token),
-      refresh: encryptSecret(c.session.refresh_token),
-    };
+  // sessao/conta antigas (app tinha login): limpa qualquer residuo no config.
+  if (c.session || c.sessionEnc) {
     delete c.session;
+    delete c.sessionEnc;
     changed = true;
   }
 
@@ -108,70 +93,8 @@ function migrateConfig() {
   if (changed) saveConfig(c);
 }
 
-// --- Auth (Supabase). A anon key e publica por design (protegida por RLS no banco).
-const SUPABASE_URL = process.env.MEDUSA_SUPABASE_URL || "https://xukvtvggqdirvbrqqdjw.supabase.co";
-const SUPABASE_ANON_KEY =
-  process.env.MEDUSA_SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1a3Z0dmdncWRpcnZicnFxZGp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MzU0OTcsImV4cCI6MjA5NzMxMTQ5N30.DfXNTgf08l782ZJxDajsRnF0_Za63eovmdZJFxkMS_o";
-
-async function supabaseAuth(endpoint, body) {
-  const r = await fetch(`${SUPABASE_URL}/auth/v1/${endpoint}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: "Bearer " + SUPABASE_ANON_KEY,
-    },
-    body: JSON.stringify(body),
-  });
-  const data = await r.json().catch(() => ({}));
-  return { status: r.status, data };
-}
-
-function authError(data, fallback) {
-  return data.error_description || data.msg || data.message || data.error || fallback;
-}
-
-// Backend do site (rotas privilegiadas, ex.: exclusao de conta). Dev: aponte pro
-// localhost com MEDUSA_API_BASE=http://localhost:3000.
-const API_BASE = process.env.MEDUSA_API_BASE || "https://medusaclip.com";
-
-// Access token valido: renova com o refresh_token se ja expirou.
-async function getValidAccessToken() {
-  const s = loadConfig().sessionEnc;
-  if (!s) return null;
-  const access = decryptSecret(s.access);
-  if (s.expires_at && s.expires_at * 1000 > Date.now() + 60_000) return access || null;
-  const refresh = decryptSecret(s.refresh);
-  if (!refresh) return access || null;
-  try {
-    const { status, data } = await supabaseAuth("token?grant_type=refresh_token", {
-      refresh_token: refresh,
-    });
-    if (status === 200 && data.access_token) {
-      storeSession(data);
-      return data.access_token;
-    }
-  } catch {
-    return access || null;
-  }
-  return access || null;
-}
-
-// Guarda a sessao no config local: tokens CIFRADOS; email/expiry em claro (nao
-// sensiveis, usados pra decidir renovacao sem precisar decifrar).
-function storeSession(sess) {
-  const c = loadConfig();
-  c.sessionEnc = sess
-    ? {
-        email: (sess.user && sess.user.email) || null,
-        expires_at: sess.expires_at || null,
-        access: encryptSecret(sess.access_token),
-        refresh: encryptSecret(sess.refresh_token),
-      }
-    : null;
-  saveConfig(c);
-}
+// App sem cadastro: nao ha login/conta nem backend. Aceite legal e gravado so local
+// (config.json em userData); nada de video/clipe/conta sobe pra nuvem.
 
 function enginePath() {
   if (process.env.ENGINE_BIN) return process.env.ENGINE_BIN;
@@ -474,113 +397,10 @@ ipcMain.handle("pick-file", async () => {
   });
   return r.canceled ? null : r.filePaths[0];
 });
-ipcMain.handle("auth-sign-in", async (_e, { email, password } = {}) => {
-  try {
-    const { status, data } = await supabaseAuth("token?grant_type=password", { email, password });
-    if (status === 200 && data.access_token) {
-      storeSession(data);
-      return { ok: true, email: data.user && data.user.email };
-    }
-    return { ok: false, error: authError(data, "Não foi possível entrar.") };
-  } catch {
-    return { ok: false, error: "Sem internet ou Supabase fora do ar." };
-  }
-});
-
-ipcMain.handle("auth-sign-up", async (_e, { email, password } = {}) => {
-  try {
-    const { status, data } = await supabaseAuth("signup", { email, password });
-    if (status === 200 && data.access_token) {
-      storeSession(data);
-      return { ok: true, email: data.user && data.user.email };
-    }
-    // Conta criada mas o projeto exige confirmacao por e-mail.
-    if (status === 200) return { ok: true, needsConfirm: true };
-    return { ok: false, error: authError(data, "Não foi possível criar a conta.") };
-  } catch {
-    return { ok: false, error: "Sem internet ou Supabase fora do ar." };
-  }
-});
-
-ipcMain.handle("auth-sign-out", () => {
-  storeSession(null);
-  return true;
-});
-
-// Email do usuario logado (pra exibir na aba CONTA).
-ipcMain.handle("get-account", () => {
-  const s = loadConfig().sessionEnc;
-  return { email: (s && s.email) || null };
-});
-
-// Dispara o email de recuperacao de senha. Serve aos dois casos:
-//  - "esqueci a senha" (deslogado): email vem da tela de login;
-//  - "trocar senha" (logado): cai no email da sessao.
-// A redefinicao em si finaliza na pagina web (redirect_to).
-ipcMain.handle("auth-recover", async (_e, { email } = {}) => {
-  const s = loadConfig().sessionEnc;
-  const mail = (email || (s && s.email) || "").trim();
-  if (!mail) return { ok: false, error: "Informe um email." };
-  const redirect = encodeURIComponent(`${API_BASE}/redefinir-senha`);
-  try {
-    const { status, data } = await supabaseAuth(`recover?redirect_to=${redirect}`, { email: mail });
-    if (status === 200) return { ok: true };
-    return { ok: false, error: authError(data, "Não foi possível enviar o email.") };
-  } catch {
-    return { ok: false, error: "Sem internet ou Supabase fora do ar." };
-  }
-});
-
-// Apaga os dados locais (chave, sessao, prefs, onboarding) — NAO mexe nos clips.
+// Apaga os dados locais (chave, prefs, onboarding) — NAO mexe nos clips.
 ipcMain.handle("wipe-local-data", () => {
   saveConfig({});
   return { ok: true };
-});
-
-// Exclui a conta no servidor (service_role, server-side) e limpa os dados locais.
-ipcMain.handle("auth-delete-account", async () => {
-  const token = await getValidAccessToken();
-  if (!token) return { ok: false, error: "Sessão expirada. Entre novamente." };
-  try {
-    const r = await fetch(`${API_BASE}/api/account/delete`, {
-      method: "POST",
-      headers: { Authorization: "Bearer " + token },
-    });
-    const data = await r.json().catch(() => ({}));
-    if (r.ok && data.ok) {
-      saveConfig({}); // conta excluida -> zera o estado local
-      return { ok: true };
-    }
-    return { ok: false, error: data.error || "Servidor respondeu " + r.status + "." };
-  } catch {
-    return { ok: false, error: "Sem internet ou servidor fora do ar." };
-  }
-});
-
-// Retorna a sessao salva; renova com o refresh_token se o access_token expirou.
-ipcMain.handle("auth-get-session", async () => {
-  const s = loadConfig().sessionEnc;
-  if (!s || !s.refresh) return null;
-  if (s.expires_at && s.expires_at * 1000 > Date.now() + 60_000) {
-    syncAcceptance(); // backfill/retry da prova de aceite (background)
-    return { email: s.email };
-  }
-  const refreshToken = decryptSecret(s.refresh);
-  if (!refreshToken) return null;
-  try {
-    const { status, data } = await supabaseAuth("token?grant_type=refresh_token", {
-      refresh_token: refreshToken,
-    });
-    if (status === 200 && data.access_token) {
-      storeSession(data);
-      syncAcceptance(); // backfill/retry da prova de aceite (background)
-      return { email: data.user && data.user.email };
-    }
-  } catch {
-    return { email: s.email }; // offline: mantem a sessao local ate reconectar
-  }
-  storeSession(null);
-  return null;
 });
 
 // --- Provedor de IA ativo (OpenRouter / OpenAI / Anthropic) ---
@@ -657,50 +477,8 @@ ipcMain.handle("set-library-dir", (_e, dir) => {
   return { ok: true, dir };
 });
 
-// Prova de aceite: grava no Supabase (trilha de auditoria) usando a sessao do user.
-async function recordAcceptance(version, accepts, acceptedAt) {
-  const token = await getValidAccessToken();
-  if (!token) return false;
-  try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/legal_acceptances`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: "Bearer " + token,
-        Prefer: "return=minimal",
-      },
-      body: JSON.stringify({
-        version,
-        accepts: accepts || {},
-        app_version: app.getVersion(),
-        accepted_at: acceptedAt || new Date().toISOString(),
-      }),
-    });
-    return r.ok; // 201 Created
-  } catch {
-    return false;
-  }
-}
-
-// Garante que o aceite local esteja registrado no banco (best-effort + retry).
-// Cobre: novo aceite, re-aceite, retry offline e backfill de aceites locais antigos.
-async function syncAcceptance() {
-  const c = loadConfig();
-  const ob = c.onboarding;
-  if (!ob || ob.synced) return;
-  const ok = await recordAcceptance(ob.version, ob.accepts, ob.acceptedAt);
-  if (ok) {
-    const c2 = loadConfig();
-    if (c2.onboarding && c2.onboarding.version === ob.version) {
-      c2.onboarding.synced = true;
-      saveConfig(c2);
-    }
-  }
-}
-
 // --- Onboarding de primeiro acesso (aceites + pasta) ---
-const LEGAL_VERSION = "2026-06-20";
+const LEGAL_VERSION = "2026-06-21";
 ipcMain.handle("get-onboarding", () => {
   const c = loadConfig();
   const ob = c.onboarding;
@@ -721,11 +499,12 @@ ipcMain.handle("complete-onboarding", (_e, payload = {}) => {
 
   const c = loadConfig();
   c.libraryDir = dir;
+  // Prova de aceite gravada SO localmente (sem servidor): versao + data + itens.
   c.onboarding = {
     version: LEGAL_VERSION,
     acceptedAt: new Date().toISOString(),
     accepts: a,
-    synced: false,
+    appVersion: app.getVersion(),
   };
   saveConfig(c);
   try {
@@ -733,7 +512,6 @@ ipcMain.handle("complete-onboarding", (_e, payload = {}) => {
   } catch {
     /* idem */
   }
-  syncAcceptance(); // grava a prova no banco em background (retry no proximo boot)
   return { ok: true };
 });
 

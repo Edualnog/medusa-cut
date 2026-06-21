@@ -2,7 +2,8 @@
 
 // Security headers (auditoria #7). CSP permissiva em script/style (Next precisa de
 // inline na hidratação) mas estrita no resto: sem enquadramento (anti-clickjacking),
-// sem object/base externos, conexões só pra própria origem + Supabase (auth/conta).
+// sem object/base externos, conexões só pra própria origem. Site estático, sem
+// backend/Supabase — nada de origens externas em connect-src.
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -13,7 +14,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "connect-src 'self'",
   "upgrade-insecure-requests",
 ].join("; ");
 

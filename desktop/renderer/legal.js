@@ -3,10 +3,10 @@
 // FONTE CANONICA: docs/legal/*.md — manter em sincronia ao editar.
 // AVISO: minutas para MVP. Revisar com advogado antes de produção.
 window.LEGAL = {
-  version: "2026-06-19",
+  version: "2026-06-21",
 
   terms: `
-    <p class="legal-draft">Minuta — revisar com advogado. Versão 2026-06-19.</p>
+    <p class="legal-draft">Minuta — revisar com advogado. Versão 2026-06-21.</p>
     <h2>Termos de Uso — Medusa Clip</h2>
     <p>Ao instalar, acessar ou usar o aplicativo Medusa Clip ("Aplicativo"), você
     concorda com estes Termos de Uso. Se não concordar, não use o Aplicativo.</p>
@@ -21,9 +21,10 @@ window.LEGAL = {
     <p>Você declara ter <strong>18 anos ou mais</strong> e capacidade civil para
     aceitar estes Termos.</p>
 
-    <h3>3. Conta</h3>
-    <p>O login usa autenticação por e-mail e senha. Você é responsável por manter suas
-    credenciais em segurança e por toda atividade na sua conta.</p>
+    <h3>3. Sem cadastro</h3>
+    <p>O Aplicativo <strong>não tem conta nem login</strong>: você não cria cadastro,
+    não fornece e-mail nem senha. O acesso é direto, e suas configurações e o registro
+    do seu aceite ficam apenas no seu dispositivo.</p>
 
     <h3>4. Chave do provedor de IA (modelo "traga sua chave")</h3>
     <p>A análise por IA usa <strong>a sua própria chave</strong> do provedor que você
@@ -66,9 +67,9 @@ window.LEGAL = {
     danos indiretos, lucros cessantes, perda de dados, custos de IA gerados pela sua
     chave, ou por uso indevido de conteúdo de terceiros por você.</p>
 
-    <h3>11. Suspensão e rescisão</h3>
-    <p>Podemos suspender ou encerrar o acesso em caso de violação destes Termos. Você
-    pode parar de usar o Aplicativo a qualquer momento.</p>
+    <h3>11. Rescisão</h3>
+    <p>A licença de uso do Aplicativo cessa automaticamente em caso de violação destes
+    Termos. Você pode parar de usar e desinstalar o Aplicativo a qualquer momento.</p>
 
     <h3>12. Alterações</h3>
     <p>Estes Termos podem ser atualizados. Mudanças relevantes serão comunicadas no
@@ -83,32 +84,33 @@ window.LEGAL = {
   `,
 
   privacy: `
-    <p class="legal-draft">Minuta — revisar com advogado. Versão 2026-06-19.</p>
+    <p class="legal-draft">Minuta — revisar com advogado. Versão 2026-06-21.</p>
     <h2>Política de Privacidade — Medusa Clip</h2>
     <p>Esta Política explica como o Medusa Clip trata dados pessoais, em conformidade com
     a Lei Geral de Proteção de Dados (LGPD, Lei nº 13.709/2018).</p>
 
     <h3>1. Resumo</h3>
-    <p>O Medusa Clip é <strong>local-first</strong>: seus vídeos e clipes ficam e são
-    processados no seu computador. <strong>Nós não recebemos seus vídeos.</strong> Não
-    coletamos telemetria nem analytics de uso.</p>
+    <p>O Medusa Clip é <strong>local-first e sem cadastro</strong>: não há conta nem
+    login. Seus vídeos e clipes ficam e são processados no seu computador.
+    <strong>Nós não recebemos seus vídeos.</strong> Não coletamos telemetria nem
+    analytics, e <strong>não mantemos servidores com seus dados</strong>.</p>
 
     <h3>2. Dados que ficam no seu dispositivo</h3>
     <ul>
       <li>Sua chave do provedor de IA — OpenRouter, OpenAI ou Anthropic
       (<strong>armazenada cifrada</strong> pelo cofre do sistema operacional);</li>
-      <li>Tokens da sua sessão de login (<strong>cifrados</strong>);</li>
+      <li>O registro do seu aceite dos Termos e desta Política (versão, data e itens
+      aceitos), guardado <strong>apenas localmente</strong> — não é enviado a nenhum
+      servidor;</li>
       <li>Os clipes gerados, na pasta que você escolher;</li>
       <li>Estatísticas de custo/uso de IA e suas preferências do app.</li>
     </ul>
 
     <h3>3. Dados que saem do seu dispositivo</h3>
+    <p>Como não há conta, <strong>nada de identificação sua é enviado a servidores
+    nossos</strong> (não temos servidores). Saem do seu dispositivo apenas, por sua
+    ação:</p>
     <ul>
-      <li><strong>Login (Supabase):</strong> seu e-mail e senha são enviados ao Supabase
-      para autenticar sua conta.</li>
-      <li><strong>Aceites legais (Supabase):</strong> registramos a versão dos Termos e
-      desta Política que você aceitou, com data e hora, vinculados à sua conta — como
-      prova de consentimento.</li>
       <li><strong>Análise por IA (provedor que você escolher):</strong> para gerar os
       cortes, o Aplicativo envia ao provedor de IA selecionado — OpenRouter, OpenAI ou
       Anthropic — usando a <em>sua</em> chave — a transcrição do áudio, instruções
@@ -121,26 +123,25 @@ window.LEGAL = {
     </ul>
 
     <h3>4. Finalidades e bases legais</h3>
-    <p>Tratamos dados para autenticar sua conta (execução de contrato), gerar os cortes
-    solicitados (execução de contrato e seu consentimento ao usar o recurso) e cumprir
-    obrigações legais. O envio ao provedor de IA ocorre por sua
-    ação ao gerar clipes.</p>
+    <p>Tratamos dados para gerar os cortes solicitados (execução de contrato e seu
+    consentimento ao usar o recurso) e cumprir obrigações legais. O envio ao provedor de
+    IA ocorre por sua ação ao gerar clipes. Não há tratamento para autenticação de
+    conta, pois o Aplicativo não tem cadastro.</p>
 
     <h3>5. Compartilhamento (operadores)</h3>
-    <p>Usamos provedores que atuam como operadores: <strong>Supabase</strong> (conta/
-    autenticação) e, por iniciativa sua, <strong>OpenRouter</strong>,
-    <strong>OpenAI</strong> ou <strong>Anthropic</strong> e provedores de
-    modelos de IA (análise). A consulta de prévia usa serviço do <strong>Google/
-    YouTube</strong>. Não vendemos seus dados.</p>
+    <p>Não usamos servidores próprios. Por iniciativa sua, dados vão a operadores que
+    <strong>você</strong> escolhe: <strong>OpenRouter</strong>, <strong>OpenAI</strong>
+    ou <strong>Anthropic</strong> e provedores de modelos de IA (análise). A prévia de
+    link usa serviço do <strong>Google/YouTube</strong>. Não vendemos seus dados.</p>
 
     <h3>6. Transferência internacional</h3>
     <p>Alguns provedores podem processar dados fora do Brasil. Buscamos parceiros que
     adotem salvaguardas adequadas, conforme a LGPD.</p>
 
     <h3>7. Retenção</h3>
-    <p>Dados de conta são mantidos enquanto a conta existir. Dados locais (chave, clipes,
-    preferências) permanecem no seu dispositivo até você removê-los ou desinstalar o
-    Aplicativo.</p>
+    <p>Não há dados de conta (não existe cadastro). Dados locais (chave, registro de
+    aceite, clipes, preferências) permanecem no seu dispositivo até você removê-los
+    (pela opção "apagar dados deste dispositivo") ou desinstalar o Aplicativo.</p>
 
     <h3>8. Seus direitos (LGPD)</h3>
     <p>Você pode solicitar confirmação de tratamento, acesso, correção, anonimização,

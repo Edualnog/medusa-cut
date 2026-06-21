@@ -2,48 +2,53 @@
 
 Contexto para o Claude Code. Leia antes de codar.
 
-> ⚠️ DIRECAO ATUAL (2026-06-18): app **desktop local-first** ("Medusa Clip",
-> medusaclip.com). O processamento roda **no PC do usuario** (app Electron com motor +
-> ffmpeg embutidos) — NAO em VPS, NAO em worker na nuvem. A VPS/worker foi abandonada.
-> O motor de cortes Python foi reaproveitado integral, agora empacotado como binario.
+> ⚠️ DIRECAO ATUAL (2026-06-21): app **desktop local-first, SEM CADASTRO** ("Medusa
+> Clip", medusaclip.com). O processamento roda **no PC do usuario** (app Electron com
+> motor + ffmpeg embutidos) — NAO em VPS, NAO em worker na nuvem. A VPS/worker foi
+> abandonada. **Login/conta removidos** (era Supabase auth) — o app nao tem mais
+> cadastro, nem backend. O motor de cortes Python foi reaproveitado integral, agora
+> empacotado como binario.
 
 ## O que e
 
-**App desktop para criadores de games**: o usuario instala o Medusa Clip, entra na
-conta, conecta a **propria** chave de IA (OpenRouter, OpenAI ou Anthropic), escolhe um video local (ou cola um
-link publico) e recebe **cortes verticais 9:16** nivel Opus Clip (ganchos, legenda
-karaoke, enquadramento) — tudo processado **na propria maquina**. App **gratuito**
-(sem assinatura), **sem creditos** — o custo de IA (LLM) e do usuario, pela chave dele.
-Estrategia: base enorme de usuarios primeiro, **monetizar de outra forma no futuro**
-(modelo ainda nao definido).
-Privacidade por padrao: **o gameplay nunca sobe pra nuvem**.
+**App desktop para criadores de games**: o usuario instala o Medusa Clip, **abre (sem
+cadastro, sem login)**, conecta a **propria** chave de IA (OpenRouter, OpenAI ou
+Anthropic), escolhe um video local (ou cola um link publico) e recebe **cortes
+verticais 9:16** nivel Opus Clip (ganchos, legenda karaoke, enquadramento) — tudo
+processado **na propria maquina**. App **gratuito** (sem assinatura), **sem creditos** —
+o custo de IA (LLM) e do usuario, pela chave dele. Estrategia: base enorme de usuarios
+primeiro (atrito zero, **no sign-up**), **monetizar de outra forma no futuro** (modelo
+ainda nao definido). Privacidade por padrao: **o gameplay nunca sobe pra nuvem** e
+**nao ha conta nossa**.
 
-## Arquitetura: app Electron (local) + Supabase (so conta)
+## Arquitetura: app Electron (local), sem backend
 
 Processamento de video (yt-dlp, ffmpeg, whisper, render) e **pesado** e roda **100%
-no computador do usuario**, dentro do app Electron. Supabase serve apenas conta/auth —
-videos e clipes ficam no disco do usuario.
+no computador do usuario**, dentro do app Electron. **Nao ha servidor nosso**: sem
+conta, sem auth, sem Supabase. Tudo (config, aceite legal, clipes) fica no disco do
+usuario.
 
 ```
-DESKTOP (Electron @ PC do usuario)        SUPABASE (so conta)
-  renderer/  UI 8-bit (3 views)             auth (login)
-  main.js    spawn do motor (binario)       (sem billing — app gratis)
-  engine/    medusacut-engine + ffmpeg      (NENHUM video sobe pra ca)
-             + ffprobe (embutidos)
-  config.json (userData): provider + chave de IA local (por provedor)
+DESKTOP (Electron @ PC do usuario)
+  renderer/  UI 8-bit (4 views: Inicio / Biblioteca / Chaves API / Ajustes)
+  main.js    spawn do motor (binario)
+  engine/    medusacut-engine + ffmpeg + ffprobe (embutidos)
+  config.json (userData): provider + chave de IA local (por provedor) +
+              onboarding (aceite legal gravado SO local: versao/data/itens)
   ~/Downloads/Medusa Clip/: biblioteca de clipes
 
 WEB (Next.js @ Vercel)
-  landing 8-bit + downloads + login/conta
+  landing 8-bit + downloads  (so isso — SEM login, SEM api, SEM Supabase)
 ```
 
 - **Desktop**: faz todo o trabalho pesado; o motor e um **binario** (`medusacut-engine`)
   chamado por `main.js` via `spawn`, que repassa progresso em JSON linha a linha.
   `ffmpeg`/`ffprobe` vivem em `desktop/engine/` e entram no PATH do subprocesso —
-  self-contained, sem dep do sistema nem Python instalado.
-- **Web (Vercel)**: so a landing + downloads + login. Sem worker, sem fila de jobs.
-- **Supabase**: auth/conta. **Nao** guarda video/clipe. **Sem billing** (app gratis).
-- **Custo de compute e do USUARIO** (CPU/banda/disco dele). O dono so paga site + auth.
+  self-contained, sem dep do sistema nem Python instalado. **Sem auth**: ao abrir, o
+  app vai direto pro onboarding (1o acesso) ou pro app.
+- **Web (Vercel)**: so a landing + downloads. Sem login, sem worker, sem fila, **sem
+  rotas `api/*`**. Site 100% estatico.
+- **Custo de compute e do USUARIO** (CPU/banda/disco dele). O dono so paga o site.
 
 ## Regras inegociaveis (seguranca + modelo)
 
@@ -54,11 +59,15 @@ WEB (Next.js @ Vercel)
   servidor nosso. No motor: `LLM_PROVIDER` + `LLM_API_KEY`; OpenRouter/OpenAI via SDK
   da OpenAI (base_url), Anthropic via SDK nativo `anthropic` (API != OpenAI).
 - **Local-first**: video bruto e clipes **nunca** saem do PC do usuario. Nada de
-  upload de gameplay pra Supabase/nuvem.
+  upload de gameplay pra nuvem.
+- **Sem cadastro (no sign-up)**: o app **nao tem login nem conta**. Nao reintroduzir
+  auth/Supabase/backend sem decisao explicita. O aceite legal (Termos, Privacidade,
+  18+, responsabilidade de conteudo) e gravado **so localmente** (`config.json`,
+  `onboarding`: versao/data/itens) — nenhuma prova de aceite sobe pra servidor.
 - **App gratuito**: sem assinatura, sem creditos. Custo de IA e do usuario (BYO key).
   Monetizacao futura ainda nao definida — nao assumir/implementar cobranca.
-- Segredos de servidor (se houver, p/ billing): **so no servidor** (env Vercel),
-  nunca `NEXT_PUBLIC`, nunca no git.
+- Se algum dia voltar a haver segredo de servidor (p/ billing): **so no servidor**
+  (env Vercel), nunca `NEXT_PUBLIC`, nunca no git.
 
 ## Onde mora a qualidade ("nivel Opus Clip")
 
@@ -100,31 +109,23 @@ agent/    # Python: motor de cortes (`medusacut`). Empacotado como binario p/ o 
   tests/  pyproject.toml  Makefile  docs/ARCHITECTURE.md
 desktop/  # App Electron (o produto). main.js · preload.js · renderer/ (UI 8-bit)
           # engine/ (medusacut-engine + ffmpeg + ffprobe embutidos) · scripts/build_app.sh
-web/      # Next.js (App Router) @ Vercel: landing 8-bit + downloads + login
+web/      # Next.js (App Router) @ Vercel: landing 8-bit + downloads (so isso)
 docs/     # SETUP.md
 ```
 
-> Supabase: **auth** (`auth.users` nativo) + **1 tabela**: `legal_acceptances`
-> (`supabase/migrations/0001_legal_acceptances.sql`) — **prova de aceite** dos termos
-> (user_id/version/accepts/accepted_at, RLS, imutavel). O desktop grava cada aceite via
-> sessao do user (`recordAcceptance`/`syncAcceptance` no `main.js`, com retry/backfill).
-> App gratuito — sem billing.
->
-> Backend minimo na web: rota privilegiada `web/app/api/account/delete` (runtime
-> nodejs) usa a **`SUPABASE_SERVICE_ROLE_KEY`** (server-only, env da Vercel / `.env.local`)
-> pra excluir a conta do proprio usuario. A service_role **nunca** vai pro desktop/client
-> nem pro git. O desktop chama essa rota mandando o access_token do usuario (`API_BASE`,
-> default `https://medusaclip.com`, override via `MEDUSA_API_BASE`). Ver `web/.env.example`.
+> **Sem backend, sem Supabase.** O app nao tem mais conta/login: removidos o auth
+> Supabase (desktop), a tabela `legal_acceptances`, a rota `web/app/api/account/delete`
+> e a `SUPABASE_SERVICE_ROLE_KEY`. O **aceite legal** e gravado **so localmente** no
+> `config.json` (`onboarding`: versao/data/itens) — nenhuma prova sobe pra servidor.
+> Projeto Supabase antigo **deletado** (2026-06-21) — isso invalidou a anon key +
+> service_role que estavam no repo. Nao reintroduzir auth sem decisao explicita.
 
 ## Deploy da web (Vercel)
 
 - **Monorepo**: na Vercel, **Root Directory = `web`** (o Next.js nao esta na raiz).
-- **Env vars** (Settings → Environment Variables): `NEXT_PUBLIC_SUPABASE_URL`,
-  `NEXT_PUBLIC_SUPABASE_ANON_KEY` (publicas) e `SUPABASE_SERVICE_ROLE_KEY` (secreta).
-  As `NEXT_PUBLIC_*` sao embutidas no build -> ao mudar, **rebuildar**.
-- **Sem middleware**: a web nao tem `middleware.ts` (auth e client-side; a rota de
-  exclusao valida o token sozinha). Nao reintroduzir o middleware do Supabase SSR
-  (quebrava no Edge -> `MIDDLEWARE_INVOCATION_FAILED`).
+- **Sem env vars**: a web e 100% estatica (landing + downloads), sem login, sem rotas
+  `api/*`, sem Supabase. Nada a cadastrar em Environment Variables.
+- **Sem middleware** e **sem rotas dinamicas**: nao reintroduzir auth/SSR do Supabase.
 - Auto-deploy da Vercel exige que o **email do autor do commit** exista na conta do
   GitHub (`git config user.email`). Email errado -> deploy recusado.
 
@@ -144,25 +145,29 @@ por enquanto), `.exe`/nsis (win).
 
 **Web (Next.js)**: TypeScript, App Router. Estilo **8-bit gamer**: fonte pixel
 (Press Start 2P / VT323), fundo preto, bordas pixeladas. Paleta preto/branco-quente/
-amarelo. Segredo de servidor SO em rotas `app/api/*` (runtime nodejs).
+amarelo. **Site estatico** (so landing + downloads): sem rotas `app/api/*`, sem auth,
+sem Supabase.
 
 **Geral**: `out/`, `dist/`, `.env`, `.env*.local`, video e `node_modules` NUNCA no git.
-O dono conecta as contas (Supabase, Vercel); o Claude escreve o codigo e **guia o
-dono passo a passo** no deploy (ver `docs/SETUP.md`).
+O dono conecta as contas (Vercel); o Claude escreve o codigo e **guia o dono passo a
+passo** no deploy (ver `docs/SETUP.md`).
 
 ## Status / roadmap
 
 - [x] Motor de cortes completo (viral multimodal, legenda, reframe, custo).
 - [x] Motor empacotado como binario + ffmpeg/ffprobe embutidos no app.
-- [x] App desktop Electron: UI 8-bit (Inicio / Biblioteca / Chaves API), preview de
-      link do YouTube, progresso, biblioteca local.
+- [x] App desktop Electron: UI 8-bit (Inicio / Biblioteca / Chaves API / Ajustes),
+      preview de link do YouTube, progresso, biblioteca local.
 - [x] Build do instalador `.dmg` (electron-builder, sem assinatura).
 - [x] Landing 8-bit refocada no app desktop (downloads "em breve" por plataforma).
-- [x] Login no app desktop: email/senha via Supabase (auth no `main.js`, sessao
-      local em config.json, gate de tela de login).
+- [x] **Sem cadastro (no sign-up):** login/conta Supabase removidos do app e da web
+      (era `authGate` + `auth-*` no `main.js`/`preload.js`, telas `/login` e
+      `/redefinir-senha`, rota `api/account/delete`, `service_role`). App abre direto
+      no onboarding/app; web virou site estatico.
 - [x] Onboarding de 1o acesso: aceites (Termos, Privacidade, responsabilidade de
-      conteudo, 18+) + escolha da pasta dos clips. Textos legais em
-      `desktop/renderer/legal.js` (espelho em `docs/legal/`). `LEGAL_VERSION` no `main.js`.
+      conteudo, 18+) + escolha da pasta dos clips. Aceite gravado **so local** no
+      `config.json` (`onboarding`). Textos legais em `desktop/renderer/legal.js`
+      (espelho em `docs/legal/`). `LEGAL_VERSION` no `main.js`.
 - [x] Multi-provedor de IA (BYO key): OpenRouter, OpenAI e Anthropic. Seletor de provedor
       na aba Chaves API; chave salva por provedor; validacao por provedor (sem custo);
       motor (`llm.py`) dispatcha por `LLM_PROVIDER` (OpenAI-compat vs SDK nativo Anthropic).
@@ -179,9 +184,12 @@ dono passo a passo** no deploy (ver `docs/SETUP.md`).
 - [x] Seguranca: chave de IA (por provedor) e tokens de sessao **cifrados** no disco via
       `safeStorage` (migra config antigo em texto puro). Fallback texto puro no
       Linux sem keyring (flag `secretsPlaintext`).
+- [x] **Decommission do Supabase (2026-06-21)**: projeto **deletado** (banco + tabela
+      `legal_acceptances` + auth), o que invalidou a anon key + service_role que estavam
+      hardcoded no repo. App nao usa mais nada de Supabase.
 - [ ] **Seguranca pendente**: assinatura/notarizacao de codigo (mac `identity:null`,
       win sem assinatura -> avisos de Gatekeeper/SmartScreen); auto-update seguro;
-      revisao juridica dos textos legais; rotacao dos segredos cloud antigos (R2/service_role).
+      revisao juridica dos textos legais; rotacao dos segredos cloud antigos (R2).
 - [ ] Liberar instaladores assinados por plataforma (mac/win/linux — target Linux
       AppImage ja configurado no electron-builder).
 - [ ] **GPU no Windows "de fabrica" (NVIDIA):** o codigo ja usa CUDA se as libs

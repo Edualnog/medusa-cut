@@ -5,7 +5,7 @@ const VIEW_META = {
   inicio: { title: "INÍCIO", code: "01" },
   biblioteca: { title: "BIBLIOTECA", code: "02" },
   apis: { title: "CHAVES API", code: "03" },
-  conta: { title: "CONTA", code: "04" },
+  conta: { title: "AJUSTES", code: "04" },
 };
 
 const LAYOUT_LABELS = {
@@ -45,7 +45,6 @@ function setView(view) {
     refreshProviderBadges();
     if ($("key").value.trim()) checkKey();
   }
-  if (view === "conta") loadAccount();
 }
 
 document.querySelectorAll(".nav").forEach((button) => {
@@ -586,18 +585,8 @@ $("openLib").addEventListener("click", () => window.api.openFolder(null));
 updateSummary();
 loadStats();
 
-// ---- Autenticação (gate) ----
-let authMode = "login";
-
-// Apos login/sessao: esconde o login e decide entre onboarding e app.
-async function showApp(email) {
-  $("authGate").classList.add("hidden");
-  $("accountEmail").textContent = email || "";
-  const ob = await window.api.getOnboarding();
-  if (ob && ob.done) revealApp();
-  else showOnboarding(ob);
-}
-
+// ---- Boot (sem login) ----
+// App sem cadastro: ao abrir, decide direto entre onboarding (1o acesso) e o app.
 function revealApp() {
   $("onboarding").classList.add("hidden");
   $("appShell").classList.remove("hidden");
@@ -605,97 +594,7 @@ function revealApp() {
   maybeShowWhatsNew();
 }
 
-function showGate() {
-  $("appShell").classList.add("hidden");
-  $("onboarding").classList.add("hidden");
-  $("authGate").classList.remove("hidden");
-}
-
-function setAuthMsg(text, isError = true) {
-  const el = $("authMsg");
-  el.textContent = text || "";
-  el.classList.toggle("hidden", !text);
-  el.classList.toggle("error", Boolean(text) && isError);
-}
-
-function authSubmitLabel() {
-  return authMode === "login" ? "ENTRAR →" : "CRIAR CONTA →";
-}
-
-function setAuthMode(next) {
-  authMode = next;
-  $("authTitle").textContent = next === "login" ? "ENTRAR" : "CRIAR CONTA";
-  $("authSubmit").textContent = authSubmitLabel();
-  $("authSwitchText").textContent = next === "login" ? "Não tem conta?" : "Já tem conta?";
-  $("authSwitch").textContent = next === "login" ? "Criar conta" : "Entrar";
-  $("authPassword").setAttribute("autocomplete", next === "login" ? "current-password" : "new-password");
-  setAuthMsg("");
-}
-
-$("authSwitch").addEventListener("click", () => {
-  setAuthMode(authMode === "login" ? "signup" : "login");
-});
-
-$("forgotPass").addEventListener("click", async () => {
-  const email = $("authEmail").value.trim();
-  if (!email) {
-    setAuthMsg("Digite seu e-mail acima para receber o link de redefinição.");
-    return;
-  }
-  const btn = $("forgotPass");
-  btn.disabled = true;
-  const res = await window.api.recoverPassword(email);
-  setAuthMsg(
-    res && res.ok
-      ? "Enviamos um link para seu e-mail. Abra-o para definir uma nova senha."
-      : (res && res.error) || "Não foi possível enviar.",
-    !(res && res.ok)
-  );
-  btn.disabled = false;
-});
-
-$("authForm").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const email = $("authEmail").value.trim();
-  const password = $("authPassword").value;
-  if (!email || password.length < 6) {
-    setAuthMsg("Informe e-mail e senha (mínimo 6 caracteres).");
-    return;
-  }
-
-  const submit = $("authSubmit");
-  submit.disabled = true;
-  submit.textContent = "...";
-  setAuthMsg("");
-  try {
-    const res = authMode === "login"
-      ? await window.api.signIn(email, password)
-      : await window.api.signUp(email, password);
-
-    if (res.ok && res.needsConfirm) {
-      setAuthMode("login");
-      setAuthMsg("Conta criada! Confirme o e-mail e depois entre.", false);
-    } else if (res.ok) {
-      $("authPassword").value = "";
-      showApp(res.email || email);
-    } else {
-      setAuthMsg(res.error || "Não foi possível continuar.");
-    }
-  } finally {
-    submit.disabled = false;
-    submit.textContent = authSubmitLabel();
-  }
-});
-
-$("signOut").addEventListener("click", async () => {
-  await window.api.signOut();
-  $("authEmail").value = "";
-  $("authPassword").value = "";
-  setAuthMode("login");
-  showGate();
-});
-
-// Olhinho de mostrar/ocultar senha (qualquer campo dentro de .pass-row)
+// Olhinho de mostrar/ocultar senha (qualquer campo dentro de .pass-row, ex.: chave de IA)
 document.querySelectorAll(".pass-eye").forEach((btn) => {
   btn.addEventListener("click", () => {
     const input = btn.parentElement.querySelector("input");
@@ -707,10 +606,10 @@ document.querySelectorAll(".pass-eye").forEach((btn) => {
   });
 });
 
-(async function initAuth() {
-  const session = await window.api.getSession();
-  if (session && session.email) showApp(session.email);
-  else showGate();
+(async function initApp() {
+  const ob = await window.api.getOnboarding();
+  if (ob && ob.done) revealApp();
+  else showOnboarding(ob);
 })();
 
 // ---- Modal de documentos legais ----
@@ -817,60 +716,22 @@ $("cfgChangeFolder").addEventListener("click", async () => {
   if (res && res.ok) loadLibraryPath();
 });
 
-// ---- Aba CONTA ----
-async function loadAccount() {
-  const acc = await window.api.getAccount();
-  const email = (acc && acc.email) || "—";
-  $("contaEmail").textContent = email;
-  $("accountEmail").textContent = email !== "—" ? email : $("accountEmail").textContent;
-}
-
-$("resetPass").addEventListener("click", async () => {
-  const btn = $("resetPass");
-  btn.disabled = true;
-  const res = await window.api.recoverPassword(); // sem email -> usa o da sessao
-  const ok = Boolean(res && res.ok);
-  $("resetPassNote").textContent = ok
-    ? "EMAIL ENVIADO. ABRA O LINK NO NAVEGADOR PARA DEFINIR A NOVA SENHA."
-    : (res && res.error) || "NÃO FOI POSSÍVEL ENVIAR.";
-  $("resetPassNote").classList.toggle("error", !ok);
-  btn.disabled = false;
-});
-
-function resetToLogin() {
+// ---- Aba AJUSTES: apagar dados locais ----
+// Volta o app pro estado de 1o acesso (onboarding) depois de limpar o config local.
+async function resetAfterWipe() {
   if ($("key")) $("key").value = "";
-  $("authEmail").value = "";
-  $("authPassword").value = "";
-  setAuthMode("login");
-  showGate();
+  $("appShell").classList.add("hidden");
+  const ob = await window.api.getOnboarding();
+  showOnboarding(ob);
 }
 
 $("wipeData").addEventListener("click", async () => {
   const ok = window.confirm(
-    "Apagar sua chave de IA, a sessão e as preferências deste dispositivo?\n\nOs clips já gerados NÃO serão apagados. Você precisará entrar e configurar novamente."
+    "Apagar sua chave de IA e as preferências deste dispositivo?\n\nOs clips já gerados NÃO serão apagados. Você precisará reconfigurar (aceite e pasta) ao reabrir."
   );
   if (!ok) return;
   await window.api.wipeLocalData();
-  resetToLogin();
-});
-
-$("deleteAccount").addEventListener("click", async () => {
-  const ok = window.confirm(
-    "Excluir sua conta permanentemente?\n\nEsta ação NÃO pode ser desfeita. Você perderá o acesso e seus dados locais serão apagados (os clips já gerados ficam no seu computador)."
-  );
-  if (!ok) return;
-  const btn = $("deleteAccount");
-  btn.disabled = true;
-  $("deleteAccountNote").classList.remove("error");
-  $("deleteAccountNote").textContent = "EXCLUINDO…";
-  const res = await window.api.deleteAccount();
-  if (res && res.ok) {
-    resetToLogin();
-  } else {
-    btn.disabled = false;
-    $("deleteAccountNote").textContent = (res && res.error) || "NÃO FOI POSSÍVEL EXCLUIR.";
-    $("deleteAccountNote").classList.add("error");
-  }
+  resetAfterWipe();
 });
 
 // ---- Notas de atualização (novidades) ----

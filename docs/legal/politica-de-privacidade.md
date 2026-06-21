@@ -1,6 +1,6 @@
 # Política de Privacidade — Medusa Clip
 
-> **Minuta — revisar com advogado.** Versão 2026-06-19.
+> **Minuta — revisar com advogado.** Versão 2026-06-21.
 > Fonte canônica. A cópia exibida no app vive em `desktop/renderer/legal.js` —
 > manter as duas em sincronia.
 
@@ -8,21 +8,21 @@ Esta Política explica como o Medusa Clip trata dados pessoais, em conformidade 
 Geral de Proteção de Dados (LGPD, Lei nº 13.709/2018).
 
 ## 1. Resumo
-O Medusa Clip é **local-first**: seus vídeos e clipes ficam e são processados no seu
-computador. **Nós não recebemos seus vídeos.** Não coletamos telemetria nem analytics.
+O Medusa Clip é **local-first e sem cadastro**: não há conta nem login. Seus vídeos e
+clipes ficam e são processados no seu computador. **Nós não recebemos seus vídeos.**
+Não coletamos telemetria nem analytics, e **não mantemos servidores com seus dados**.
 
 ## 2. Dados que ficam no seu dispositivo
 - Sua chave do provedor de IA — OpenRouter, OpenAI ou Anthropic (**armazenada cifrada**
   pelo cofre do sistema operacional);
-- Tokens da sua sessão de login (**cifrados**);
+- O registro do seu aceite dos Termos e desta Política (versão, data e itens aceitos),
+  guardado **apenas localmente** — não é enviado a nenhum servidor;
 - Os clipes gerados, na pasta que você escolher;
 - Estatísticas de custo/uso de IA e suas preferências do app.
 
 ## 3. Dados que saem do seu dispositivo
-- **Login (Supabase):** seu e-mail e senha são enviados ao Supabase para autenticar sua
-  conta.
-- **Aceites legais (Supabase):** registramos a versão dos Termos e desta Política que
-  você aceitou, com data e hora, vinculados à sua conta — como prova de consentimento.
+Como não há conta, **nada de identificação sua é enviado a servidores nossos** (não
+temos servidores). Saem do seu dispositivo apenas, por sua ação:
 - **Análise por IA (provedor que você escolher):** para gerar os cortes, o Aplicativo
   envia ao provedor de IA selecionado — OpenRouter, OpenAI ou Anthropic — usando a *sua*
   chave — a transcrição do áudio, instruções (prompts) e **quadros (imagens) do seu
@@ -34,24 +34,24 @@ computador. **Nós não recebemos seus vídeos.** Não coletamos telemetria nem 
   de origem.
 
 ## 4. Finalidades e bases legais
-Tratamos dados para autenticar sua conta (execução de contrato), gerar os cortes
-solicitados (execução de contrato e seu consentimento ao usar o recurso) e cumprir
-obrigações legais. O envio ao provedor de IA ocorre por sua ação ao gerar clipes.
+Tratamos dados para gerar os cortes solicitados (execução de contrato e seu
+consentimento ao usar o recurso) e cumprir obrigações legais. O envio ao provedor de IA
+ocorre por sua ação ao gerar clipes. Não há tratamento para autenticação de conta,
+pois o Aplicativo não tem cadastro.
 
 ## 5. Compartilhamento (operadores)
-Usamos provedores que atuam como operadores: **Supabase** (conta/autenticação) e, por
-iniciativa sua, **OpenRouter**, **OpenAI** ou **Anthropic** e provedores de modelos de IA
-(análise). A prévia usa
-serviço do **Google/YouTube**. Não vendemos seus dados.
+Não usamos servidores próprios. Por iniciativa sua, dados vão a operadores que **você**
+escolhe: **OpenRouter**, **OpenAI** ou **Anthropic** e provedores de modelos de IA
+(análise). A prévia de link usa serviço do **Google/YouTube**. Não vendemos seus dados.
 
 ## 6. Transferência internacional
 Alguns provedores podem processar dados fora do Brasil. Buscamos parceiros com
 salvaguardas adequadas, conforme a LGPD.
 
 ## 7. Retenção
-Dados de conta são mantidos enquanto a conta existir. Dados locais (chave, clipes,
-preferências) permanecem no seu dispositivo até você removê-los ou desinstalar o
-Aplicativo.
+Não há dados de conta (não existe cadastro). Dados locais (chave, registro de aceite,
+clipes, preferências) permanecem no seu dispositivo até você removê-los (pela opção
+"apagar dados deste dispositivo") ou desinstalar o Aplicativo.
 
 ## 8. Seus direitos (LGPD)
 Você pode solicitar confirmação de tratamento, acesso, correção, anonimização,

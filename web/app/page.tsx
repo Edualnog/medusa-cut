@@ -22,7 +22,7 @@ const BENEFITS = [
 
 const STEPS = [
   { number: "1", title: "INSTALE", text: "Baixe a versão certa para o seu sistema e abra o Medusa Clip." },
-  { number: "2", title: "CONECTE", text: "Entre na sua conta e conecte sua chave de IA — OpenRouter, OpenAI ou Anthropic." },
+  { number: "2", title: "CONECTE", text: "Sem cadastro: abra o app e conecte sua chave de IA — OpenRouter, OpenAI ou Anthropic." },
   { number: "3", title: "ESCOLHA", text: "Selecione um vídeo local ou cole um link público de gameplay." },
   { number: "4", title: "PUBLIQUE", text: "Receba clips 9:16 com título, legenda karaokê e reframe automático." },
 ];
@@ -30,11 +30,15 @@ const STEPS = [
 const FAQ = [
   {
     question: "MEUS VÍDEOS SÃO ENVIADOS PARA ALGUM SERVIDOR?",
-    answer: "Não. O processamento de vídeo e a biblioteca de clips ficam no seu computador. A sua conta usa o Supabase, mas seus gameplays não passam por ele.",
+    answer: "Não. O processamento de vídeo e a biblioteca de clips ficam no seu computador. Não há cadastro, conta nem servidor nosso — seus gameplays não saem do seu PC.",
+  },
+  {
+    question: "PRECISO CRIAR CONTA?",
+    answer: "Não. O Medusa Clip é sem cadastro: baixe, abra e use. Nada de login, e-mail ou senha — só conecte a sua chave de IA.",
   },
   {
     question: "PRECISO DE INTERNET?",
-    answer: "Para entrar na conta, falar com o provedor de IA e baixar vídeos por link, sim. Arquivos locais continuam sendo analisados e renderizados no seu PC.",
+    answer: "Para falar com o provedor de IA e baixar vídeos por link, sim. Arquivos locais continuam sendo analisados e renderizados no seu PC.",
   },
   {
     question: "QUAIS PROVEDORES DE IA POSSO USAR?",
@@ -81,16 +85,16 @@ export default function Home() {
             <a href="#liberdade">GRÁTIS</a>
           </div>
 
-          <Link href="/login" className="nav-login">
-            ENTRAR
-          </Link>
+          <a href="#download" className="nav-login">
+            BAIXAR
+          </a>
         </nav>
       </header>
 
       <main>
         <section className="hero shell-width">
           <div className="hero-copy">
-            <div className="eyebrow">BETA · ESPECIALISTA EM GAMEPLAY · 100% LOCAL</div>
+            <div className="eyebrow">BETA · ESPECIALISTA EM GAMEPLAY · 100% LOCAL · SEM CADASTRO</div>
             <h1>
               FEITO PRA
               <br />
@@ -112,7 +116,7 @@ export default function Home() {
                 COMO FUNCIONA
               </a>
             </div>
-            <p className="hero-note">GRÁTIS · MACOS · WINDOWS · LINUX · SUA CHAVE DE IA</p>
+            <p className="hero-note">GRÁTIS · SEM CADASTRO · MACOS · WINDOWS · LINUX · SUA CHAVE DE IA</p>
           </div>
 
           <figure className="app-preview">
@@ -142,7 +146,7 @@ export default function Home() {
           <div className="shell-width proof-strip-inner">
             <span>ESPECIALISTA EM GAMEPLAY</span>
             <span>100% GRÁTIS</span>
-            <span>SUA CHAVE DE IA</span>
+            <span>SEM CADASTRO</span>
             <span>SEM UPLOAD</span>
           </div>
         </div>
@@ -242,11 +246,11 @@ export default function Home() {
             </p>
           </div>
           <div className="hero-actions">
-            <Link className="button button-primary" href="/login">
-              CRIAR CONTA GRÁTIS
-            </Link>
-            <a className="button button-secondary" href="#download">
-              BAIXAR AGORA
+            <a className="button button-primary" href="#download">
+              BAIXAR GRÁTIS
+            </a>
+            <a className="button button-secondary" href="#como-funciona">
+              COMO FUNCIONA
             </a>
           </div>
         </section>
@@ -341,7 +345,7 @@ export default function Home() {
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
             </svg>
           </a>
-          <Link href="/login" className="footer-login">ENTRAR</Link>
+          <a href="#download" className="footer-login">BAIXAR</a>
         </div>
       </footer>
     </>

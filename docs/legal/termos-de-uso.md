@@ -1,6 +1,6 @@
 # Termos de Uso — Medusa Clip
 
-> **Minuta — revisar com advogado.** Versão 2026-06-19.
+> **Minuta — revisar com advogado.** Versão 2026-06-21.
 > Fonte canônica destes termos. A cópia exibida no app vive em
 > `desktop/renderer/legal.js` — manter as duas em sincronia.
 
@@ -15,9 +15,10 @@ computador**; seus vídeos e clipes não são enviados para nossos servidores.
 ## 2. Elegibilidade
 Você declara ter **18 anos ou mais** e capacidade civil para aceitar estes Termos.
 
-## 3. Conta
-O login usa autenticação por e-mail e senha. Você é responsável por manter suas
-credenciais em segurança e por toda atividade na sua conta.
+## 3. Sem cadastro
+O Aplicativo **não tem conta nem login**: você não cria cadastro, não fornece e-mail
+nem senha. O acesso é direto, e suas configurações e o registro do seu aceite ficam
+apenas no seu dispositivo.
 
 ## 4. Chave do provedor de IA (modelo "traga sua chave")
 A análise por IA usa **a sua própria chave** do provedor que você escolher — **OpenRouter**,
@@ -56,9 +57,9 @@ Na máxima extensão permitida pela lei, o Medusa Clip não se responsabiliza po
 indiretos, lucros cessantes, perda de dados, custos de IA gerados pela sua chave, ou por
 uso indevido de conteúdo de terceiros por você.
 
-## 11. Suspensão e rescisão
-Podemos suspender ou encerrar o acesso em caso de violação destes Termos. Você pode parar
-de usar o Aplicativo a qualquer momento.
+## 11. Rescisão
+A licença de uso do Aplicativo cessa automaticamente em caso de violação destes Termos.
+Você pode parar de usar e desinstalar o Aplicativo a qualquer momento.
 
 ## 12. Alterações
 Estes Termos podem ser atualizados. Mudanças relevantes serão comunicadas no Aplicativo,

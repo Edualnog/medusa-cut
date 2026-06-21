@@ -1,98 +1,41 @@
-# Guia de montagem — Zorothax (SaaS)
+# Guia de montagem — Medusa Clip
 
-Mapa pra subir tudo. Arquitetura **Caminho A**: Vercel (site) + Supabase (dados) +
-VPS (worker). Você cria as contas e cola as chaves; eu (Claude) escrevo o código e
-te guio em cada passo. Itens marcados ⏳ dependem da Fase 3 (worker) — chego neles.
+Mapa pra subir tudo. Arquitetura **local-first, sem cadastro**: o app desktop faz todo
+o trabalho no PC do usuário e **não há backend**. A única peça de nuvem é a **Vercel**,
+que hospeda o site estático (landing + downloads). Sem Supabase, sem login, sem VPS,
+sem worker.
 
-## As 3 peças (e o que cada uma faz)
+## As peças (e o que cada uma faz)
 
 | Peça | Faz | Custo |
 |---|---|---|
-| **Vercel** | hospeda o **site** (landing, login, painel). Deploy com `git push`. | grátis pra começar |
-| **Supabase** | **banco + login + storage + fila de jobs**. | grátis pra começar |
-| **VPS** (Hostinger KVM) | roda o **worker** que baixa/corta/renderiza o vídeo. | ~R$44–60/mês |
+| **App desktop** (Electron) | baixa/corta/renderiza o vídeo **no PC do usuário**; guarda config + aceite legal localmente. | grátis (compute é do usuário) |
+| **Vercel** | hospeda o **site estático** (landing + downloads). Deploy com `git push`. | grátis |
+| **GitHub Releases** | distribui os instaladores + feeds de auto-update. | grátis |
 
-Segredos por lugar (NUNCA no git):
-- **Navegador (público)**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-- **Servidor web (Vercel)**: `SUPABASE_SERVICE_ROLE_KEY`, `KEY_ENCRYPTION_SECRET`.
-- **Worker (VPS)**: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `KEY_ENCRYPTION_SECRET`
-  (o mesmo da web, pra decifrar a chave do user).
+Não há segredos de servidor: a chave de IA fica **cifrada no DISPOSITIVO do usuário**
+(`safeStorage` — Keychain/DPAPI/libsecret), **nunca** sai pra nenhum servidor, e vai
+direto pro provedor escolhido.
 
 ---
 
-## 1) Supabase (banco/auth)  — em andamento
+## 1) Site (Next.js @ Vercel)
 
-1. Projeto criado em supabase.com ✅
-2. **SQL Editor** → rode os arquivos de `supabase/migrations/` em ordem:
-   - `0001_user_api_keys.sql` (chave de API do user, cifrada + RLS).
-   - ⏳ `0002_jobs.sql` (fila de jobs + clipes) — vem na Fase 3.
-3. **Authentication → Providers → Email**: pra testar rápido, desligue
-   "Confirm email" (ou confirme pelo e-mail).
-4. **Project Settings → API**: copie `Project URL`, `anon key` (públicas) e
-   `service_role` (SECRETA — só no servidor).
+**Local:** `cd web && npm install && npm run dev` → http://localhost:3000. Sem
+`.env` obrigatório (site estático, sem variáveis de ambiente).
 
-## 2) Site (Next.js)
-
-**Local (agora):** `web/.env.local` com as 4 variáveis (as 2 públicas + as 2 de
-servidor). Rode `cd web && npm run dev`.
-
-**Deploy na Vercel (quando quiser publicar):**
-1. Conecte o repositório na vercel.com, root = `web/`.
-2. Em **Settings → Environment Variables**, cole as MESMAS 4 variáveis.
+**Deploy na Vercel:**
+1. Conecte o repositório na vercel.com, **Root Directory = `web/`**.
+2. **Sem Environment Variables** a cadastrar (não há login/api/Supabase).
 3. Deploy. (HTTPS e CDN automáticos.)
-4. **Domínio `medusaclip.com`**: Vercel → Settings → Domains → adicionar o
-   domínio; a Vercel te dá os registros DNS (um `A`/`CNAME`) pra colar no painel do
-   teu registrador. HTTPS sai automático.
+4. **Domínio `medusaclip.com`**: Vercel → Settings → Domains → adicionar o domínio; a
+   Vercel te dá os registros DNS (`A`/`CNAME`) pra colar no painel do registrador.
 
-## 3) VPS — o worker  (Fase 3)
+## 2) App desktop
 
-O `agent/Dockerfile` + `docker-compose.yml` já existem. Passo a passo na VPS Ubuntu:
-
-```bash
-# 1. acessar (Hostinger te dá o IP + senha root)
-ssh root@SEU_IP
-
-# 2. instalar Docker
-curl -fsSL https://get.docker.com | sh
-
-# 3. colocar o código na VPS (escolha um):
-#    (a) Git (melhor p/ atualizar depois): repo no GitHub -> git clone <url>
-#    (b) rápido, do seu Mac:  rsync -av --exclude .venv --exclude out agent/ root@SEU_IP:/root/medusacut/
-cd /root/medusacut          # (ou medusa-cut/agent, conforme o clone)
-
-# 4. criar o .env do worker (cole os MESMOS 3 valores do web/.env.local)
-cat > .env <<'ENV'
-SUPABASE_URL=https://xukvtvggqdirvbrqqdjw.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=<cole>
-KEY_ENCRYPTION_SECRET=<cole o mesmo do web>
-ENV
-
-# 5. subir (a 1ª build demora alguns min: instala ffmpeg + stack de ML)
-docker compose up -d --build
-
-# 6. ver os logs — deve aparecer "conectado ao Supabase; escutando a fila…"
-docker compose logs -f
-```
-
-Atualizar depois: `git pull` (ou rsync de novo) + `docker compose up -d --build`.
-
-**Notas:** 1 job por vez (KVM 2) / ~2 (KVM 4). No 1º job o whisper baixa o modelo
-(fica em volume, não rebaixa). Temporários são limpos a cada job; só o clipe final
-vai pro Storage.
-
----
-
-## Ordem recomendada
-
-1. Supabase: rodar `0001` + pegar as chaves (conta/auth + `legal_acceptances`).
-2. App desktop: salvar a chave de IA (OpenRouter/OpenAI/Anthropic) na aba Chaves API.
-
-> ⚠️ **Legado:** os passos abaixo sobre "jobs + worker + VPS" e "chave cifrada no
-> Supabase" são do desenho **cloud abandonado** (pré local-first) — NÃO valem mais.
->
-> Realidade atual: a chave de IA fica **cifrada no DISPOSITIVO do usuário** (`safeStorage`
-> — Keychain/DPAPI/libsecret), **nunca** sai pro Supabase, e vai direto pro provedor.
-> Não há VPS/worker; todo o processamento de vídeo é local.
+Sem cadastro: ao abrir pela 1ª vez, o usuário passa pelo onboarding (aceite dos termos
++ escolha da pasta dos clips) e conecta a chave de IA (OpenRouter/OpenAI/Anthropic) na
+aba **Chaves API**. Nada disso sai do dispositivo.
 
 ---
 

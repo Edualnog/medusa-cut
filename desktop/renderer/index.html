@@ -11,44 +11,6 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="auth-gate" id="authGate">
-    <div class="auth-card">
-      <div class="auth-brand">
-        <img class="logo" src="logo.png" alt="" />
-        <div>
-          <strong>MEDUSA</strong>
-          <span>CLIP</span>
-        </div>
-      </div>
-      <div class="auth-pill">PROCESSAMENTO LOCAL</div>
-      <h1 id="authTitle">ENTRAR</h1>
-      <form id="authForm" novalidate>
-        <label class="field">
-          <span>E-MAIL</span>
-          <input id="authEmail" type="email" required autocomplete="username" placeholder="voce@email.com" />
-        </label>
-        <label class="field">
-          <span>SENHA</span>
-          <div class="pass-row">
-            <input id="authPassword" type="password" required minlength="6" autocomplete="current-password" placeholder="••••••••" />
-            <button type="button" class="pass-eye" aria-label="Mostrar senha">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-        </label>
-        <p class="auth-msg hidden" id="authMsg"></p>
-        <button class="primary-button full-button" id="authSubmit" type="submit">ENTRAR →</button>
-      </form>
-      <p class="auth-forgot-row">
-        <button type="button" id="forgotPass" class="auth-link">Esqueci a senha</button>
-      </p>
-      <p class="auth-switch">
-        <span id="authSwitchText">Não tem conta?</span>
-        <button type="button" id="authSwitch">Criar conta</button>
-      </p>
-    </div>
-  </div>
-
   <div class="app-shell hidden" id="appShell">
     <aside class="sidebar">
       <div class="brand-block">
@@ -76,14 +38,9 @@
         </button>
         <button class="nav" data-view="conta" type="button">
           <span class="nav-index">04</span>
-          <span>CONTA</span>
+          <span>AJUSTES</span>
         </button>
       </nav>
-
-      <div class="account-block">
-        <span class="account-label">CONECTADO COMO</span>
-        <span class="account-email" id="accountEmail">—</span>
-      </div>
 
       <div class="sidebar-foot">
         <span>MEDUSA CLIP</span>
@@ -388,35 +345,17 @@
         <section id="view-conta" class="view hidden">
           <div class="page-intro">
             <div>
-              <span class="eyebrow">SUA CONTA</span>
-              <h2>CONTA<br /><em>E ACESSO.</em></h2>
+              <span class="eyebrow">SEUS AJUSTES</span>
+              <h2>AJUSTES<br /><em>E DADOS.</em></h2>
             </div>
-            <p>Gerencie seu acesso e os dados guardados neste dispositivo.</p>
+            <p>Sem cadastro: tudo fica neste dispositivo. Gerencie os dados guardados aqui.</p>
           </div>
 
           <div class="key-layout">
-            <section class="panel">
-              <div class="panel-head">
-                <div>
-                  <span class="panel-index">01</span>
-                  <h3>IDENTIDADE</h3>
-                </div>
-                <span>LOGIN</span>
-              </div>
-              <dl class="summary-list">
-                <div><dt>E-MAIL</dt><dd id="contaEmail">—</dd></div>
-              </dl>
-              <button class="primary-button full-button" id="resetPass" type="button">
-                TROCAR SENHA POR EMAIL
-              </button>
-              <p class="panel-note" id="resetPassNote">ENVIAMOS UM LINK DE REDEFINIÇÃO PARA O SEU EMAIL.</p>
-              <button class="secondary-button full-button" id="signOut" type="button">SAIR DA CONTA</button>
-            </section>
-
             <section class="panel invite-panel">
               <div class="panel-head">
                 <div>
-                  <span class="panel-index">02</span>
+                  <span class="panel-index">01</span>
                   <h3>CONVIDAR AMIGOS</h3>
                 </div>
                 <span>DIVULGUE</span>
@@ -439,36 +378,26 @@
             <section class="panel danger-panel">
               <div class="panel-head">
                 <div>
-                  <span class="panel-index">03</span>
+                  <span class="panel-index">02</span>
                   <h3>DADOS LOCAIS</h3>
                 </div>
                 <span>LGPD</span>
               </div>
               <p class="cost-copy">
-                Remove deste computador sua chave de IA, a sessão de login e suas
-                preferências. <strong>Os clips já gerados não são apagados.</strong> Você
-                precisará entrar e configurar novamente.
+                Remove deste computador sua chave de IA e suas preferências (incluindo o
+                aceite dos termos). <strong>Os clips já gerados não são apagados.</strong>
+                Você precisará reconfigurar ao reabrir.
               </p>
               <button class="danger-button full-button" id="wipeData" type="button">
                 APAGAR DADOS DESTE DISPOSITIVO
               </button>
               <p class="panel-note" id="wipeNote"></p>
-
-              <div class="danger-divider"></div>
-              <p class="cost-copy">
-                <strong>Excluir conta</strong> remove sua conta do Medusa Clip de forma
-                permanente. Esta ação <strong>não pode ser desfeita</strong>.
-              </p>
-              <button class="danger-button full-button" id="deleteAccount" type="button">
-                EXCLUIR MINHA CONTA
-              </button>
-              <p class="panel-note" id="deleteAccountNote"></p>
             </section>
 
             <section class="panel support-panel">
               <div class="panel-head">
                 <div>
-                  <span class="panel-index">04</span>
+                  <span class="panel-index">03</span>
                   <h3>SUPORTE & COMUNIDADE</h3>
                 </div>
                 <span>FALE COM A GENTE</span>
@@ -529,7 +458,7 @@
         <ul class="ob-list">
           <li>Para gerar cortes, a IA usa <strong>sua própria chave</strong> (OpenRouter, OpenAI ou Anthropic); o custo é cobrado direto pelo provedor.</li>
           <li>A análise envia transcrição e quadros do vídeo ao provedor de IA que você escolher. Detalhes na Política de Privacidade.</li>
-          <li>O login usa seu e-mail no Supabase. Sem telemetria.</li>
+          <li><strong>Sem cadastro e sem conta</strong>: nada de login. Sem servidor nosso, sem telemetria.</li>
         </ul>
         <div class="ob-actions">
           <button class="primary-button" data-ob-next="2" type="button">COMEÇAR →</button>

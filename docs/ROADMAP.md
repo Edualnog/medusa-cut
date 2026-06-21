@@ -8,28 +8,22 @@
 ## Arquitetura-alvo
 
 ```text
-SITE NEXT.JS (Vercel)
-  landing pública 8-bit
-  autenticação Supabase + download do app
+SITE NEXT.JS (Vercel)  — estático
+  landing pública 8-bit + download do app
+  (SEM login, SEM api, SEM backend)
              │
              ▼
-SUPABASE (só conta)
-  Authentication
-  1 tabela: legal_acceptances (prova de aceite dos termos, RLS, imutável)
-  (sem billing, sem entitlement, nenhum vídeo)
-             │
-             ▼
-APP ELECTRON (PC do usuário)
-  login (email/senha) — sessão local cifrada (safeStorage)
+APP ELECTRON (PC do usuário)  — SEM CADASTRO
+  abre direto (1º acesso → onboarding: aceite + pasta), sem login
+  aceite legal gravado SÓ local (config.json: versão/data/itens)
   chave de IA protegida localmente (safeStorage, por provedor) → vai direto pro provedor
   motor Python + FFmpeg/FFprobe embutidos (binário)
   processamento e biblioteca 100% locais
 ```
 
-Supabase serve apenas conta/auth e a prova de aceite legal; não participa do pipeline
-de vídeo. Nenhum arquivo de gameplay passa pelo backend. Os instaladores e o feed de
-auto-update são publicados como GitHub Releases **neste mesmo repo público**, sem token
-no app.
+Não há backend: sem conta, sem auth, sem Supabase. Nenhum dado de usuário nem arquivo
+de gameplay sai do dispositivo. Os instaladores e o feed de auto-update são publicados
+como GitHub Releases **neste mesmo repo público**, sem token no app.
 
 ## Estado em 20/06/2026
 
@@ -40,16 +34,15 @@ no app.
   dinâmico + layouts + facecam, legenda karaokê, render H.264/AAC com FFmpeg;
 - motor empacotado como **binário** + FFmpeg/FFprobe embutidos (self-contained, sem
   Python no sistema);
-- app Electron: UI 8-bit (Início/Biblioteca/Chaves), geração, progresso, biblioteca
-  local, custo acumulado;
-- login no desktop (email/senha via Supabase) com gate de tela e sessão local cifrada;
+- app Electron: UI 8-bit (Início/Biblioteca/Chaves/Ajustes), geração, progresso,
+  biblioteca local, custo acumulado;
+- **sem cadastro (no sign-up)**: login/conta Supabase **removidos** do app e da web
+  (em 21/06); o app abre direto no onboarding/app;
 - onboarding de 1º acesso: aceites legais (Termos/Privacidade/conteúdo/18+) + escolha
-  da pasta de clips; prova de aceite gravada no Supabase (`legal_acceptances`);
-- segurança: chave OpenRouter e tokens de sessão **cifrados** no disco via `safeStorage`
+  da pasta de clips; prova de aceite gravada **só localmente** (`config.json`);
+- segurança: chave de IA (por provedor) **cifrada** no disco via `safeStorage`
   (migra config antigo em texto puro; fallback Linux sem keyring);
-- landing 8-bit em Next.js refocada no app desktop + links de download;
-- rota privilegiada `web/app/api/account/delete` (service_role, server-only) p/ o
-  usuário excluir a própria conta;
+- landing 8-bit em Next.js (estática) refocada no app desktop + links de download;
 - **CI de release single-repo**: matriz GitHub Actions builda macOS arm64 + Windows x64
   + Linux x86_64 nativamente e publica a Release neste repo via `GITHUB_TOKEN`;
 - auto-update via `electron-updater` lendo o feed público (sem token no app);
@@ -60,9 +53,9 @@ no app.
 - **assinatura/notarização de código**: builds não assinados (mac `identity:null`,
   Windows sem cert) → avisos de Gatekeeper/SmartScreen; no macOS sem assinatura o
   auto-update não troca o binário (só avisa e manda baixar no site);
-- rotação dos segredos cloud antigos (R2/service_role) e revisão jurídica dos textos
-  legais;
-- worker de VPS e migrations Supabase do desenho antigo permanecem no repo como legado;
+- **decommission do Supabase: FEITO (2026-06-21)** — projeto deletado (banco + tabela
+  `legal_acceptances` + auth), invalidando a anon key + service_role que estavam no repo;
+- rotação dos segredos cloud antigos (R2) e revisão jurídica dos textos legais (pendente);
 - faltam testes end-to-end do app empacotado e do render real.
 
 ## Motor de cortes — qualidade & velocidade (rodada 2026-06-20)

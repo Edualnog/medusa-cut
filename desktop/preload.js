@@ -2,14 +2,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {
-  signIn: (email, password) => ipcRenderer.invoke("auth-sign-in", { email, password }),
-  signUp: (email, password) => ipcRenderer.invoke("auth-sign-up", { email, password }),
-  signOut: () => ipcRenderer.invoke("auth-sign-out"),
-  getSession: () => ipcRenderer.invoke("auth-get-session"),
-  getAccount: () => ipcRenderer.invoke("get-account"),
-  recoverPassword: (email) => ipcRenderer.invoke("auth-recover", { email }),
   wipeLocalData: () => ipcRenderer.invoke("wipe-local-data"),
-  deleteAccount: () => ipcRenderer.invoke("auth-delete-account"),
   getOnboarding: () => ipcRenderer.invoke("get-onboarding"),
   completeOnboarding: (payload) => ipcRenderer.invoke("complete-onboarding", payload),
   getLibraryDir: () => ipcRenderer.invoke("get-library-dir"),

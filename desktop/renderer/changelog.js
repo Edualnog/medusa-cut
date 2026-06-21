@@ -3,6 +3,17 @@
 // O app abre estas notas automaticamente no 1o boot apos atualizar (ver app.js).
 window.CHANGELOG = [
   {
+    version: "0.1.21",
+    date: "2026-06-21",
+    title: "Sem cadastro: chega de login",
+    items: [
+      "Acabou o login e a criacao de conta: abra o app e use, sem cadastro.",
+      "Mais privacidade: nada de e-mail/senha e nenhum dado de conta sai do seu PC.",
+      "O aceite dos termos agora fica salvo so no seu dispositivo.",
+      "Aba 'Conta' virou 'Ajustes' (convidar amigos, apagar dados locais e suporte).",
+    ],
+  },
+  {
     version: "0.1.20",
     date: "2026-06-21",
     title: "Notas de atualizacao, suporte e convidar amigos",
