@@ -47,7 +47,7 @@ const FAQ = [
   },
   {
     question: "COMO POSSO APOIAR O PROJETO?",
-    answer: "Por enquanto, a melhor ajuda é usar, compartilhar com quem joga e contribuir no GitHub (issues, ideias, código). Em breve teremos uma opção de doação pra quem quiser apoiar — sempre opcional, no espírito de projetos como o Blender. O app continua grátis pra todos.",
+    answer: "Doando na página Apoiar (via Open Collective, mensal ou única — você escolhe o valor), compartilhando com quem joga e contribuindo no GitHub (issues, ideias, código). A doação é sempre opcional, no espírito de projetos como o Blender — o app continua grátis pra todos.",
   },
   {
     question: "PRECISO DE INTERNET?",
@@ -98,9 +98,9 @@ export default function Home() {
             <a href="#liberdade">OPEN SOURCE</a>
           </div>
 
-          <a href="#download" className="nav-login">
-            BAIXAR
-          </a>
+          <Link href="/apoiar" className="nav-login nav-donate">
+            APOIAR
+          </Link>
         </nav>
       </header>
 
@@ -256,14 +256,14 @@ export default function Home() {
               espírito de projetos como o Blender. O código é público no GitHub pra
               qualquer um ler, auditar e contribuir. Sem conta, sem caixa-preta: seus
               clips ficam no seu PC, sua chave de IA no seu controle, sua liberdade
-              intacta. No futuro, dá pra apoiar o projeto com uma doação — sempre
-              opcional, nunca um paywall.
+              intacta. Quer ajudar a manter o projeto de pé? Dá pra apoiar com uma
+              doação — sempre opcional, nunca um paywall.
             </p>
           </div>
           <div className="hero-actions">
-            <a className="button button-primary" href="#download">
-              BAIXAR GRÁTIS
-            </a>
+            <Link className="button button-primary" href="/apoiar">
+              APOIAR O PROJETO
+            </Link>
             <a
               className="button button-secondary"
               href="https://github.com/Edualnog/medusa-cut"
