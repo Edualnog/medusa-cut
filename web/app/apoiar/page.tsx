@@ -13,7 +13,13 @@ const PIX_RECEIVER = "Erisson Eduardo Nogueira · Banco XP";
 
 // --- Cripto (endereços públicos de recebimento) ---
 // Adicione moedas aqui: { name, network, address }. Vazio = bloco "em breve".
-const CRYPTO: { name: string; network: string; address: string }[] = [];
+const CRYPTO: { name: string; network: string; address: string }[] = [
+  {
+    name: "POL · USDC · USDT",
+    network: "Polygon",
+    address: "0xd87CdFE4323701fA47aA94966e085bBcC42a7332",
+  },
+];
 
 // Monta o "Pix Copia e Cola" (BR Code / EMV) sem valor — o doador escolhe quanto.
 function emv(id: string, value: string) {
@@ -150,17 +156,26 @@ export default function ApoiarPage() {
               {CRYPTO.length === 0 ? (
                 <p className="donate-foot">Em breve.</p>
               ) : (
-                CRYPTO.map((c) => (
-                  <div key={c.name + c.network}>
-                    <span className="donate-label">
-                      {c.name} · {c.network}
-                    </span>
-                    <div className="copy-row">
-                      <code className="copy-code">{c.address}</code>
-                      <CopyButton text={c.address} />
+                <>
+                  {CRYPTO.map((c) => (
+                    <div className="crypto-item" key={c.network + c.address}>
+                      <span className="donate-label">
+                        REDE {c.network.toUpperCase()} — {c.name}
+                      </span>
+                      <div className="donate-qr donate-qr-sm">
+                        <QRCodeSVG value={c.address} size={132} level="M" marginSize={2} />
+                      </div>
+                      <div className="copy-row">
+                        <code className="copy-code">{c.address}</code>
+                        <CopyButton text={c.address} />
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                  <p className="donate-foot">
+                    ⚠️ Envie <strong>somente na rede Polygon</strong>. Token enviado em outra
+                    rede pode se perder.
+                  </p>
+                </>
               )}
             </div>
           </div>

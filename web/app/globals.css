@@ -1310,3 +1310,12 @@ a {
 .copy-btn:hover {
   background: var(--fg);
 }
+
+.crypto-item {
+  display: grid;
+  gap: 10px;
+}
+
+.donate-qr-sm {
+  padding: 10px;
+}
