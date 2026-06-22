@@ -1225,3 +1225,88 @@ a {
     box-shadow: 8px 8px 0 var(--accent-dark);
   }
 }
+
+/* Métodos de doação (Pix / cripto) */
+.donate-suggest {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 17px;
+}
+
+.donate-method {
+  display: grid;
+  gap: 10px;
+}
+
+.donate-method + .donate-method {
+  border-top: 2px solid var(--line);
+  padding-top: 18px;
+  margin-top: 4px;
+}
+
+.donate-method-title {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--fg);
+}
+
+.donate-method-sub {
+  margin: -4px 0 2px;
+  color: var(--muted);
+  font-size: 17px;
+}
+
+.donate-qr {
+  width: max-content;
+  margin: 4px auto 6px;
+  background: #fff;
+  padding: 12px;
+  border: 2px solid var(--line-strong);
+  line-height: 0;
+}
+
+.donate-label {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+
+.copy-row {
+  display: flex;
+  align-items: stretch;
+  border: 2px solid var(--line-strong);
+  background: #08080a;
+}
+
+.copy-code {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 12px;
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  white-space: nowrap;
+  overflow-x: auto;
+  user-select: all;
+}
+
+.copy-btn {
+  flex-shrink: 0;
+  border: 0;
+  border-left: 2px solid var(--line-strong);
+  background: var(--accent);
+  color: #080808;
+  padding: 0 16px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.copy-btn:hover {
+  background: var(--fg);
+}
