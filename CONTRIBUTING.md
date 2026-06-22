@@ -4,8 +4,11 @@ Obrigado pelo interesse! 💛 O Medusa Clip é **open source (AGPL-3.0)** e toda
 
 Ao participar, você concorda em seguir nosso [Código de Conduta](CODE_OF_CONDUCT.md).
 
+Quer conversar antes de começar? Entra no nosso [**Discord**](https://discord.gg/jqUDqRt8). 💬
+
 ## Formas de ajudar
 
+- 💬 **Comunidade:** [Discord](https://discord.gg/jqUDqRt8) — dúvidas, ideias e papo com quem usa e desenvolve.
 - 🐛 **Bugs:** abra uma [issue](https://github.com/Edualnog/medusa-clip/issues) com passos pra reproduzir, seu SO e a versão do app.
 - 💡 **Ideias / features:** abra uma issue descrevendo o caso de uso.
 - 🔧 **Código:** faça um fork, crie uma branch e abra um Pull Request.

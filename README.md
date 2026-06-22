@@ -11,8 +11,9 @@
 [![Downloads](https://img.shields.io/github/downloads/Edualnog/medusa-clip/total?color=brightgreen)](https://github.com/Edualnog/medusa-clip/releases)
 ![Platforms](https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-grey)
 ![No sign-up](https://img.shields.io/badge/sem%20cadastro-100%25%20local-success)
+[![Discord](https://img.shields.io/badge/Discord-entrar-5865F2?logo=discord&logoColor=white)](https://discord.gg/jqUDqRt8)
 
-[**🌐 medusaclip.com**](https://medusaclip.com) · [**⬇️ Download**](#download) · [**💛 Apoiar**](https://github.com/sponsors/Edualnog)
+[**🌐 medusaclip.com**](https://medusaclip.com) · [**⬇️ Download**](#download) · [**💬 Discord**](https://discord.gg/jqUDqRt8) · [**💛 Apoiar**](https://github.com/sponsors/Edualnog)
 
 <br />
 
@@ -127,7 +128,8 @@ cd web && npm install && npm run dev
 Toda ajuda é bem-vinda — código, bug, ideia, tradução ou divulgação. 💛
 
 - **Por onde começar:** veja as [issues abertas](https://github.com/Edualnog/medusa-clip/issues), em especial as marcadas [`good first issue`](https://github.com/Edualnog/medusa-clip/labels/good%20first%20issue).
-- **Bug ou ideia:** abra uma [issue](https://github.com/Edualnog/medusa-clip/issues/new/choose) (tem template). Dúvidas e conversas vão pras [Discussions](https://github.com/Edualnog/medusa-clip/discussions).
+- **Bate-papo:** entra no nosso [**Discord**](https://discord.gg/jqUDqRt8) pra conversar com a comunidade e tirar dúvidas.
+- **Bug ou ideia:** abra uma [issue](https://github.com/Edualnog/medusa-clip/issues/new/choose) (tem template). Dúvidas e conversas vão pro [Discord](https://discord.gg/jqUDqRt8) ou pras [Discussions](https://github.com/Edualnog/medusa-clip/discussions).
 - **Código:** faça um **fork** → crie uma **branch** → assine os commits com `git commit -s` (**DCO**, exigido pelo CI — ver [DCO.md](DCO.md)) → abra um **Pull Request**.
 - **Antes do PR:** rode os testes do motor (`cd agent && make test`) e mantenha os princípios do projeto — **local-first**, **sem cadastro**, **BYO key**.
 
