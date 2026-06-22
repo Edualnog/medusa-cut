@@ -10,7 +10,7 @@ Ao participar, você concorda em seguir nosso [Código de Conduta](CODE_OF_CONDU
 - 💡 **Ideias / features:** abra uma issue descrevendo o caso de uso.
 - 🔧 **Código:** faça um fork, crie uma branch e abra um Pull Request.
 - 📣 **Divulgação:** compartilhe com quem joga e cria conteúdo.
-- 💸 **Apoio:** [medusaclip.com/apoiar](https://medusaclip.com/apoiar) (Pix ou cripto, sempre opcional).
+- 💸 **Apoio:** [GitHub Sponsors](https://github.com/sponsors/Edualnog) (mensal ou único, sempre opcional).
 
 ## Rodando localmente
 

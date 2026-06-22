@@ -12,7 +12,7 @@
 ![Platforms](https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-grey)
 ![No sign-up](https://img.shields.io/badge/sem%20cadastro-100%25%20local-success)
 
-[**🌐 medusaclip.com**](https://medusaclip.com) · [**⬇️ Download**](#download) · [**💛 Apoiar**](https://medusaclip.com/apoiar)
+[**🌐 medusaclip.com**](https://medusaclip.com) · [**⬇️ Download**](#download) · [**💛 Apoiar**](https://github.com/sponsors/Edualnog)
 
 <br />
 
@@ -93,8 +93,8 @@ provedor/modelo e o tamanho do vídeo, cobrado direto pelo provedor na sua chave
 ## 💛 Apoie o projeto
 
 O Medusa Clip é grátis e open source, no espírito de projetos como o Blender. Se ele te
-ajuda, considere apoiar (sempre opcional, nunca um paywall): **[medusaclip.com/apoiar](https://medusaclip.com/apoiar)**
-— via **Pix** ou **cripto**. Compartilhar com quem joga e contribuir no GitHub também ajuda muito.
+ajuda, considere apoiar (sempre opcional, nunca um paywall) pelo **[GitHub Sponsors](https://github.com/sponsors/Edualnog)**
+— mensal ou único, você escolhe o valor. Compartilhar com quem joga e contribuir no GitHub também ajuda muito.
 
 ## 🛠️ Desenvolvimento
 

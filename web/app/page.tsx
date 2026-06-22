@@ -47,7 +47,7 @@ const FAQ = [
   },
   {
     question: "COMO POSSO APOIAR O PROJETO?",
-    answer: "Doando na página Apoiar (via Open Collective, mensal ou única — você escolhe o valor), compartilhando com quem joga e contribuindo no GitHub (issues, ideias, código). A doação é sempre opcional, no espírito de projetos como o Blender — o app continua grátis pra todos.",
+    answer: "Apoiando pelo GitHub Sponsors (mensal ou única — você escolhe o valor), compartilhando com quem joga e contribuindo no GitHub (issues, ideias, código). O apoio é sempre opcional, no espírito de projetos como o Blender — o app continua grátis pra todos.",
   },
   {
     question: "PRECISO DE INTERNET?",
