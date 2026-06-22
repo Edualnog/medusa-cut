@@ -4,11 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { MedusaLogo } from "../medusa-logo";
 
-// Coletivo no Open Collective. O dono precisa criar o coletivo com ESTE slug
-// (ou trocar aqui pelo slug real). Enquanto não existir, o botão Doar leva a um 404.
-const OPEN_COLLECTIVE_SLUG = "medusa-clip";
-const CURRENCY_SYMBOL = "$";
-const PRESETS = [5, 10, 25, 50, 100, 250];
+// Coletivo no Open Collective: https://opencollective.com/medusaclip
+// Moeda BRL (fiscal host brasileiro) — o `amount` da URL vai em reais.
+const OPEN_COLLECTIVE_SLUG = "medusaclip";
+const CURRENCY_SYMBOL = "R$";
+const PRESETS = [5, 15, 25, 50, 100, 150];
 
 type Interval = "month" | "oneTime";
 
@@ -21,7 +21,7 @@ function donateUrl(amount: number, interval: Interval) {
 
 export default function ApoiarPage() {
   const [interval, setInterval] = useState<Interval>("month");
-  const [selected, setSelected] = useState<number>(10);
+  const [selected, setSelected] = useState<number>(25);
   const [custom, setCustom] = useState<string>("");
 
   const customValue = Number(custom);
