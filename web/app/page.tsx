@@ -2,6 +2,25 @@ import Link from "next/link";
 import { DownloadPicker } from "./download-picker";
 import { MedusaLogo } from "./medusa-logo";
 
+const DISCORD_URL = "https://discord.gg/jqUDqRt8";
+const GITHUB_URL = "https://github.com/Edualnog/medusa-clip";
+
+function DiscordIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" fill="currentColor">
+      <path d="M20.32 4.37A19.8 19.8 0 0 0 15.45 3a13.7 13.7 0 0 0-.62 1.27 18.27 18.27 0 0 0-5.66 0A13.5 13.5 0 0 0 8.54 3a19.74 19.74 0 0 0-4.88 1.37C.56 9 .04 13.47.3 17.89a19.92 19.92 0 0 0 6.04 3.06c.49-.66.92-1.36 1.29-2.1-.71-.27-1.39-.59-2.04-.98.17-.13.34-.26.5-.4a14.23 14.23 0 0 0 12.16 0c.16.14.33.27.5.4-.65.39-1.34.71-2.05.98.37.74.8 1.44 1.29 2.1a19.9 19.9 0 0 0 6.05-3.06c.31-5.12-.53-9.55-3.5-13.52ZM8.02 15.2c-1.16 0-2.12-1.07-2.12-2.38 0-1.31.94-2.38 2.12-2.38 1.19 0 2.14 1.08 2.12 2.38 0 1.31-.94 2.38-2.12 2.38Zm7.96 0c-1.17 0-2.12-1.07-2.12-2.38 0-1.31.94-2.38 2.12-2.38 1.19 0 2.14 1.08 2.12 2.38 0 1.31-.93 2.38-2.12 2.38Z" />
+    </svg>
+  );
+}
+
+function GithubIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} aria-hidden="true" fill="currentColor">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+    </svg>
+  );
+}
+
 const BENEFITS = [
   {
     number: "01",
@@ -98,9 +117,31 @@ export default function Home() {
             <a href="#liberdade">OPEN SOURCE</a>
           </div>
 
-          <Link href="/apoiar" className="nav-login nav-donate">
-            APOIAR
-          </Link>
+          <div className="nav-actions">
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="nav-icon is-github"
+              aria-label="GitHub do Medusa Clip"
+              title="GitHub — ver o código"
+            >
+              <GithubIcon size={18} />
+            </a>
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="nav-icon is-discord"
+              aria-label="Discord do Medusa Clip"
+              title="Discord — comunidade"
+            >
+              <DiscordIcon size={20} />
+            </a>
+            <Link href="/apoiar" className="nav-login nav-donate">
+              APOIAR
+            </Link>
+          </div>
         </nav>
       </header>
 
@@ -315,6 +356,51 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="section section-bordered shell-width community-section" id="comunidade">
+          <SectionTag>COMUNIDADE</SectionTag>
+          <div className="section-heading compact">
+            <h2>ENTRA PRA<br />COMUNIDADE.</h2>
+          </div>
+          <div className="community-grid">
+            <article className="community-card is-discord">
+              <span className="community-icon">
+                <DiscordIcon size={28} />
+              </span>
+              <h3>DISCORD</h3>
+              <p>
+                Tira dúvidas, mostra teus clips, sugere ideias e fala direto com quem usa e
+                desenvolve o Medusa Clip. É o jeito mais rápido de chegar na gente.
+              </p>
+              <a
+                className="button button-discord"
+                href={DISCORD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                ENTRAR NO DISCORD
+              </a>
+            </article>
+            <article className="community-card is-github">
+              <span className="community-icon">
+                <GithubIcon size={26} />
+              </span>
+              <h3>GITHUB</h3>
+              <p>
+                Código aberto sob AGPL-3.0. Dá uma estrela, abre issues, manda PRs — ou só
+                audita e veja que o app faz exatamente o que promete.
+              </p>
+              <a
+                className="button button-primary"
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                VER NO GITHUB
+              </a>
+            </article>
+          </div>
+        </section>
+
         <section className="final-cta">
           <div className="shell-width final-cta-inner">
             <div>
@@ -344,26 +430,22 @@ export default function Home() {
 
         <div className="footer-social">
           <a
-            href="https://discord.gg/dB79XXBz"
+            href={DISCORD_URL}
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Discord do Medusa Clip"
             title="Discord"
           >
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor">
-              <path d="M20.32 4.37A19.8 19.8 0 0 0 15.45 3a13.7 13.7 0 0 0-.62 1.27 18.27 18.27 0 0 0-5.66 0A13.5 13.5 0 0 0 8.54 3a19.74 19.74 0 0 0-4.88 1.37C.56 9 .04 13.47.3 17.89a19.92 19.92 0 0 0 6.04 3.06c.49-.66.92-1.36 1.29-2.1-.71-.27-1.39-.59-2.04-.98.17-.13.34-.26.5-.4a14.23 14.23 0 0 0 12.16 0c.16.14.33.27.5.4-.65.39-1.34.71-2.05.98.37.74.8 1.44 1.29 2.1a19.9 19.9 0 0 0 6.05-3.06c.31-5.12-.53-9.55-3.5-13.52ZM8.02 15.2c-1.16 0-2.12-1.07-2.12-2.38 0-1.31.94-2.38 2.12-2.38 1.19 0 2.14 1.08 2.12 2.38 0 1.31-.94 2.38-2.12 2.38Zm7.96 0c-1.17 0-2.12-1.07-2.12-2.38 0-1.31.94-2.38 2.12-2.38 1.19 0 2.14 1.08 2.12 2.38 0 1.31-.93 2.38-2.12 2.38Z" />
-            </svg>
+            <DiscordIcon size={20} />
           </a>
           <a
-            href="https://github.com/Edualnog/medusa-clip"
+            href={GITHUB_URL}
             target="_blank"
             rel="noopener noreferrer"
             aria-label="GitHub do Medusa Clip"
             title="GitHub"
           >
-            <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" fill="currentColor">
-              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
-            </svg>
+            <GithubIcon size={20} />
           </a>
           <a href="#download" className="footer-login">BAIXAR</a>
         </div>
