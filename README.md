@@ -14,6 +14,10 @@
 
 [**🌐 medusaclip.com**](https://medusaclip.com) · [**⬇️ Download**](#download) · [**💛 Apoiar**](https://medusaclip.com/apoiar)
 
+<br />
+
+<img src="web/public/desktop-app-preview.png" alt="Medusa Clip — aplicativo desktop" width="880" />
+
 </div>
 
 ---
