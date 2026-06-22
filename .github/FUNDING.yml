@@ -1,0 +1,6 @@
+# Botao "Sponsor" do repo. Docs: https://docs.github.com/sponsors/sponsors-faq
+# O Medusa Clip e gratis; apoio e sempre opcional (Pix ou cripto) via medusaclip.com/apoiar.
+custom: ["https://medusaclip.com/apoiar"]
+
+# Quando/ se voce entrar no GitHub Sponsors, descomente e ajuste:
+# github: [Edualnog]
