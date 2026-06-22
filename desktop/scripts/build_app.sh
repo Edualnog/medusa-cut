@@ -13,18 +13,9 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."   # desktop/
 
-EXE=""
-[ "${OS:-}" = "Windows_NT" ] && EXE=".exe"   # git-bash no runner Windows
-
-# 1. motor standalone (PyInstaller) -> agent/dist/medusacut-engine
-( cd ../agent && VENV=.buildvenv bash scripts/build_engine.sh )
-
-# 2. monta engine/ = motor + ffmpeg + ffprobe (static, do node_modules)
-rm -rf engine && mkdir -p engine
-cp -R "../agent/dist/medusacut-engine/." engine/
-cp node_modules/@ffmpeg-installer/*/ffmpeg${EXE} "engine/ffmpeg${EXE}"
-cp node_modules/@ffprobe-installer/*/ffprobe${EXE} "engine/ffprobe${EXE}"
-chmod +x "engine/medusacut-engine${EXE}" "engine/ffmpeg${EXE}" "engine/ffprobe${EXE}" || true
+# 1+2. motor (PyInstaller) + ffmpeg/ffprobe dentro de desktop/engine/ — mesmo passo do
+# dev (`npm run engine`), reaproveitado aqui pra nao duplicar.
+bash scripts/dev_engine.sh
 
 # 3. instalador (+ publish opcional no CI)
 export CSC_IDENTITY_AUTO_DISCOVERY=false

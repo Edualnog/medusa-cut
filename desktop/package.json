@@ -6,6 +6,7 @@
   "author": "Medusa Clip",
   "scripts": {
     "start": "electron .",
+    "engine": "bash scripts/dev_engine.sh",
     "dist": "electron-builder"
   },
   "devDependencies": {

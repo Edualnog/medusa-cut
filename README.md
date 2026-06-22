@@ -111,11 +111,26 @@ cd agent && make setup && make test
 
 ### Aplicativo desktop (`desktop/`)
 
+Rodar **do código**, na sua máquina (igual à produção). Pré-requisitos: **Node.js 18+**
+e **Python 3.11** (o motor é Python empacotado; `ffmpeg`/`ffprobe` vêm pelo `npm`).
+
 ```bash
-cd desktop && npm install && npm start
-# instalador do sistema atual:
+cd desktop
+npm install        # Electron + ffmpeg/ffprobe
+npm run engine     # prepara o motor (Python -> binário) em desktop/engine/ — só na 1ª vez (alguns min)
+npm start          # abre o app
+```
+
+> A pasta `desktop/engine/` não vai pro git, então **`npm run engine` é obrigatório num
+> clone novo** — sem ele o app abre mas não gera cortes. Mexeu no motor (`agent/`)? rode
+> `npm run engine` de novo. Mexeu só na interface? basta reabrir com `npm start`.
+
+```bash
+# instalador do sistema atual (.dmg/.exe/.AppImage):
 bash scripts/build_app.sh
 ```
+
+Passo a passo detalhado (pré-requisitos, ciclo de dev, rodar só o motor): **[docs/SETUP.md](docs/SETUP.md)**.
 
 ### Site (`web/`)
 

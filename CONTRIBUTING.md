@@ -20,10 +20,13 @@ Quer conversar antes de começar? Entra no nosso [**Discord**](https://discord.g
 Veja a seção **Desenvolvimento** do [README](README.md):
 
 ```bash
-cd agent   && make setup && make test   # motor de cortes (Python 3.11+)
-cd desktop && npm install && npm start    # app Electron
-cd web     && npm install && npm run dev  # landing
+cd agent   && make setup && make test              # motor de cortes (Python 3.11+)
+cd desktop && npm install && npm run engine && npm start  # app Electron (1ª vez: npm run engine)
+cd web     && npm install && npm run dev            # landing
 ```
+
+> No app desktop, `npm run engine` prepara o motor (Python → binário) em `desktop/engine/`
+> — obrigatório num clone novo. Detalhes em [docs/SETUP.md](docs/SETUP.md).
 
 ## Pull Requests
 

@@ -37,6 +37,51 @@ Sem cadastro: ao abrir pela 1ª vez, o usuário passa pelo onboarding (aceite do
 + escolha da pasta dos clips) e conecta a chave de IA (OpenRouter/OpenAI/Anthropic) na
 aba **Chaves API**. Nada disso sai do dispositivo.
 
+### Rodar localmente a partir do código (dev)
+
+Roda o app exatamente como em produção, na sua máquina (sem instalar nada de nuvem).
+
+**Pré-requisitos:**
+- **Git**
+- **Node.js 18+** (LTS) — vem com o `npm`
+- **Python 3.11** — o motor de cortes é Python empacotado num binário; a stack de ML
+  (faster-whisper/ctranslate2) nem sempre tem wheels pras versões mais novas, por isso 3.11
+- macOS/Windows/Linux: o `ffmpeg`/`ffprobe` vêm pelo `npm` (não precisa instalar à parte)
+
+**Passo a passo:**
+```bash
+# 1. baixe o código
+git clone https://github.com/Edualnog/medusa-clip.git
+cd medusa-clip/desktop
+
+# 2. dependências do app (Electron + ffmpeg/ffprobe)
+npm install
+
+# 3. prepara o MOTOR (Python -> binário) dentro de desktop/engine/
+#    demora alguns minutos na 1ª vez (baixa a stack de ML e empacota com PyInstaller)
+npm run engine
+#    obs.: usa python3.11 por padrão; pra outro interpretador: PYTHON=python3.12 npm run engine
+
+# 4. abre o app
+npm start
+```
+
+O app abre na tela de onboarding (sem cadastro). Conecte sua chave de IA na aba
+**Chaves API**, escolha um vídeo/link e gere os cortes — tudo local.
+
+**Ciclo de desenvolvimento (o que recompilar ao mexer):**
+- Mexeu em `desktop/renderer/` ou `desktop/main.js` (interface/app) → **feche e rode `npm start`** de novo.
+- Mexeu no motor `agent/` (Python) → rode **`npm run engine`** de novo (re-empacota o binário) e depois `npm start`.
+
+> A pasta `desktop/engine/` (o binário + ffmpeg) **não vai pro git** — por isso o passo 3
+> é obrigatório num clone novo; sem ele o `npm start` abre, mas não consegue gerar cortes.
+
+### (Opcional) rodar só o motor pela linha de comando
+```bash
+cd agent && make setup && make test
+.venv/bin/medusacut "https://youtube.com/watch?v=..." --out out --clips 3
+```
+
 ---
 
 ## Distribuição + auto-update (app desktop)

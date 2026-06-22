@@ -185,6 +185,10 @@ protocol.registerSchemesAsPrivileged([
   { scheme: "zclip", privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
 ]);
 
+// Icone do app (mesmo do instalador). Em dev (npm start) o Electron usaria o icone
+// padrao dele; aqui forcamos o da Medusa na janela/taskbar (Win/Linux) e no dock (Mac).
+const APP_ICON = path.join(__dirname, "build", "icon.png");
+
 function createWindow() {
   win = new BrowserWindow({
     width: 1280,
@@ -193,6 +197,7 @@ function createWindow() {
     minHeight: 700,
     backgroundColor: "#060608",
     title: "Medusa Clip",
+    icon: APP_ICON,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -351,8 +356,19 @@ function setupUpdates() {
   autoUpdater.checkForUpdates().catch((e) => console.error("[update]", e && e.message));
 }
 
+app.setName("Medusa Clip"); // sem isso o menu/dock em dev aparece como "Electron"
+
 app.whenReady().then(() => {
   migrateConfig(); // safeStorage so fica disponivel apos o ready
+  // Dock do macOS em dev: o icone do bundle so existe no build empacotado; aqui
+  // forcamos o icone da Medusa pra nao aparecer o do Electron ao rodar npm start.
+  if (process.platform === "darwin" && app.dock) {
+    try {
+      app.dock.setIcon(APP_ICON);
+    } catch {
+      /* icone ausente: mantem o padrao */
+    }
+  }
   // zclip://clip/<id> -> serve o video local correspondente (id registrado em listClips).
   protocol.handle("zclip", (request) => {
     let id = "";
