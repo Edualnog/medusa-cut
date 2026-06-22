@@ -12,7 +12,7 @@
     "electron": "^33.4.11",
     "electron-builder": "^25.1.8"
   },
-  "//publish": "Releases sao publicadas NESTE mesmo repo publico (medusa-cut, source-available). electron-updater le este bloco pra achar o feed. Ver docs/SETUP.md.",
+  "//publish": "Releases sao publicadas NESTE mesmo repo publico (medusa-clip, open source). electron-updater le este bloco pra achar o feed. Ver docs/SETUP.md.",
   "build": {
     "appId": "com.medusaclip.app",
     "productName": "Medusa Clip",
@@ -21,7 +21,7 @@
       {
         "provider": "github",
         "owner": "Edualnog",
-        "repo": "medusa-cut"
+        "repo": "medusa-clip"
       }
     ],
     "files": [

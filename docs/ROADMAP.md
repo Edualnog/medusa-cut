@@ -4,7 +4,7 @@
 > usuário usa a própria chave de IA (**OpenRouter, OpenAI ou Anthropic**) e todo o
 > processamento de vídeo roda na máquina dele. Monetização futura ainda **não definida**
 > — não há cobrança. Código **open source (AGPL-3.0)** num único repo público
-> (`Edualnog/medusa-cut`). Modelo estilo Blender: gratuito + aberto + doações (futuro).
+> (`Edualnog/medusa-clip`). Modelo estilo Blender: gratuito + aberto + doações (futuro).
 
 ## Arquitetura-alvo
 

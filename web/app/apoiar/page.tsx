@@ -86,7 +86,7 @@ export default function ApoiarPage() {
           <div className="nav-menu">
             <Link href="/">INÍCIO</Link>
             <Link href="/#download">DOWNLOAD</Link>
-            <a href="https://github.com/Edualnog/medusa-cut" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/Edualnog/medusa-clip" target="_blank" rel="noopener noreferrer">
               GITHUB
             </a>
           </div>

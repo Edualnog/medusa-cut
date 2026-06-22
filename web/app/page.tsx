@@ -266,7 +266,7 @@ export default function Home() {
             </Link>
             <a
               className="button button-secondary"
-              href="https://github.com/Edualnog/medusa-cut"
+              href="https://github.com/Edualnog/medusa-clip"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -355,7 +355,7 @@ export default function Home() {
             </svg>
           </a>
           <a
-            href="https://github.com/Edualnog/medusa-cut"
+            href="https://github.com/Edualnog/medusa-clip"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="GitHub do Medusa Clip"

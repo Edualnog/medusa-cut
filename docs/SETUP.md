@@ -47,7 +47,7 @@ aba **Chaves API**. Nada disso sai do dispositivo.
 > liga 100%.
 
 ### Arquitetura: um único repo PÚBLICO open source (código + releases)
-- Código-fonte **e** releases: `Edualnog/medusa-cut` (**público, open source AGPL-3.0**;
+- Código-fonte **e** releases: `Edualnog/medusa-clip` (**público, open source AGPL-3.0**;
   ver `LICENSE`).
 - Os 3 lugares apontam pra cá: `desktop/package.json` (`build.publish`),
   `desktop/main.js` (`GITHUB_REPO`), `web/app/page.tsx` (`RELEASE_REPO`).

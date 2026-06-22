@@ -6,9 +6,9 @@
 
 **Cortes verticais 9:16 nível Opus Clip, feitos pra gameplay — grátis, open source e 100% no seu PC.**
 
-[![Release](https://img.shields.io/github/v/release/Edualnog/medusa-cut?label=release&color=ffd11a)](https://github.com/Edualnog/medusa-cut/releases/latest)
-[![License: AGPL-3.0](https://img.shields.io/github/license/Edualnog/medusa-cut?color=orange)](LICENSE)
-[![Downloads](https://img.shields.io/github/downloads/Edualnog/medusa-cut/total?color=brightgreen)](https://github.com/Edualnog/medusa-cut/releases)
+[![Release](https://img.shields.io/github/v/release/Edualnog/medusa-clip?label=release&color=ffd11a)](https://github.com/Edualnog/medusa-clip/releases/latest)
+[![License: AGPL-3.0](https://img.shields.io/github/license/Edualnog/medusa-clip?color=orange)](LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/Edualnog/medusa-clip/total?color=brightgreen)](https://github.com/Edualnog/medusa-clip/releases)
 ![Platforms](https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-grey)
 ![No sign-up](https://img.shields.io/badge/sem%20cadastro-100%25%20local-success)
 
@@ -43,25 +43,25 @@ nem login**, e a IA usa a **sua própria chave**. É **grátis** e **open source
 
 Grátis. Os links apontam sempre pra **versão mais recente** — baixe pelo botão ou cole o comando.
 
-**macOS (Apple Silicon / ARM64)** — [baixar `.dmg`](https://github.com/Edualnog/medusa-cut/releases/latest/download/MedusaClip-mac-arm64.dmg)
+**macOS (Apple Silicon / ARM64)** — [baixar `.dmg`](https://github.com/Edualnog/medusa-clip/releases/latest/download/MedusaClip-mac-arm64.dmg)
 
 ```bash
-curl -L -o MedusaClip.dmg https://github.com/Edualnog/medusa-cut/releases/latest/download/MedusaClip-mac-arm64.dmg && open MedusaClip.dmg
+curl -L -o MedusaClip.dmg https://github.com/Edualnog/medusa-clip/releases/latest/download/MedusaClip-mac-arm64.dmg && open MedusaClip.dmg
 ```
 
-**Windows 10/11 (x64)** — [baixar `.exe`](https://github.com/Edualnog/medusa-cut/releases/latest/download/MedusaClip-win-x64.exe)
+**Windows 10/11 (x64)** — [baixar `.exe`](https://github.com/Edualnog/medusa-clip/releases/latest/download/MedusaClip-win-x64.exe)
 
 ```powershell
-iwr https://github.com/Edualnog/medusa-cut/releases/latest/download/MedusaClip-win-x64.exe -OutFile MedusaClip.exe; .\MedusaClip.exe
+iwr https://github.com/Edualnog/medusa-clip/releases/latest/download/MedusaClip-win-x64.exe -OutFile MedusaClip.exe; .\MedusaClip.exe
 ```
 
-**Linux (x64)** — [baixar `.AppImage`](https://github.com/Edualnog/medusa-cut/releases/latest/download/MedusaClip-linux-x86_64.AppImage)
+**Linux (x64)** — [baixar `.AppImage`](https://github.com/Edualnog/medusa-clip/releases/latest/download/MedusaClip-linux-x86_64.AppImage)
 
 ```bash
-curl -L https://github.com/Edualnog/medusa-cut/releases/latest/download/MedusaClip-linux-x86_64.AppImage -o MedusaClip.AppImage && chmod +x MedusaClip.AppImage && ./MedusaClip.AppImage
+curl -L https://github.com/Edualnog/medusa-clip/releases/latest/download/MedusaClip-linux-x86_64.AppImage -o MedusaClip.AppImage && chmod +x MedusaClip.AppImage && ./MedusaClip.AppImage
 ```
 
-Todas as versões em [Releases](https://github.com/Edualnog/medusa-cut/releases). Os builds
+Todas as versões em [Releases](https://github.com/Edualnog/medusa-clip/releases). Os builds
 ainda **não são assinados** — na primeira abertura, no macOS clique com o botão direito
 no app → **Abrir**; no Windows, em **Mais informações → Executar assim mesmo**.
 

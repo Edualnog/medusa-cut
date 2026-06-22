@@ -1,7 +1,7 @@
 name: release
 
 # Builda os instaladores nativos por plataforma e publica UMA release NESTE mesmo
-# repo (Edualnog/medusa-cut) — código source-available, público.
+# repo (Edualnog/medusa-clip) — código source-available, público.
 # Dispara ao empurrar uma tag de versão (ex.: git tag v0.1.7 && git push --tags).
 #
 # Desenho à prova de corrida: os jobs `build` NÃO publicam — cada um sobe seus
@@ -80,7 +80,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "${GITHUB_REF_NAME}" \
-            --repo Edualnog/medusa-cut \
+            --repo Edualnog/medusa-clip \
             --title "Medusa Clip ${GITHUB_REF_NAME}" \
             --notes "Instaladores do Medusa Clip ${GITHUB_REF_NAME} (macOS Apple Silicon, Windows, Linux). App gratuito." \
             --latest \

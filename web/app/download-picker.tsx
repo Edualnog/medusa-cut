@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 // Repo PÚBLICO (source-available) que hospeda código + releases. Links apontam pra
 // release `latest`; nomes de asset são fixos (artifactName no electron-builder).
-const RELEASE_REPO = "Edualnog/medusa-cut";
+const RELEASE_REPO = "Edualnog/medusa-clip";
 const releaseUrl = (asset: string) =>
   `https://github.com/${RELEASE_REPO}/releases/latest/download/${asset}`;
 
