@@ -80,8 +80,8 @@ $("srcFile").addEventListener("click", async () => {
 $("linkInput").addEventListener("input", queueLinkPreview);
 $("layout").addEventListener("change", updateSummary);
 $("dur").addEventListener("change", updateSummary);
-$("facecam").addEventListener("change", updateSummary);
 $("captions").addEventListener("change", updateSummary);
+$("thumbnails").addEventListener("change", updateSummary);
 $("clips").addEventListener("input", updateSummary);
 
 $("pasteLink").addEventListener("click", async () => {
@@ -211,7 +211,6 @@ function sourceReady() {
 function updateSummary() {
   const clips = Number($("clips").value);
   const selectedLayout = $("layout").value;
-  const facecamLayout = selectedLayout === "facecam_top_gameplay_bottom";
 
   $("clipsN").textContent = `${clips} ${clips === 1 ? "CLIP" : "CLIPS"}`;
   $("summarySource").textContent = sourceReady()
@@ -223,8 +222,7 @@ function updateSummary() {
   $("summaryDuration").textContent = DURATION_LABELS[$("dur").value] || "PERSONALIZADA";
   $("summaryClips").textContent = `${clips} ${clips === 1 ? "CLIP" : "CLIPS"}`;
   $("summaryCaptions").textContent = $("captions").checked ? "ATIVADAS" : "DESATIVADAS";
-  $("facecamField").classList.toggle("hidden", !facecamLayout);
-  $("facecam").disabled = !facecamLayout;
+  $("summaryThumbs").textContent = $("thumbnails").checked ? "ATIVADA" : "DESATIVADA";
   $("gen").disabled = !sourceReady() || isProcessing;
 }
 
@@ -367,8 +365,9 @@ $("gen").addEventListener("click", async () => {
     minLen,
     maxLen,
     layout: $("layout").value,
-    facecam: $("facecam").value,
+    facecam: "auto", // sempre auto: deteccao nos cantos superiores (sem escolha manual)
     captions: $("captions").checked,
+    thumbnails: $("thumbnails").checked,
   });
 });
 
@@ -508,11 +507,16 @@ function clipCard(clip, index) {
     : "";
   const title = (clip.hook || "").trim() || clip.file;
   const description = (clip.description || "").trim();
+  // Capa gerada vira o poster do card (some no hover/play); fallback: 1o frame do video.
+  const poster = clip.thumbUrl ? ` poster="${escapeAttr(clip.thumbUrl)}"` : "";
+  const thumbBtn = clip.thumbUrl
+    ? `<button type="button" data-action="thumb" data-index="${index}">CAPA</button>`
+    : "";
 
   return `
     <article class="clip-card">
       <div class="clip-wrap">
-        <video src="${escapeAttr(clip.url)}#t=0.4" muted loop playsinline controls preload="metadata"></video>
+        <video src="${escapeAttr(clip.url)}#t=0.4"${poster} muted loop playsinline controls preload="metadata"></video>
         <div class="clip-badges">${score}${duration}</div>
       </div>
       <div class="clip-body">
@@ -520,6 +524,7 @@ function clipCard(clip, index) {
         ${description ? `<p class="clip-description">${escapeHtml(description)}</p>` : ""}
         <div class="clip-actions">
           <button type="button" data-action="play" data-index="${index}">▶ ABRIR</button>
+          ${thumbBtn}
           <button type="button" data-action="folder" data-index="${index}">PASTA</button>
           <button type="button" data-action="copy" data-index="${index}" ${description ? "" : "disabled"}>COPIAR TEXTO</button>
         </div>
@@ -535,6 +540,8 @@ $("lib").addEventListener("click", async (event) => {
 
   if (button.dataset.action === "play") {
     openClipModal(clip);
+  } else if (button.dataset.action === "thumb" && clip.thumbPath) {
+    await window.api.openFolder(clip.thumbPath); // openPath num arquivo abre no visualizador
   } else if (button.dataset.action === "folder") {
     await window.api.openFolder(clip.path);
   } else if (button.dataset.action === "copy" && clip.description) {

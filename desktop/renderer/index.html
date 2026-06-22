@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta
     http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; media-src 'self' zclip: blob:;"
+    content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: zclip:; media-src 'self' zclip: blob:;"
   />
   <title>Medusa Clip</title>
   <link rel="stylesheet" href="styles.css" />
@@ -148,14 +148,6 @@
                     <option value="30,90">Curtos · 30–90s</option>
                   </select>
                 </label>
-                <label class="field" id="facecamField">
-                  <span>FACECAM</span>
-                  <select id="facecam">
-                    <option value="auto">Detectar nos cantos (auto)</option>
-                    <option value="tr">Topo direita</option>
-                    <option value="tl">Topo esquerda</option>
-                  </select>
-                </label>
                 <label class="field range-field">
                   <span>QUANTIDADE <b id="clipsN">3 CLIPS</b></span>
                   <input id="clips" type="range" min="1" max="10" value="3" />
@@ -165,6 +157,13 @@
                   <span>
                     <strong>LEGENDA KARAOKÊ</strong>
                     <small>Palavra ativa em destaque</small>
+                  </span>
+                </label>
+                <label class="check-field">
+                  <input id="thumbnails" type="checkbox" checked />
+                  <span>
+                    <strong>THUMBNAIL (CAPA)</strong>
+                    <small>Capa 9:16 com facecam + manchete · grátis</small>
                   </span>
                 </label>
               </div>
@@ -187,6 +186,7 @@
                 <div><dt>DURAÇÃO</dt><dd id="summaryDuration">AUTO · 15–90S</dd></div>
                 <div><dt>SAÍDA</dt><dd id="summaryClips">3 CLIPS</dd></div>
                 <div><dt>LEGENDAS</dt><dd id="summaryCaptions">ATIVADAS</dd></div>
+                <div><dt>THUMBNAIL</dt><dd id="summaryThumbs">ATIVADA</dd></div>
               </dl>
 
               <button class="generate-button" id="gen" type="button" disabled>

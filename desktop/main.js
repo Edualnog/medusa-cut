@@ -665,10 +665,23 @@ ipcMain.handle("list-clips", () => {
       } catch {
         /* arquivo sumiu entre o readdir e o stat */
       }
+      // Thumbnail (capa) do corte, se gerada: serve pelo mesmo protocolo (allowlist).
+      let thumbUrl = null;
+      let thumbPath = null;
+      const thumbName = meta.thumb || `${f.replace(/\.mp4$/, "")}.jpg`;
+      if (thumbName) {
+        const tp = path.join(dir, thumbName);
+        if (fs.existsSync(tp)) {
+          thumbPath = tp;
+          thumbUrl = "zclip://clip/" + registerClip(tp);
+        }
+      }
       out.push({
         file: f,
         url: "zclip://clip/" + registerClip(full),
         path: full,
+        thumbUrl,
+        thumbPath,
         run: r.name,
         mtime,
         hook: meta.hook || "",
@@ -715,6 +728,7 @@ ipcMain.on("generate", (_e, opts) => {
     "--facecam", opts.facecam,
   ];
   if (!opts.captions) args.push("--no-captions");
+  if (opts.thumbnails === false) args.push("--no-thumbs");
 
   // A chave vai por VARIÁVEL DE AMBIENTE (LLM_API_KEY), nunca por argv: argumentos
   // de processo são visíveis a outros processos/usuários locais (ps -ef). O motor lê

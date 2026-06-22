@@ -68,6 +68,7 @@ def generate_clips(
     caption_y: float = 0.80,
     score_virality: bool = True,
     captions: bool = True,
+    thumbnails: bool = True,
     min_len: float | None = None,
     max_len: float | None = None,
     local_source: str | None = None,
@@ -175,6 +176,7 @@ def generate_clips(
         game_context=game_context,
         score_virality=score_virality,
         captions=captions,
+        thumbnails=thumbnails,
         final_count=max_clips,
         min_len=lo,
         max_len=hi,
@@ -199,6 +201,7 @@ def render_candidates(
     game_context: str = "",
     score_virality: bool = False,
     captions: bool = False,
+    thumbnails: bool = True,
     final_count: int | None = None,
     min_len: float | None = None,
     max_len: float | None = None,
@@ -297,6 +300,19 @@ def render_candidates(
                 print(f"[medusacut] sem hook em {file_name}: {exc}", file=_sys.stderr)
         _render_layout(media, cand, layout_name, facecam_corner, out_path, cache_dir,
                        facecam_box=facecam_box, overlays=[caption_track, hook_track])
+        # Thumbnail (capa) 9:16: frame do corte + facecam (rosto real) + manchete.
+        # Local, sem token, reusa o hook ja gerado. Extra: nunca derruba o corte.
+        thumb_name = ""
+        if thumbnails and hook_text:
+            from medusacut import thumbnail
+            stem = os.path.splitext(file_name)[0]
+            thumb_path = os.path.join(out_dir, f"{stem}.jpg")
+            made = thumbnail.build_thumbnail(
+                media.path, cand.start, cand.end, hook_text,
+                facecam_box=facecam_box, out_path=thumb_path, cache_dir=cap_dir,
+            )
+            if made:
+                thumb_name = os.path.basename(made)
         return Clip(
             index=idx, start=cand.start, end=cand.end, score=cand.score, file=file_name,
             hook=hook.hook if hook else "",
@@ -304,6 +320,7 @@ def render_candidates(
             virality_score=hook.virality_score if hook else None,
             description=hook.description if hook else "",
             moment_type=hook.moment_type if hook else "",
+            thumb=thumb_name,
         )
 
     # Render dos cortes em PARALELO. Os 2 layouts agora sao so filtergraph do ffmpeg

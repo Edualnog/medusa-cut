@@ -52,6 +52,7 @@ def run(argv: list[str] | None = None) -> int:
     p.add_argument("--layout", default="facecam_top_gameplay_bottom")
     p.add_argument("--facecam", default="auto", help="auto|tl|tr|bl|br")
     p.add_argument("--no-captions", action="store_true")
+    p.add_argument("--no-thumbs", action="store_true", help="nao gerar thumbnail (capa) dos cortes")
     p.add_argument("--key", default=None, help="chave do provedor de IA (ou env LLM_API_KEY); provedor via LLM_PROVIDER")
     a = p.parse_args(argv)
 
@@ -79,6 +80,7 @@ def run(argv: list[str] | None = None) -> int:
             facecam_auto=(a.facecam == "auto"),
             facecam_corner=None if a.facecam == "auto" else a.facecam,
             captions=not a.no_captions,
+            thumbnails=not a.no_thumbs,
             score_virality=True,
             local_source=a.source if is_file else None,
             progress=progress,
@@ -102,6 +104,7 @@ def run(argv: list[str] | None = None) -> int:
         "clips": [
             {
                 "file": c.file,
+                "thumb": c.thumb,
                 "idx": c.index,
                 "start": c.start,
                 "end": c.end,
