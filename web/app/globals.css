@@ -875,6 +875,24 @@ a {
   text-align: center;
 }
 
+.footer-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-badge {
+  display: inline-flex;
+  line-height: 0;
+  opacity: 0.92;
+  transition: opacity 120ms ease;
+}
+
+.footer-badge:hover {
+  opacity: 1;
+}
+
 .footer-brand {
   display: flex;
   flex-direction: column;

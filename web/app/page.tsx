@@ -426,7 +426,23 @@ export default function Home() {
           </a>
         </div>
 
-        <p>© 2026 MEDUSA CLIP · OPEN SOURCE (AGPL-3.0) · SEM CADASTRO</p>
+        <div className="footer-center">
+          <p>© 2026 MEDUSA CLIP · OPEN SOURCE (AGPL-3.0) · SEM CADASTRO</p>
+          <a
+            className="footer-badge"
+            href="https://fazier.com/launches/www.medusaclip.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Medusa Clip no Fazier"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=dark"
+              width={120}
+              alt="Fazier badge"
+            />
+          </a>
+        </div>
 
         <div className="footer-social">
           <a
